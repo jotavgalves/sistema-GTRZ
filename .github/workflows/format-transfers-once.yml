@@ -1,0 +1,46 @@
+name: Formatar transferências de estoque
+
+on:
+  push:
+    branches: [feat/transferencias-estoque]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: feat/transferencias-estoque
+          fetch-depth: 0
+
+      - name: Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.23.1'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
+
+      - name: Aplicar Prettier
+        run: npx prettier --write apps/desktop/src/renderer/src/features/inventory/StockTransferSection.tsx packages/database/src/stock-transfers.ts tests/e2e/transfers.spec.ts
+
+      - name: Registrar resultado
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/desktop/src/renderer/src/features/inventory/StockTransferSection.tsx packages/database/src/stock-transfers.ts tests/e2e/transfers.spec.ts
+          git commit -m "style: formata transferências de estoque"
+          git push origin HEAD:feat/transferencias-estoque
