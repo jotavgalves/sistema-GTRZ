@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router';
 
-import { useSession } from './SessionContext';
+import { useSession } from './session-context';
 
 export function RequireProduction(): React.JSX.Element {
   const { state, loading, error } = useSession();
