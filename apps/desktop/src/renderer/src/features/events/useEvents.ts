@@ -2,17 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type { EventStatus, GtrzEvent } from '@gtrz/contracts';
 
-import { useSession } from '../../shared/session/SessionContext';
+import { useSession } from '../../shared/session/session-context';
 
 interface EventsState {
   readonly events: readonly GtrzEvent[];
   readonly loading: boolean;
   readonly error: string | null;
-  create(name: string, startsAt: number): Promise<void>;
-  rename(eventId: string, name: string): Promise<void>;
-  changeStatus(eventId: string, status: EventStatus): Promise<void>;
-  select(eventId: string): Promise<void>;
-  reload(): Promise<void>;
+  readonly create: (name: string, startsAt: number) => Promise<void>;
+  readonly rename: (eventId: string, name: string) => Promise<void>;
+  readonly changeStatus: (eventId: string, status: EventStatus) => Promise<void>;
+  readonly select: (eventId: string) => Promise<void>;
+  readonly reload: () => Promise<void>;
 }
 
 function getErrorMessage(error: unknown): string {
