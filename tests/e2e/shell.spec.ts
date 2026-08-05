@@ -121,6 +121,11 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
 
     await window.getByRole('button', { name: 'Usar perfil Caixa' }).click();
     await expect(window.getByText('Caixa', { exact: true })).toBeVisible();
+    await window.getByRole('link', { name: 'Estoque' }).click();
+    await expect(window.getByRole('heading', { name: 'Estoque' })).toBeVisible();
+
+    productCard = window.locator('article.inventory-card').filter({ hasText: productName });
+    await expect(productCard).toBeVisible();
     await expect(productCard.getByText('R$ 10,00')).toBeVisible();
     await expect(productCard.getByText('Lucro bruto')).toHaveCount(0);
     await expect(productCard.getByText('Custo')).toHaveCount(0);
