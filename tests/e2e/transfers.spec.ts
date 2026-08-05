@@ -5,12 +5,23 @@ import { _electron as electron } from 'playwright';
 
 const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
 
+async function ensureProduction(window: Awaited<ReturnType<Awaited<ReturnType<typeof electron.launch>>['firstWindow']>>): Promise<void> {
+  const cashierBadge = window.getByText('Caixa', { exact: true });
+
+  if (await cashierBadge.isVisible()) {
+    await window.getByPlaceholder('Digite a senha').fill('121225');
+    await window.getByRole('button', { name: 'Entrar em Produção' }).click();
+    await expect(window.getByText('Produção', { exact: true })).toBeVisible();
+  }
+}
+
 test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', async () => {
   const electronApplication = await electron.launch({ args: [applicationPath] });
 
   try {
     const window = await electronApplication.firstWindow();
     await window.waitForLoadState('domcontentloaded');
+    await ensureProduction(window);
     const suffix = String(Date.now());
     const sourceEventName = `Origem transferência ${suffix}`;
     const destinationEventName = `Destino transferência ${suffix}`;
