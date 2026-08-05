@@ -1,0 +1,45 @@
+name: Formatação final do controle
+
+on:
+  push:
+    branches: [feat/controle-do-sistema]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: feat/controle-do-sistema
+          fetch-depth: 0
+
+      - name: Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.23.1'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
+
+      - name: Aplicar Prettier
+        run: npx prettier --write apps/desktop/src/renderer/src/shared/session/SessionProvider.tsx packages/database/src/control.ts
+
+      - name: Registrar resultado
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/desktop/src/renderer/src/shared/session/SessionProvider.tsx packages/database/src/control.ts
+          git commit -m "style: formata controle do sistema"
+          git push origin HEAD:feat/controle-do-sistema
