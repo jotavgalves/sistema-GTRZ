@@ -1,10 +1,11 @@
 import js from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: [
       '**/node_modules/**',
@@ -20,11 +21,10 @@ export default tseslint.config(
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {
+    files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
-        projectService: {
-          allowDefaultProject: ['*.mjs', 'scripts/*.mjs'],
-        },
+        projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
       globals: {
@@ -96,9 +96,18 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.mjs'],
+    files: ['**/*.mjs'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: {
+      globals: globals.node,
+    },
     rules: {
       'no-console': ['error', { allow: ['warn', 'error', 'log'] }],
+      'no-duplicate-imports': 'error',
+      'no-warning-comments': [
+        'error',
+        { location: 'anywhere', terms: ['todo', 'fixme', 'hack', 'legacy'] },
+      ],
     },
   },
   {
