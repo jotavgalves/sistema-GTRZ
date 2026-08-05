@@ -23,6 +23,11 @@ export default defineConfig({
       externalizeDeps: false,
       rollupOptions: {
         input: resolveFromApp('./src/preload/index.ts'),
+        output: {
+          entryFileNames: 'index.cjs',
+          format: 'cjs',
+          inlineDynamicImports: true,
+        },
       },
     },
   },
