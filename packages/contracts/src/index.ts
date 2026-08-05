@@ -2,9 +2,11 @@ import { z } from 'zod';
 
 import type { ComboApi } from './combos';
 import type { InventoryApi } from './inventory';
+import type { OperationsApi } from './operations';
 
 export * from './combos';
 export * from './inventory';
+export * from './operations';
 
 export const IPC_CHANNELS = {
   systemGetInfo: 'system:get-info',
@@ -31,6 +33,13 @@ export const IPC_CHANNELS = {
   combosList: 'combos:list',
   combosCreate: 'combos:create',
   combosUpdate: 'combos:update',
+  operationsGetState: 'operations:get-state',
+  operationsCreateServicePoint: 'operations:create-service-point',
+  operationsOpenOrder: 'operations:open-order',
+  operationsGetOrder: 'operations:get-order',
+  operationsAddItem: 'operations:add-item',
+  operationsRemoveItem: 'operations:remove-item',
+  operationsCloseOrder: 'operations:close-order',
 } as const;
 
 export const systemInfoSchema = z.object({
@@ -168,4 +177,5 @@ export interface GtrzDesktopApi {
   };
   readonly inventory: InventoryApi;
   readonly combos: ComboApi;
+  readonly operations: OperationsApi;
 }
