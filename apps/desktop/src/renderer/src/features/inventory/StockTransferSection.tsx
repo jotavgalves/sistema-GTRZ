@@ -65,11 +65,7 @@ export function StockTransferSection({
     const parsedQuantity = Number(quantity);
 
     try {
-      if (
-        sourceEventId.length === 0 ||
-        destinationEventId.length === 0 ||
-        productId.length === 0
-      ) {
+      if (sourceEventId.length === 0 || destinationEventId.length === 0 || productId.length === 0) {
         throw new Error('Selecione origem, destino e produto.');
       }
 
@@ -100,7 +96,9 @@ export function StockTransferSection({
         <div>
           <span className="eyebrow">Movimento entre eventos</span>
           <h2 id="transfer-section-title">Transferências</h2>
-          <p>Débito e crédito acontecem na mesma transação, sem saldo intermediário inconsistente.</p>
+          <p>
+            Débito e crédito acontecem na mesma transação, sem saldo intermediário inconsistente.
+          </p>
         </div>
         <button
           className="button button--secondary button--compact"

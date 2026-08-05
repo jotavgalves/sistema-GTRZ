@@ -68,7 +68,10 @@ test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', asy
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
     await expect(productCard.getByText('3 un.', { exact: true })).toBeVisible();
 
-    const transferCard = window.locator('article.transfer-card').filter({ hasText: productName }).first();
+    const transferCard = window
+      .locator('article.transfer-card')
+      .filter({ hasText: productName })
+      .first();
     await expect(transferCard).toBeVisible();
     await expect(transferCard.getByText(sourceEventName, { exact: true })).toBeVisible();
     await expect(transferCard.getByText(destinationEventName, { exact: true })).toBeVisible();

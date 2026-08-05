@@ -221,7 +221,9 @@ export function transferStockBetweenEvents(
   const destinationQuantityBefore = getStockQuantity(database, destinationEvent.id, product.id);
 
   if (sourceQuantityBefore < input.quantity) {
-    throw new Error(`Estoque insuficiente na origem. Saldo atual: ${String(sourceQuantityBefore)}.`);
+    throw new Error(
+      `Estoque insuficiente na origem. Saldo atual: ${String(sourceQuantityBefore)}.`,
+    );
   }
 
   const sourceQuantityAfter = sourceQuantityBefore - input.quantity;
