@@ -57,6 +57,17 @@ export function registerInventoryIpcHandlers(options: RegisterInventoryIpcOption
 
   ipcMain.handle(IPC_CHANNELS.inventoryRecordMovement, (_event, payload: unknown) => {
     const input = recordStockMovementInputSchema.parse(payload);
-    return inventoryProductSchema.parse(recordStockMovement(options.getDatabase(), input));
+    const movementInput =
+      input.note === undefined
+        ? {
+            productId: input.productId,
+            type: input.type,
+            quantity: input.quantity,
+          }
+        : input;
+
+    return inventoryProductSchema.parse(
+      recordStockMovement(options.getDatabase(), movementInput),
+    );
   });
 }
