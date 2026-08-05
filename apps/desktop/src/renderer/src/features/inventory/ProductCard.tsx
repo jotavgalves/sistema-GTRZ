@@ -49,7 +49,7 @@ export function ProductCard({
             setMode('view');
           }}
           onSubmit={async (input) => {
-            await onUpdate(input as UpdateProductInput);
+            await onUpdate(input);
             setMode('view');
           }}
           product={product}
