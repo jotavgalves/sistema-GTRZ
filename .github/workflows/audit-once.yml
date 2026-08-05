@@ -1,0 +1,33 @@
+name: Diagnóstico temporário de dependências
+
+on:
+  push:
+    branches: [feat/fundacao-tecnica]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.1'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
+
+      - name: Exibir auditoria completa
+        shell: bash
+        run: npm audit --json || true
+
+      - name: Validar dependências de produção
+        run: npm audit --omit=dev --audit-level=high
