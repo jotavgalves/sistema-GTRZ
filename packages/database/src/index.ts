@@ -193,6 +193,243 @@ const migrations: readonly Migration[] = [
         ON stock_transfers (product_id, created_at DESC);
     `,
   },
+  {
+    version: 6,
+    name: 'event-operations-sales-vouchers-cash-expenses',
+    sql: `
+      ALTER TABLE stock_movements RENAME TO stock_movements_legacy;
+
+      CREATE TABLE stock_movements (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        product_id TEXT NOT NULL,
+        type TEXT NOT NULL CHECK (type IN (
+          'purchase',
+          'correction-positive',
+          'correction-negative',
+          'loss',
+          'breakage',
+          'internal-consumption',
+          'courtesy',
+          'return',
+          'sale',
+          'sale-cancel'
+        )),
+        quantity INTEGER NOT NULL CHECK (quantity > 0),
+        delta INTEGER NOT NULL CHECK (delta != 0),
+        note TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (product_id) REFERENCES products(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      INSERT INTO stock_movements
+      (id, event_id, product_id, type, quantity, delta, note, created_at)
+      SELECT id, event_id, product_id, type, quantity, delta, note, created_at
+      FROM stock_movements_legacy;
+
+      DROP TABLE stock_movements_legacy;
+
+      CREATE INDEX stock_movements_event_created_idx
+        ON stock_movements (event_id, created_at DESC);
+      CREATE INDEX stock_movements_product_created_idx
+        ON stock_movements (product_id, created_at DESC);
+
+      CREATE TABLE sale_tables (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        name TEXT NOT NULL COLLATE NOCASE,
+        kind TEXT NOT NULL CHECK (kind IN ('counter', 'table')),
+        status TEXT NOT NULL CHECK (status IN ('open', 'closed')),
+        opened_at INTEGER NOT NULL,
+        closed_at INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE (event_id, name),
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE INDEX sale_tables_event_status_idx
+        ON sale_tables (event_id, status, name COLLATE NOCASE);
+
+      CREATE TABLE cash_sessions (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('open', 'closed')),
+        opening_float_cents INTEGER NOT NULL CHECK (opening_float_cents >= 0),
+        counted_closing_cents INTEGER CHECK (counted_closing_cents >= 0),
+        opened_at INTEGER NOT NULL,
+        closed_at INTEGER,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE UNIQUE INDEX cash_sessions_one_open_per_event_idx
+        ON cash_sessions (event_id) WHERE status = 'open';
+
+      CREATE TABLE vouchers (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        code TEXT NOT NULL COLLATE NOCASE,
+        origin TEXT NOT NULL CHECK (origin IN ('pre-sale', 'local-sale', 'courtesy')),
+        status TEXT NOT NULL CHECK (status IN ('active', 'depleted', 'cancelled')),
+        initial_balance_cents INTEGER NOT NULL CHECK (initial_balance_cents > 0),
+        balance_cents INTEGER NOT NULL CHECK (balance_cents >= 0),
+        table_id TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE (event_id, code),
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (table_id) REFERENCES sale_tables(id)
+          ON UPDATE CASCADE ON DELETE SET NULL
+      );
+
+      CREATE TABLE sales (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        table_id TEXT NOT NULL,
+        table_name TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('paid', 'cancelled')),
+        total_cents INTEGER NOT NULL CHECK (total_cents >= 0),
+        change_cents INTEGER NOT NULL DEFAULT 0 CHECK (change_cents >= 0),
+        created_at INTEGER NOT NULL,
+        cancelled_at INTEGER,
+        cancellation_reason TEXT,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (table_id) REFERENCES sale_tables(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE INDEX sales_event_created_idx
+        ON sales (event_id, created_at DESC);
+      CREATE INDEX sales_table_created_idx
+        ON sales (table_id, created_at DESC);
+
+      CREATE TABLE sale_lines (
+        id TEXT PRIMARY KEY NOT NULL,
+        sale_id TEXT NOT NULL,
+        item_kind TEXT NOT NULL CHECK (item_kind IN ('product', 'combo')),
+        item_id TEXT NOT NULL,
+        item_name TEXT NOT NULL,
+        quantity INTEGER NOT NULL CHECK (quantity > 0),
+        unit_price_cents INTEGER NOT NULL CHECK (unit_price_cents >= 0),
+        total_price_cents INTEGER NOT NULL CHECK (total_price_cents >= 0),
+        FOREIGN KEY (sale_id) REFERENCES sales(id)
+          ON UPDATE CASCADE ON DELETE CASCADE
+      );
+
+      CREATE TABLE sale_payments (
+        id TEXT PRIMARY KEY NOT NULL,
+        sale_id TEXT NOT NULL,
+        method TEXT NOT NULL CHECK (method IN ('card', 'pix', 'cash', 'voucher')),
+        amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+        voucher_id TEXT,
+        voucher_code TEXT,
+        FOREIGN KEY (sale_id) REFERENCES sales(id)
+          ON UPDATE CASCADE ON DELETE CASCADE,
+        FOREIGN KEY (voucher_id) REFERENCES vouchers(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE TABLE voucher_movements (
+        id TEXT PRIMARY KEY NOT NULL,
+        voucher_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        type TEXT NOT NULL CHECK (type IN ('issue', 'redeem', 'refund', 'cancel', 'reactivate')),
+        amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+        balance_before_cents INTEGER NOT NULL CHECK (balance_before_cents >= 0),
+        balance_after_cents INTEGER NOT NULL CHECK (balance_after_cents >= 0),
+        sale_id TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (voucher_id) REFERENCES vouchers(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (sale_id) REFERENCES sales(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE INDEX voucher_movements_voucher_created_idx
+        ON voucher_movements (voucher_id, created_at DESC);
+
+      CREATE TABLE cash_movements (
+        id TEXT PRIMARY KEY NOT NULL,
+        session_id TEXT NOT NULL,
+        event_id TEXT NOT NULL,
+        type TEXT NOT NULL CHECK (type IN (
+          'opening',
+          'supply',
+          'withdrawal',
+          'sale',
+          'refund',
+          'expense',
+          'expense-reversal'
+        )),
+        method TEXT CHECK (method IN ('card', 'pix', 'cash')),
+        amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+        note TEXT,
+        source_id TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (session_id) REFERENCES cash_sessions(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE INDEX cash_movements_session_created_idx
+        ON cash_movements (session_id, created_at DESC);
+
+      CREATE TABLE expense_categories (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        name TEXT NOT NULL COLLATE NOCASE,
+        created_at INTEGER NOT NULL,
+        UNIQUE (event_id, name),
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE TABLE expenses (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        category_id TEXT NOT NULL,
+        description TEXT NOT NULL,
+        total_cents INTEGER NOT NULL CHECK (total_cents > 0),
+        due_at INTEGER,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES events(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (category_id) REFERENCES expense_categories(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE INDEX expenses_event_created_idx
+        ON expenses (event_id, created_at DESC);
+
+      CREATE TABLE expense_payments (
+        id TEXT PRIMARY KEY NOT NULL,
+        expense_id TEXT NOT NULL,
+        session_id TEXT NOT NULL,
+        method TEXT NOT NULL CHECK (method IN ('card', 'pix', 'cash')),
+        amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+        note TEXT,
+        paid_at INTEGER NOT NULL,
+        reversed_at INTEGER,
+        FOREIGN KEY (expense_id) REFERENCES expenses(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (session_id) REFERENCES cash_sessions(id)
+          ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE INDEX expense_payments_expense_paid_idx
+        ON expense_payments (expense_id, paid_at DESC);
+    `,
+  },
 ];
 
 function ensureMigrationTable(sqlite: BetterSqlite3.Database): void {
@@ -258,8 +495,12 @@ export function verifyDatabaseIntegrity(database: DatabaseContext): boolean {
 
 export * from './audit';
 export * from './backup';
+export * from './cash';
 export * from './combos';
 export * from './control';
+export * from './expenses';
 export * from './inventory';
+export * from './operations';
 export * from './stock-transfers';
+export * from './vouchers';
 export type { DatabaseContext } from './types';

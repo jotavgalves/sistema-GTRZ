@@ -1,0 +1,324 @@
+.operation-layout,
+.cash-control-grid,
+.expense-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(20rem, 0.75fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.operation-panel,
+.checkout-panel,
+.table-panel,
+.sales-history-panel,
+.voucher-create-panel,
+.cash-control-card,
+.expense-form-panel {
+  min-width: 0;
+}
+
+.operation-catalog,
+.checkout-lines,
+.sales-history-list,
+.expense-payment-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.operation-item,
+.checkout-line,
+.expense-payment-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-raised);
+}
+
+.operation-item > div:first-child,
+.voucher-card__header > div,
+.expense-card__header > div,
+.sale-history-card__header > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.operation-item strong,
+.voucher-card h3,
+.expense-card h3,
+.sale-history-card h3,
+.table-card h3 {
+  margin: 0;
+}
+
+.operation-item small,
+.operation-item__kind,
+.voucher-card__header span,
+.expense-card__header span,
+.sale-history-card__header span,
+.table-card > div > span {
+  color: var(--color-text-muted);
+}
+
+.quantity-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.quantity-stepper > span {
+  min-width: 2rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.checkout-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block: var(--space-5);
+  padding-block: var(--space-4);
+  border-block: 1px solid var(--color-border);
+}
+
+.checkout-total strong {
+  font-size: 1.5rem;
+}
+
+.operation-form,
+.voucher-form,
+.expense-payment-form,
+.inline-create-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.mixed-payment-grid,
+.cash-breakdown-grid,
+.expense-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.checkbox-field {
+  display: flex !important;
+  grid-template-columns: auto 1fr;
+  flex-direction: row !important;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.checkbox-field input {
+  width: auto;
+}
+
+.form-actions,
+.inline-create-form {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.operation-note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  background: var(--color-bg-raised);
+}
+
+.table-grid,
+.voucher-grid,
+.expense-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: var(--space-4);
+}
+
+.table-card,
+.voucher-card,
+.expense-card,
+.sale-history-card,
+.cash-breakdown-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.table-card--open {
+  border-color: rgb(34 197 94 / 45%);
+}
+
+.table-card dl,
+.expense-totals {
+  margin: 0;
+}
+
+.table-card dl,
+.expense-totals,
+.voucher-balance {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.table-card dl > div,
+.expense-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.table-card dt,
+.expense-totals dt {
+  color: var(--color-text-muted);
+}
+
+.table-card dd,
+.expense-totals dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.sale-history-card__header,
+.voucher-card__header,
+.expense-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.sale-history-card__header > div:last-child {
+  justify-items: end;
+}
+
+.sale-history-card ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sale-history-card li,
+.sale-payment-list {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sale-payment-list {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.voucher-form {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+}
+
+.voucher-balance strong {
+  font-size: 1.5rem;
+}
+
+.cash-breakdown-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cash-breakdown-card {
+  gap: var(--space-2);
+}
+
+.cash-breakdown-card span {
+  color: var(--color-text-muted);
+}
+
+.cash-breakdown-card strong {
+  font-size: 1.1rem;
+}
+
+.expense-form-grid {
+  grid-template-columns: minmax(16rem, 0.65fr) minmax(0, 1.35fr);
+}
+
+.expense-payment-form {
+  grid-template-columns: 0.7fr 0.8fr 1.2fr auto;
+  align-items: end;
+}
+
+.expense-payment--reversed {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.status-badge--paid,
+.status-badge--active,
+.status-badge--partial,
+.status-badge--depleted,
+.status-badge--cancelled {
+  border: 1px solid var(--color-border);
+}
+
+.status-badge--paid,
+.status-badge--active {
+  color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.status-badge--partial,
+.status-badge--depleted {
+  color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.status-badge--cancelled {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+
+@media (max-width: 1100px) {
+  .operation-layout,
+  .cash-control-grid,
+  .expense-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cash-breakdown-grid,
+  .voucher-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .expense-payment-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .mixed-payment-grid,
+  .cash-breakdown-grid,
+  .voucher-form,
+  .expense-payment-form,
+  .form-actions,
+  .inline-create-form {
+    grid-template-columns: 1fr;
+  }
+
+  .sale-history-card__header,
+  .voucher-card__header,
+  .expense-card__header,
+  .operation-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

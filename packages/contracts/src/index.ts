@@ -2,9 +2,11 @@ import { z } from 'zod';
 
 import type { ComboApi } from './combos';
 import type { InventoryApi } from './inventory';
+import type { CashApi, ExpensesApi, OperationsApi, VouchersApi } from './operations';
 
 export * from './combos';
 export * from './inventory';
+export * from './operations';
 
 export const IPC_CHANNELS = {
   systemGetInfo: 'system:get-info',
@@ -31,6 +33,23 @@ export const IPC_CHANNELS = {
   combosList: 'combos:list',
   combosCreate: 'combos:create',
   combosUpdate: 'combos:update',
+  operationsGetState: 'operations:get-state',
+  operationsCreateTable: 'operations:create-table',
+  operationsChangeTableStatus: 'operations:change-table-status',
+  operationsCheckout: 'operations:checkout',
+  operationsCancelSale: 'operations:cancel-sale',
+  vouchersGetState: 'vouchers:get-state',
+  vouchersCreate: 'vouchers:create',
+  vouchersChangeStatus: 'vouchers:change-status',
+  cashGetSummary: 'cash:get-summary',
+  cashOpen: 'cash:open',
+  cashClose: 'cash:close',
+  cashAddMovement: 'cash:add-movement',
+  expensesGetState: 'expenses:get-state',
+  expensesCreateCategory: 'expenses:create-category',
+  expensesCreate: 'expenses:create',
+  expensesPay: 'expenses:pay',
+  expensesReversePayment: 'expenses:reverse-payment',
 } as const;
 
 export const systemInfoSchema = z.object({
@@ -168,4 +187,8 @@ export interface GtrzDesktopApi {
   };
   readonly inventory: InventoryApi;
   readonly combos: ComboApi;
+  readonly operations: OperationsApi;
+  readonly vouchers: VouchersApi;
+  readonly cash: CashApi;
+  readonly expenses: ExpensesApi;
 }
