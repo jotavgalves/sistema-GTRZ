@@ -23,7 +23,7 @@ export const userProfileSchema = z.enum(['production', 'cashier']);
 export const eventStatusSchema = z.enum(['open', 'closed', 'archived']);
 
 export const eventSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   name: z.string().trim().min(2).max(100),
   status: eventStatusSchema,
   startsAt: z.number().int().nonnegative(),
@@ -40,17 +40,17 @@ export const createEventInputSchema = z.object({
 });
 
 export const renameEventInputSchema = z.object({
-  eventId: z.string().uuid(),
+  eventId: z.uuid(),
   name: z.string().trim().min(2).max(100),
 });
 
 export const changeEventStatusInputSchema = z.object({
-  eventId: z.string().uuid(),
+  eventId: z.uuid(),
   status: eventStatusSchema,
 });
 
 export const setActiveEventInputSchema = z.object({
-  eventId: z.string().uuid().nullable(),
+  eventId: z.uuid().nullable(),
 });
 
 export const sessionStateSchema = z.object({
