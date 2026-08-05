@@ -48,7 +48,9 @@ test('SMK-CMB-001 — calcula combo pelo estoque dos componentes e protege custo
     const comboForm = window.locator('form.combo-form');
     await comboForm.getByLabel('Nome do combo', { exact: true }).fill(comboName);
     await comboForm.getByLabel('Preço do combo', { exact: true }).fill('18.00');
-    await comboForm.getByLabel('Produto do combo', { exact: true }).selectOption({ label: productName });
+    await comboForm
+      .getByLabel('Produto do combo', { exact: true })
+      .selectOption({ label: productName });
     await comboForm.getByLabel('Quantidade do componente', { exact: true }).fill('2');
     await comboForm.getByRole('button', { name: 'Adicionar componente' }).click();
     await comboForm.getByRole('button', { name: 'Cadastrar combo' }).click();

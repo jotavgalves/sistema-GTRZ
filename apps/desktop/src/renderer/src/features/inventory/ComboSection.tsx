@@ -52,7 +52,9 @@ export function ComboSection({ products, production }: ComboSectionProps): React
             </div>
           </div>
           {activeProducts.length === 0 ? (
-            <p className="inventory-helper">Cadastre ao menos um produto ativo para criar combos.</p>
+            <p className="inventory-helper">
+              Cadastre ao menos um produto ativo para criar combos.
+            </p>
           ) : (
             <ComboForm busy={busy} onSubmit={createCombo} products={activeProducts} />
           )}

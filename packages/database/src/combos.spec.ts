@@ -127,7 +127,7 @@ describe('combo database', () => {
     expect(updated).toMatchObject({ name: 'Combo atualizado', active: false });
     expect(updated.components).toHaveLength(2);
     const actions = database.sqlite
-      .prepare("SELECT action FROM audit_log WHERE entity_id = ? ORDER BY id")
+      .prepare('SELECT action FROM audit_log WHERE entity_id = ? ORDER BY id')
       .all(combo.id);
     expect(actions).toEqual([{ action: 'combo.created' }, { action: 'combo.updated' }]);
     database.close();

@@ -7,12 +7,7 @@ import {
   IPC_CHANNELS,
   updateComboInputSchema,
 } from '@gtrz/contracts';
-import {
-  createCombo,
-  listCombos,
-  updateCombo,
-  type DatabaseContext,
-} from '@gtrz/database';
+import { createCombo, listCombos, updateCombo, type DatabaseContext } from '@gtrz/database';
 
 interface RegisterComboIpcOptions {
   readonly getDatabase: () => DatabaseContext;

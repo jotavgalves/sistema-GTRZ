@@ -106,7 +106,9 @@ export function ComboCard({
           <Tags size={15} aria-hidden="true" />
           {combo.components.length} componente{combo.components.length === 1 ? '' : 's'}
         </span>
-        {!combo.active ? <span className="status-badge status-badge--archived">Inativo</span> : null}
+        {!combo.active ? (
+          <span className="status-badge status-badge--archived">Inativo</span>
+        ) : null}
         {production ? (
           <button
             className="button button--ghost button--compact"

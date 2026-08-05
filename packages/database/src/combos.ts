@@ -75,11 +75,7 @@ function requireProduction(database: DatabaseContext): void {
   }
 }
 
-function requireUniqueName(
-  database: DatabaseContext,
-  name: string,
-  excludedId?: string,
-): void {
+function requireUniqueName(database: DatabaseContext, name: string, excludedId?: string): void {
   const duplicate = database.sqlite
     .prepare(
       `SELECT id
@@ -182,9 +178,7 @@ function mapCombo(
     (total, component) => total + component.cost_cents * component.required_quantity,
     0,
   );
-  const hasUnavailableComponent = componentRows.some(
-    (component) => component.product_active !== 1,
-  );
+  const hasUnavailableComponent = componentRows.some((component) => component.product_active !== 1);
   const availableUnits =
     activeEventId === null || componentRows.length === 0 || hasUnavailableComponent
       ? 0
