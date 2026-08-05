@@ -78,6 +78,7 @@ export const stockMovements = sqliteTable('stock_movements', {
       'internal-consumption',
       'courtesy',
       'return',
+      'sale',
     ],
   }).notNull(),
   quantity: integer('quantity').notNull(),
@@ -132,6 +133,62 @@ export const comboComponents = sqliteTable(
   (table) => [primaryKey({ columns: [table.comboId, table.productId] })],
 );
 
+export const servicePoints = sqliteTable('service_points', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => events.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  label: text('label').notNull(),
+  type: text('type', { enum: ['table', 'counter'] }).notNull(),
+  active: integer('active', { mode: 'boolean' }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const orders = sqliteTable('orders', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => events.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  servicePointId: text('service_point_id')
+    .notNull()
+    .references(() => servicePoints.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  servicePointLabel: text('service_point_label').notNull(),
+  status: text('status', { enum: ['open', 'paid', 'cancelled'] }).notNull(),
+  subtotalCents: integer('subtotal_cents').notNull(),
+  discountCents: integer('discount_cents').notNull(),
+  totalCents: integer('total_cents').notNull(),
+  openedAt: integer('opened_at', { mode: 'timestamp_ms' }).notNull(),
+  closedAt: integer('closed_at', { mode: 'timestamp_ms' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const orderItems = sqliteTable('order_items', {
+  id: text('id').primaryKey(),
+  orderId: text('order_id')
+    .notNull()
+    .references(() => orders.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+  itemKind: text('item_kind', { enum: ['product', 'combo'] }).notNull(),
+  itemId: text('item_id').notNull(),
+  itemName: text('item_name').notNull(),
+  quantity: integer('quantity').notNull(),
+  unitPriceCents: integer('unit_price_cents').notNull(),
+  totalCents: integer('total_cents').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const payments = sqliteTable('payments', {
+  id: text('id').primaryKey(),
+  orderId: text('order_id')
+    .notNull()
+    .references(() => orders.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  method: text('method', { enum: ['cash', 'pix', 'credit-card', 'debit-card'] }).notNull(),
+  amountCents: integer('amount_cents').notNull(),
+  receivedCents: integer('received_cents'),
+  changeCents: integer('change_cents').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
 export const auditLog = sqliteTable('audit_log', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   eventId: text('event_id'),
@@ -150,9 +207,13 @@ export const technicalSchema = {
   combos,
   eventStock,
   events,
+  orderItems,
+  orders,
+  payments,
   productCategories,
   products,
   schemaMigrations,
+  servicePoints,
   stockMovements,
   stockTransfers,
 };
