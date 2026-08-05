@@ -13,7 +13,11 @@ test('SMK-INF-002 — abre o GTRZ System com navegação modular', async () => {
 
     await expect(window).toHaveTitle('GTRZ System');
     await expect(window.locator('#root')).not.toBeEmpty();
-    await expect(window.locator('.brand-lockup')).toContainText('GTRZ');
+
+    const bodyText = await window.locator('body').innerText();
+    expect(bodyText).toContain('GTRZ');
+    expect(bodyText).not.toContain('Falha ao abrir esta área');
+
     await expect(window.getByRole('navigation', { name: 'Módulos do sistema' })).toBeVisible();
     await expect(window.getByRole('link', { name: 'Estoque' })).toBeVisible();
     await expect(window.getByRole('link', { name: 'Mesas e balcão' })).toBeVisible();
