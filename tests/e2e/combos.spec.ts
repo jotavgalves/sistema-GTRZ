@@ -78,6 +78,10 @@ test('SMK-CMB-001 — calcula combo pelo estoque dos componentes e protege custo
     await expect(comboCard.getByText('Lucro bruto')).toHaveCount(0);
     await expect(comboCard.getByText('Margem')).toHaveCount(0);
     await expect(comboCard.getByRole('button', { name: 'Editar combo' })).toHaveCount(0);
+
+    await window.getByPlaceholder('Digite a senha').fill('121225');
+    await window.getByRole('button', { name: 'Entrar em Produção' }).click();
+    await expect(window.getByText('Produção', { exact: true })).toBeVisible();
   } finally {
     await electronApplication.close();
   }
