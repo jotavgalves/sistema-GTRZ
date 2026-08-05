@@ -1,0 +1,58 @@
+name: Corrigir lint do estoque
+
+on:
+  push:
+    branches: [feat/produtos-estoque]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: feat/produtos-estoque
+          fetch-depth: 0
+
+      - name: Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.23.1'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
+
+      - name: Normalizar observação vazia
+        shell: python
+        run: |
+          from pathlib import Path
+          file = Path('packages/database/src/inventory.ts')
+          content = file.read_text(encoding='utf-8')
+          old = "  const note = input.note?.trim() || null;"
+          new = "  const trimmedNote = input.note?.trim();\n  const note =\n    trimmedNote === undefined || trimmedNote.length === 0 ? null : trimmedNote;"
+          if old not in content:
+              raise SystemExit('Trecho esperado não encontrado.')
+          file.write_text(content.replace(old, new, 1), encoding='utf-8')
+
+      - name: Aplicar Prettier
+        run: npx prettier --write apps/desktop/src/renderer/src/features/inventory/InventoryPage.tsx apps/desktop/src/renderer/src/features/inventory/useInventory.ts packages/contracts/src/inventory.ts packages/database/src/inventory.ts
+
+      - name: Registrar resultado
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/desktop/src/renderer/src/features/inventory/InventoryPage.tsx apps/desktop/src/renderer/src/features/inventory/useInventory.ts packages/contracts/src/inventory.ts packages/database/src/inventory.ts
+          git commit -m "fix: atende regras de lint do estoque"
+          git push origin HEAD:feat/produtos-estoque
