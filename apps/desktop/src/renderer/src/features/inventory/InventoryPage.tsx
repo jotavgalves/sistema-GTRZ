@@ -1,7 +1,7 @@
 import { Boxes, PackagePlus, RefreshCw, Search, TriangleAlert } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import type { CreateProductInput, ProductKind } from '@gtrz/contracts';
+import type { ProductKind } from '@gtrz/contracts';
 
 import { useSession } from '../../shared/session/session-context';
 import { CategoryForm } from './CategoryForm';
@@ -59,10 +59,6 @@ export function InventoryPage(): React.JSX.Element {
     0,
   );
 
-  async function submitProduct(input: CreateProductInput): Promise<void> {
-    await createProduct(input);
-  }
-
   return (
     <section className="feature-page">
       <header className="feature-header">
@@ -91,7 +87,9 @@ export function InventoryPage(): React.JSX.Element {
           <span>Produtos ativos</span>
           <strong>{activeProducts}</strong>
         </article>
-        <article className={lowStockProducts > 0 ? 'summary-card summary-card--warning' : 'summary-card'}>
+        <article
+          className={lowStockProducts > 0 ? 'summary-card summary-card--warning' : 'summary-card'}
+        >
           <span>Alertas de estoque</span>
           <strong>{lowStockProducts}</strong>
         </article>
@@ -101,7 +99,9 @@ export function InventoryPage(): React.JSX.Element {
         </article>
         <article className="summary-card summary-card--accent">
           <span>{production ? 'Custo do estoque' : 'Evento selecionado'}</span>
-          <strong>{production ? formatMoney(stockCostCents) : hasActiveEvent ? 'Ativo' : 'Nenhum'}</strong>
+          <strong>
+            {production ? formatMoney(stockCostCents) : hasActiveEvent ? 'Ativo' : 'Nenhum'}
+          </strong>
         </article>
       </div>
 
@@ -128,11 +128,7 @@ export function InventoryPage(): React.JSX.Element {
             {categories.length === 0 ? (
               <p className="inventory-helper">Crie uma categoria antes de cadastrar produtos.</p>
             ) : (
-              <ProductForm
-                busy={busy}
-                categories={categories}
-                onSubmit={(input) => submitProduct(input as CreateProductInput)}
-              />
+              <ProductForm busy={busy} categories={categories} onSubmit={createProduct} />
             )}
           </article>
 
