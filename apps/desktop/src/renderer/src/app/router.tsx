@@ -1,4 +1,4 @@
-import { createHashRouter, Navigate } from 'react-router-dom';
+import { createHashRouter, Navigate } from 'react-router';
 
 import { AuditPage } from '../features/audit';
 import { BackupsPage } from '../features/backups';
