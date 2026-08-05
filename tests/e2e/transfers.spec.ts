@@ -78,7 +78,19 @@ test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', asy
     await transferForm.getByRole('button', { name: 'Transferir estoque' }).click();
 
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
-    await expect(productCard.getByText('3 un.', { exact: true })).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          if (await productCard.getByText('3 un.', { exact: true }).isVisible()) {
+            return 'success';
+          }
+
+          const formErrors = await transferForm.locator('.form-error').allTextContents();
+          return formErrors.join(' | ') || 'pending';
+        },
+        { timeout: 5_000 },
+      )
+      .toBe('success');
 
     const transferCard = window
       .locator('article.transfer-card')
