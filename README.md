@@ -116,7 +116,7 @@ packages/
 - Electron 43
 - React 19
 - TypeScript estrito
-- Vite 8 e Electron Vite 5
+- Vite 7 e Electron Vite 5
 - SQLite e Drizzle ORM
 - Zod
 - Lucide React
