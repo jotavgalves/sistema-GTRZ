@@ -1,19 +1,17 @@
 import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig, externalizeDepsPlugin } from 'electron-vite';
+import { defineConfig } from 'electron-vite';
 
 const resolveFromApp = (relativePath: string): string =>
   fileURLToPath(new URL(relativePath, import.meta.url));
 
 export default defineConfig({
   main: {
-    plugins: [
-      externalizeDepsPlugin({
-        exclude: ['@gtrz/contracts', '@gtrz/database', '@gtrz/domain'],
-      }),
-    ],
     build: {
+      externalizeDeps: {
+        exclude: ['@gtrz/contracts', '@gtrz/database', '@gtrz/domain'],
+      },
       rollupOptions: {
         external: ['better-sqlite3'],
         input: resolveFromApp('./src/main/index.ts'),
@@ -21,12 +19,8 @@ export default defineConfig({
     },
   },
   preload: {
-    plugins: [
-      externalizeDepsPlugin({
-        exclude: ['@gtrz/contracts'],
-      }),
-    ],
     build: {
+      externalizeDeps: false,
       rollupOptions: {
         input: resolveFromApp('./src/preload/index.ts'),
       },
