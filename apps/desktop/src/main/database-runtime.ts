@@ -76,7 +76,6 @@ export class DatabaseRuntime {
     } finally {
       await rm(incomingPath, { force: true });
       await rm(rollbackPath, { force: true });
-      await this.#removeSidecars();
     }
   }
 
