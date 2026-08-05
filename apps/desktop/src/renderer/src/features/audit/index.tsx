@@ -10,7 +10,11 @@ export function AuditPage(): React.JSX.Element {
       icon={ShieldCheck}
       metrics={[
         { label: 'Registros hoje', value: '0', detail: 'Nenhuma operação auditada.' },
-        { label: 'Ações protegidas', value: '0', detail: 'Autorizações por senha aparecerão aqui.' },
+        {
+          label: 'Ações protegidas',
+          value: '0',
+          detail: 'Autorizações por senha aparecerão aqui.',
+        },
         { label: 'Falhas', value: '0', detail: 'Erros técnicos e recusas rastreáveis.' },
       ]}
       nextDeliveries={[

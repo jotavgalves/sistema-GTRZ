@@ -1,11 +1,7 @@
 import { app, BrowserWindow, dialog } from 'electron';
 import path from 'node:path';
 
-import {
-  openDatabase,
-  type DatabaseContext,
-  verifyDatabaseIntegrity,
-} from '@gtrz/database';
+import { openDatabase, type DatabaseContext, verifyDatabaseIntegrity } from '@gtrz/database';
 
 import { createMainWindow } from './create-main-window';
 import { registerIpcHandlers } from './register-ipc';
@@ -45,7 +41,8 @@ if (!hasSingleInstanceLock) {
 
       mainWindow = createMainWindow();
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Falha desconhecida na inicialização.';
+      const message =
+        error instanceof Error ? error.message : 'Falha desconhecida na inicialização.';
       dialog.showErrorBox('GTRZ System não pôde iniciar', message);
       app.quit();
     }

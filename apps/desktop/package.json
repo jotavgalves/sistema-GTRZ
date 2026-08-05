@@ -44,14 +44,18 @@
       {
         "from": "resources/branding",
         "to": "branding",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "artifactName": "GTRZ-System-${version}-Setup.${ext}"

@@ -9,12 +9,7 @@
     "rootDir": ".",
     "types": ["node", "vitest/globals"]
   },
-  "include": [
-    "vitest.config.ts",
-    "playwright.config.ts",
-    "tests/**/*.ts",
-    "packages/**/*.spec.ts"
-  ],
+  "include": ["vitest.config.ts", "playwright.config.ts", "tests/**/*.ts", "packages/**/*.spec.ts"],
   "references": [
     { "path": "./packages/contracts" },
     { "path": "./packages/domain" },

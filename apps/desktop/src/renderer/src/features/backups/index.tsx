@@ -11,7 +11,11 @@ export function BackupsPage(): React.JSX.Element {
       metrics={[
         { label: 'Último backup', value: 'Nunca', detail: 'Nenhum arquivo gerado.' },
         { label: 'Destino', value: 'Não definido', detail: 'Pasta, pendrive ou HD externo.' },
-        { label: 'Integridade', value: 'Pendente', detail: 'Checksum será validado em cada pacote.' },
+        {
+          label: 'Integridade',
+          value: 'Pendente',
+          detail: 'Checksum será validado em cada pacote.',
+        },
       ]}
       nextDeliveries={[
         'Backup automático, manual e ao encerrar evento.',

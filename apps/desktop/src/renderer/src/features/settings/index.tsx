@@ -11,7 +11,11 @@ export function SettingsPage(): React.JSX.Element {
       metrics={[
         { label: 'Perfil', value: 'Produção', detail: 'Direitos administrativos completos.' },
         { label: 'Modo', value: 'Offline', detail: 'Sem dependência de serviços externos.' },
-        { label: 'Tema', value: 'GTRZ Dark', detail: 'Vermelho vivo, branco e superfícies escuras.' },
+        {
+          label: 'Tema',
+          value: 'GTRZ Dark',
+          detail: 'Vermelho vivo, branco e superfícies escuras.',
+        },
       ]}
       nextDeliveries={[
         'Alteração da senha de Produção e autorizações protegidas.',

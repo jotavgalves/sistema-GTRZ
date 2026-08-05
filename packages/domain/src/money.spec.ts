@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  assertIntegerCents,
-  calculateGrossProfit,
-  calculateMarginPercent,
-} from './money';
+import { assertIntegerCents, calculateGrossProfit, calculateMarginPercent } from './money';
 
 describe('money', () => {
   it('calcula lucro bruto em centavos', () => {

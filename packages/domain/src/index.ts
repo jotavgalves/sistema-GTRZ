@@ -1,5 +1,1 @@
-export {
-  assertIntegerCents,
-  calculateGrossProfit,
-  calculateMarginPercent,
-} from './money';
+export { assertIntegerCents, calculateGrossProfit, calculateMarginPercent } from './money';

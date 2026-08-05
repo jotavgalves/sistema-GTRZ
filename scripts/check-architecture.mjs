@@ -68,7 +68,11 @@ for (const file of files) {
     report(file, 'manipulação direta de HTML é proibida.');
   }
 
-  if (isRenderer && !isRendererEntry && /\bdocument\.(?:querySelector|getElementById)\s*\(/u.test(content)) {
+  if (
+    isRenderer &&
+    !isRendererEntry &&
+    /\bdocument\.(?:querySelector|getElementById)\s*\(/u.test(content)
+  ) {
     report(file, 'componentes não podem procurar ou disputar contêineres diretamente no DOM.');
   }
 

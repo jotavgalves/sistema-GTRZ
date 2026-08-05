@@ -4,10 +4,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 import type { SystemInfo } from '@gtrz/contracts';
 
-import {
-  navigationModules,
-  type UserProfile,
-} from '../../shared/navigation/modules';
+import { navigationModules, type UserProfile } from '../../shared/navigation/modules';
 
 const activeProfile: UserProfile = 'production';
 
@@ -67,7 +64,12 @@ export function AppShell(): React.JSX.Element {
           {visibleModules.map((module) => {
             const Icon = module.icon;
             return (
-              <NavLink className={navigationClassName} end={module.path === '/'} key={module.key} to={module.path}>
+              <NavLink
+                className={navigationClassName}
+                end={module.path === '/'}
+                key={module.key}
+                to={module.path}
+              >
                 <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
                 <span>{module.label}</span>
               </NavLink>
