@@ -108,9 +108,7 @@ function requireActiveEvent(database: DatabaseContext): string {
 function calculateFinancials(costCents: number, salePriceCents: number): DatabaseProductFinancials {
   const grossProfitCents = salePriceCents - costCents;
   const marginPercent =
-    salePriceCents === 0
-      ? 0
-      : Math.round((grossProfitCents / salePriceCents) * 10_000) / 100;
+    salePriceCents === 0 ? 0 : Math.round((grossProfitCents / salePriceCents) * 10_000) / 100;
 
   return { costCents, grossProfitCents, marginPercent };
 }
@@ -143,9 +141,7 @@ function mapProduct(
     active: row.active === 1,
     quantity,
     lowStock: hasActiveEvent && quantity <= row.low_stock_threshold,
-    financials: showFinancials
-      ? calculateFinancials(row.cost_cents, row.sale_price_cents)
-      : null,
+    financials: showFinancials ? calculateFinancials(row.cost_cents, row.sale_price_cents) : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -250,7 +246,9 @@ function requireUniqueName(
     .get(name, excludedId ?? null, excludedId ?? null) as { readonly id: string } | undefined;
 
   if (row !== undefined) {
-    throw new Error(table === 'products' ? 'Já existe um produto com esse nome.' : 'Já existe essa categoria.');
+    throw new Error(
+      table === 'products' ? 'Já existe um produto com esse nome.' : 'Já existe essa categoria.',
+    );
   }
 }
 
@@ -411,11 +409,7 @@ export function updateInventoryProduct(
     });
   })();
 
-  return getProduct(
-    database,
-    input.productId,
-    getSessionState(database).activeEvent?.id ?? null,
-  );
+  return getProduct(database, input.productId, getSessionState(database).activeEvent?.id ?? null);
 }
 
 export function recordStockMovement(
@@ -460,16 +454,7 @@ export function recordStockMovement(
          (id, event_id, product_id, type, quantity, delta, note, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(
-        movementId,
-        eventId,
-        input.productId,
-        input.type,
-        input.quantity,
-        delta,
-        note,
-        now,
-      );
+      .run(movementId, eventId, input.productId, input.type, input.quantity, delta, note, now);
     appendAudit(database, {
       action: 'inventory.stock-moved',
       entityType: 'stock-movement',

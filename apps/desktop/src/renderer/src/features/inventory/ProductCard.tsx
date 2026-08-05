@@ -74,7 +74,9 @@ export function ProductCard({
   }
 
   return (
-    <article className={product.active ? 'inventory-card' : 'inventory-card inventory-card--inactive'}>
+    <article
+      className={product.active ? 'inventory-card' : 'inventory-card inventory-card--inactive'}
+    >
       <div className="inventory-card__header">
         <div>
           <span>{product.categoryName}</span>
@@ -114,7 +116,9 @@ export function ProductCard({
           <CircleDollarSign size={15} aria-hidden="true" />
           {product.kind === 'drink' ? 'Bebida' : 'Comida'}
         </span>
-        {!product.active ? <span className="status-badge status-badge--archived">Inativo</span> : null}
+        {!product.active ? (
+          <span className="status-badge status-badge--archived">Inativo</span>
+        ) : null}
         {production ? (
           <div className="inventory-card__actions">
             <button

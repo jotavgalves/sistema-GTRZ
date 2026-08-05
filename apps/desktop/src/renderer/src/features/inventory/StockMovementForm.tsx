@@ -56,7 +56,9 @@ export function StockMovementForm({
       onCancel();
     } catch (submitError: unknown) {
       setError(
-        submitError instanceof Error ? submitError.message : 'Não foi possível movimentar o estoque.',
+        submitError instanceof Error
+          ? submitError.message
+          : 'Não foi possível movimentar o estoque.',
       );
     }
   }

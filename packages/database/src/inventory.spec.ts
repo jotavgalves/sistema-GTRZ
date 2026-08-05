@@ -89,9 +89,9 @@ describe('inventory database', () => {
     expect(() =>
       recordStockMovement(database, { productId, type: 'breakage', quantity: 8 }),
     ).toThrow('Estoque insuficiente. Saldo atual: 7.');
-    expect(getInventoryState(database).products.find((item) => item.id === productId)?.quantity).toBe(
-      7,
-    );
+    expect(
+      getInventoryState(database).products.find((item) => item.id === productId)?.quantity,
+    ).toBe(7);
 
     const movements = database.sqlite
       .prepare(
@@ -121,14 +121,14 @@ describe('inventory database', () => {
     });
     setActiveEvent(database, secondEvent.id);
     recordStockMovement(database, { productId, type: 'purchase', quantity: 2 });
-    expect(getInventoryState(database).products.find((item) => item.id === productId)?.quantity).toBe(
-      2,
-    );
+    expect(
+      getInventoryState(database).products.find((item) => item.id === productId)?.quantity,
+    ).toBe(2);
 
     setActiveEvent(database, firstEvent.id);
-    expect(getInventoryState(database).products.find((item) => item.id === productId)?.quantity).toBe(
-      5,
-    );
+    expect(
+      getInventoryState(database).products.find((item) => item.id === productId)?.quantity,
+    ).toBe(5);
     database.close();
   });
 
@@ -138,9 +138,9 @@ describe('inventory database', () => {
     const { productId } = createCatalog(database);
     switchProfile(database, 'cashier');
 
-    expect(getInventoryState(database).products.find((item) => item.id === productId)?.financials).toBe(
-      null,
-    );
+    expect(
+      getInventoryState(database).products.find((item) => item.id === productId)?.financials,
+    ).toBe(null);
     expect(() => createProductCategory(database, 'Bloqueada')).toThrow(
       'Esta operação de estoque exige o perfil Produção.',
     );
