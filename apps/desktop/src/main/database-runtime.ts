@@ -40,6 +40,8 @@ export class DatabaseRuntime {
 
     const incomingPath = `${this.#filePath}.incoming`;
     const rollbackPath = `${this.#filePath}.rollback`;
+    let rollbackCreated = false;
+    let incomingActivated = false;
 
     await rm(incomingPath, { force: true });
     await rm(rollbackPath, { force: true });
@@ -55,16 +57,25 @@ export class DatabaseRuntime {
     try {
       await this.#removeSidecars();
       await rename(this.#filePath, rollbackPath);
+      rollbackCreated = true;
       await rename(incomingPath, this.#filePath);
+      incomingActivated = true;
       this.#database = this.#openVerified();
       await rm(rollbackPath, { force: true });
     } catch (error: unknown) {
-      await rm(this.#filePath, { force: true });
-      await rename(rollbackPath, this.#filePath).catch(() => undefined);
+      if (incomingActivated) {
+        await rm(this.#filePath, { force: true });
+      }
+
+      if (rollbackCreated) {
+        await rename(rollbackPath, this.#filePath);
+      }
+
       this.#database = this.#openVerified();
       throw error;
     } finally {
       await rm(incomingPath, { force: true });
+      await rm(rollbackPath, { force: true });
       await this.#removeSidecars();
     }
   }
