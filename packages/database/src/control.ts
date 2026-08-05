@@ -52,9 +52,9 @@ function mapEvent(row: EventRow): DatabaseEvent {
 }
 
 function getMeta(database: DatabaseContext, key: string): string | null {
-  const row = database.sqlite
-    .prepare('SELECT value FROM app_meta WHERE key = ?')
-    .get(key) as { readonly value: string } | undefined;
+  const row = database.sqlite.prepare('SELECT value FROM app_meta WHERE key = ?').get(key) as
+    | { readonly value: string }
+    | undefined;
   return row?.value ?? null;
 }
 
@@ -261,18 +261,14 @@ export function changeEventStatus(
   }
 
   const now = Date.now();
-  const endsAt =
-    input.status === 'closed' ? now : input.status === 'open' ? null : current.endsAt;
+  const endsAt = input.status === 'closed' ? now : input.status === 'open' ? null : current.endsAt;
 
   database.sqlite.transaction(() => {
     database.sqlite
       .prepare('UPDATE events SET status = ?, ends_at = ?, updated_at = ? WHERE id = ?')
       .run(input.status, endsAt, now, input.eventId);
 
-    if (
-      input.status !== 'open' &&
-      getMeta(database, META_KEYS.activeEventId) === input.eventId
-    ) {
+    if (input.status !== 'open' && getMeta(database, META_KEYS.activeEventId) === input.eventId) {
       deleteMeta(database, META_KEYS.activeEventId);
     }
 
