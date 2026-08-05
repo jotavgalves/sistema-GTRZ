@@ -9,8 +9,11 @@ test('SMK-INF-002 — abre o GTRZ System com navegação modular', async () => {
 
   try {
     const window = await electronApplication.firstWindow();
+    await window.waitForLoadState('domcontentloaded');
 
-    await expect(window.getByLabel('GTRZ System')).toBeVisible();
+    await expect(window).toHaveTitle('GTRZ System');
+    await expect(window.locator('#root')).not.toBeEmpty();
+    await expect(window.locator('.brand-lockup')).toContainText('GTRZ');
     await expect(window.getByRole('navigation', { name: 'Módulos do sistema' })).toBeVisible();
     await expect(window.getByRole('link', { name: 'Estoque' })).toBeVisible();
     await expect(window.getByRole('link', { name: 'Mesas e balcão' })).toBeVisible();
