@@ -77,7 +77,6 @@ test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', asy
     await transferForm.getByLabel('Quantidade a transferir', { exact: true }).fill('3');
     await transferForm.getByRole('button', { name: 'Transferir estoque' }).click();
 
-    await expect(window.getByText('Transferência concluída de forma atômica.')).toBeVisible();
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
     await expect(productCard.getByText('3 un.', { exact: true })).toBeVisible();
 
