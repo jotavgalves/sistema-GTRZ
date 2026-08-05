@@ -1,4 +1,4 @@
-import BetterSqlite3, { type Database as SqliteDatabase } from 'better-sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
 import { technicalSchema } from './schema';
@@ -24,13 +24,13 @@ const migrations: readonly Migration[] = [
 ];
 
 export interface DatabaseContext {
-  readonly sqlite: SqliteDatabase;
+  readonly sqlite: BetterSqlite3.Database;
   readonly orm: BetterSQLite3Database<typeof technicalSchema>;
   readonly filePath: string;
   close(): void;
 }
 
-function ensureMigrationTable(sqlite: SqliteDatabase): void {
+function ensureMigrationTable(sqlite: BetterSqlite3.Database): void {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version INTEGER PRIMARY KEY NOT NULL,
@@ -40,7 +40,7 @@ function ensureMigrationTable(sqlite: SqliteDatabase): void {
   `);
 }
 
-function applyMigrations(sqlite: SqliteDatabase): void {
+function applyMigrations(sqlite: BetterSqlite3.Database): void {
   ensureMigrationTable(sqlite);
 
   const hasMigration = sqlite.prepare('SELECT 1 FROM schema_migrations WHERE version = ?');
