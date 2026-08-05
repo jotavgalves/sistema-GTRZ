@@ -9,13 +9,24 @@ import type {
   UpdateProductInput,
 } from '@gtrz/contracts';
 
-interface ProductFormProps {
+interface ProductFormBaseProps {
   readonly categories: readonly ProductCategory[];
-  readonly product?: InventoryProduct;
   readonly busy: boolean;
-  readonly onSubmit: (input: CreateProductInput | UpdateProductInput) => Promise<void>;
-  readonly onCancel?: () => void;
 }
+
+interface CreateProductFormProps extends ProductFormBaseProps {
+  readonly product?: undefined;
+  readonly onSubmit: (input: CreateProductInput) => Promise<void>;
+  readonly onCancel?: undefined;
+}
+
+interface UpdateProductFormProps extends ProductFormBaseProps {
+  readonly product: InventoryProduct;
+  readonly onSubmit: (input: UpdateProductInput) => Promise<void>;
+  readonly onCancel: () => void;
+}
+
+type ProductFormProps = CreateProductFormProps | UpdateProductFormProps;
 
 function centsToInput(cents: number | undefined): string {
   return cents === undefined ? '' : (cents / 100).toFixed(2);
@@ -32,22 +43,18 @@ function inputToCents(value: string): number {
   return Math.round(amount * 100);
 }
 
-export function ProductForm({
-  categories,
-  product,
-  busy,
-  onSubmit,
-  onCancel,
-}: ProductFormProps): React.JSX.Element {
-  const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? '');
-  const [name, setName] = useState(product?.name ?? '');
-  const [kind, setKind] = useState<ProductKind>(product?.kind ?? 'drink');
-  const [cost, setCost] = useState(centsToInput(product?.financials?.costCents));
-  const [salePrice, setSalePrice] = useState(centsToInput(product?.salePriceCents));
-  const [lowStockThreshold, setLowStockThreshold] = useState(
-    String(product?.lowStockThreshold ?? 0),
+export function ProductForm(props: ProductFormProps): React.JSX.Element {
+  const [categoryId, setCategoryId] = useState(
+    props.product?.categoryId ?? props.categories[0]?.id ?? '',
   );
-  const [active, setActive] = useState(product?.active ?? true);
+  const [name, setName] = useState(props.product?.name ?? '');
+  const [kind, setKind] = useState<ProductKind>(props.product?.kind ?? 'drink');
+  const [cost, setCost] = useState(centsToInput(props.product?.financials?.costCents));
+  const [salePrice, setSalePrice] = useState(centsToInput(props.product?.salePriceCents));
+  const [lowStockThreshold, setLowStockThreshold] = useState(
+    String(props.product?.lowStockThreshold ?? 0),
+  );
+  const [active, setActive] = useState(props.product?.active ?? true);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
@@ -68,21 +75,18 @@ export function ProductForm({
         throw new Error('O limite de estoque deve ser um número inteiro não negativo.');
       }
 
-      await onSubmit(
-        product === undefined
-          ? baseInput
-          : {
-              ...baseInput,
-              productId: product.id,
-              active,
-            },
-      );
-
-      if (product === undefined) {
+      if (props.product === undefined) {
+        await props.onSubmit(baseInput);
         setName('');
         setCost('');
         setSalePrice('');
         setLowStockThreshold('0');
+      } else {
+        await props.onSubmit({
+          ...baseInput,
+          productId: props.product.id,
+          active,
+        });
       }
     } catch (submitError: unknown) {
       setError(submitError instanceof Error ? submitError.message : 'Não foi possível salvar.');
@@ -116,7 +120,7 @@ export function ProductForm({
             value={categoryId}
           >
             <option value="">Selecione</option>
-            {categories
+            {props.categories
               .filter((category) => category.active)
               .map((category) => (
                 <option key={category.id} value={category.id}>
@@ -186,7 +190,7 @@ export function ProductForm({
         </label>
       </div>
 
-      {product === undefined ? null : (
+      {props.product === undefined ? null : (
         <label className="checkbox-field">
           <input
             checked={active}
@@ -202,23 +206,28 @@ export function ProductForm({
       {error === null ? null : <p className="form-error">{error}</p>}
 
       <div className="product-form__actions">
-        {onCancel === undefined ? null : (
-          <button className="button button--ghost" disabled={busy} onClick={onCancel} type="button">
+        {props.onCancel === undefined ? null : (
+          <button
+            className="button button--ghost"
+            disabled={props.busy}
+            onClick={props.onCancel}
+            type="button"
+          >
             <X size={16} aria-hidden="true" />
             Cancelar
           </button>
         )}
         <button
           className="button button--primary"
-          disabled={busy || categoryId.length === 0 || name.trim().length < 2}
+          disabled={props.busy || categoryId.length === 0 || name.trim().length < 2}
           type="submit"
         >
-          {product === undefined ? (
+          {props.product === undefined ? (
             <PackagePlus size={17} aria-hidden="true" />
           ) : (
             <Save size={17} aria-hidden="true" />
           )}
-          {product === undefined ? 'Cadastrar produto' : 'Salvar alterações'}
+          {props.product === undefined ? 'Cadastrar produto' : 'Salvar alterações'}
         </button>
       </div>
     </form>
