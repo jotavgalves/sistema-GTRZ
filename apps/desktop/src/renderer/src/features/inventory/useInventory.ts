@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 
 import type {
   CreateProductInput,
-  InventoryProduct,
   InventoryState,
   RecordStockMovementInput,
   UpdateProductInput,
@@ -50,7 +49,7 @@ export function useInventory(): InventoryViewState {
   }, [reload]);
 
   const run = useCallback(
-    async (operation: () => Promise<InventoryProduct | unknown>, successMessage: string) => {
+    async (operation: () => Promise<unknown>, successMessage: string) => {
       setBusy(true);
       setError(null);
       setMessage(null);
