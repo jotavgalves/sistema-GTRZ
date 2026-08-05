@@ -82,6 +82,10 @@ export const openOrderInputSchema = z.object({
   servicePointId: z.uuid(),
 });
 
+export const getOrderInputSchema = z.object({
+  orderId: z.uuid(),
+});
+
 export const addOrderItemInputSchema = z.object({
   orderId: z.uuid(),
   itemKind: orderItemKindSchema,
@@ -121,6 +125,7 @@ export type OperationCatalogItem = z.infer<typeof operationCatalogItemSchema>;
 export type OperationState = z.infer<typeof operationStateSchema>;
 export type CreateServicePointInput = z.infer<typeof createServicePointInputSchema>;
 export type OpenOrderInput = z.infer<typeof openOrderInputSchema>;
+export type GetOrderInput = z.infer<typeof getOrderInputSchema>;
 export type AddOrderItemInput = z.infer<typeof addOrderItemInputSchema>;
 export type RemoveOrderItemInput = z.infer<typeof removeOrderItemInputSchema>;
 export type CloseOrderInput = z.infer<typeof closeOrderInputSchema>;
