@@ -1,6 +1,6 @@
 import { Database, Shield, WifiOff } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router';
 
 import type { SystemInfo } from '@gtrz/contracts';
 
