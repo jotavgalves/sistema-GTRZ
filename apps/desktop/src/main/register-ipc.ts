@@ -141,6 +141,6 @@ export function registerIpcHandlers(options: RegisterIpcOptions): void {
 
   ipcMain.handle(IPC_CHANNELS.backupsVerify, async (_event, payload: unknown) => {
     const input = verifyBackupInputSchema.parse(payload);
-    return backupRecordSchema.parse(await options.backupService.inspect(input.filePath));
+    return backupRecordSchema.parse(await options.backupService.verify(input.filePath));
   });
 }
