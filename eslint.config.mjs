@@ -10,6 +10,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/out/**',
       '**/dist/**',
+      '**/.types/**',
       '**/release/**',
       '**/coverage/**',
       'LOGOS.zip',
@@ -90,6 +91,12 @@ export default tseslint.config(
           ],
         },
       ],
+    },
+  },
+  {
+    files: ['scripts/**/*.mjs'],
+    rules: {
+      'no-console': ['error', { allow: ['warn', 'error', 'log'] }],
     },
   },
   {
