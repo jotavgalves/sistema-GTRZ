@@ -38,6 +38,6 @@ describe('SMK-INF-001 — fundação modular', () => {
       'vouchers',
     ];
 
-    expect(features.toSorted()).toEqual(expectedFeatures);
+    expect([...features].sort()).toEqual(expectedFeatures);
   });
 });
