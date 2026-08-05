@@ -34,6 +34,7 @@ import {
 import type { BackupService } from './backup-service';
 import { registerComboIpcHandlers } from './register-combo-ipc';
 import { registerInventoryIpcHandlers } from './register-inventory-ipc';
+import { registerOperationsIpcHandlers } from './register-operations-ipc';
 
 interface RegisterIpcOptions {
   readonly getDatabase: () => DatabaseContext;
@@ -148,4 +149,5 @@ export function registerIpcHandlers(options: RegisterIpcOptions): void {
 
   registerInventoryIpcHandlers({ getDatabase: options.getDatabase });
   registerComboIpcHandlers({ getDatabase: options.getDatabase });
+  registerOperationsIpcHandlers({ getDatabase: options.getDatabase });
 }
