@@ -1,8 +1,8 @@
 import { KeyRound, LogIn, UserRoundCog } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router';
 
-import { useSession } from './SessionContext';
+import { useSession } from './session-context';
 
 export function ProfileSwitcher(): React.JSX.Element {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export function ProfileSwitcher(): React.JSX.Element {
 
     try {
       await switchToCashier();
-      navigate('/mesas', { replace: true });
+      await navigate('/mesas', { replace: true });
     } catch (error: unknown) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível trocar o perfil.');
     } finally {
@@ -27,7 +27,7 @@ export function ProfileSwitcher(): React.JSX.Element {
     }
   }
 
-  async function handleProduction(event: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleProduction(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setSubmitting(true);
     setMessage(null);
@@ -35,7 +35,7 @@ export function ProfileSwitcher(): React.JSX.Element {
     try {
       await switchToProduction(password);
       setPassword('');
-      navigate('/', { replace: true });
+      await navigate('/', { replace: true });
     } catch (error: unknown) {
       setMessage(error instanceof Error ? error.message : 'Não foi possível trocar o perfil.');
     } finally {
@@ -49,7 +49,9 @@ export function ProfileSwitcher(): React.JSX.Element {
         <button
           className="button button--secondary button--compact"
           disabled={submitting}
-          onClick={() => void handleCashier()}
+          onClick={() => {
+            void handleCashier();
+          }}
           type="button"
         >
           <UserRoundCog size={16} aria-hidden="true" />
@@ -68,7 +70,9 @@ export function ProfileSwitcher(): React.JSX.Element {
           <KeyRound size={15} aria-hidden="true" />
           <input
             autoComplete="current-password"
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value);
+            }}
             placeholder="Digite a senha"
             type="password"
             value={password}
