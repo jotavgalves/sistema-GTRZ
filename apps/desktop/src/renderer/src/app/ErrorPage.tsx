@@ -3,7 +3,7 @@ import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom';
 
 function getErrorMessage(error: unknown): string {
   if (isRouteErrorResponse(error)) {
-    return `${error.status}: ${error.statusText}`;
+    return `${String(error.status)}: ${error.statusText}`;
   }
 
   if (error instanceof Error) {
