@@ -5,7 +5,14 @@ import process from 'node:process';
 const root = process.cwd();
 const sourceRoots = [path.join(root, 'apps', 'desktop', 'src'), path.join(root, 'packages')];
 const codeExtensions = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs']);
-const ignoredDirectories = new Set(['.types', 'coverage', 'dist', 'node_modules', 'out', 'release']);
+const ignoredDirectories = new Set([
+  '.types',
+  'coverage',
+  'dist',
+  'node_modules',
+  'out',
+  'release',
+]);
 const violations = [];
 
 async function walk(directory) {
