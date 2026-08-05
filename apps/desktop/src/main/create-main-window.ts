@@ -12,7 +12,7 @@ export function createMainWindow(): BrowserWindow {
     autoHideMenuBar: true,
     title: 'GTRZ System',
     webPreferences: {
-      preload: path.join(__dirname, '../preload/index.js'),
+      preload: path.join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
