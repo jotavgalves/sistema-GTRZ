@@ -8,7 +8,7 @@ import {
   Square,
   X,
 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 import type { EventStatus, GtrzEvent } from '@gtrz/contracts';
 
@@ -16,9 +16,9 @@ interface EventCardProps {
   readonly event: GtrzEvent;
   readonly isActive: boolean;
   readonly busy: boolean;
-  onSelect(eventId: string): Promise<void>;
-  onRename(eventId: string, name: string): Promise<void>;
-  onChangeStatus(eventId: string, status: EventStatus): Promise<void>;
+  readonly onSelect: (eventId: string) => Promise<void>;
+  readonly onRename: (eventId: string, name: string) => Promise<void>;
+  readonly onChangeStatus: (eventId: string, status: EventStatus) => Promise<void>;
 }
 
 const STATUS_LABELS: Readonly<Record<EventStatus, string>> = {
@@ -45,7 +45,7 @@ export function EventCard({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(event.name);
 
-  async function submitRename(formEvent: FormEvent<HTMLFormElement>): Promise<void> {
+  async function submitRename(formEvent: SyntheticEvent<HTMLFormElement>): Promise<void> {
     formEvent.preventDefault();
     await onRename(event.id, name);
     setEditing(false);
@@ -66,7 +66,9 @@ export function EventCard({
             autoFocus
             maxLength={100}
             minLength={2}
-            onChange={(inputEvent) => setName(inputEvent.target.value)}
+            onChange={(inputEvent) => {
+              setName(inputEvent.target.value);
+            }}
             required
             value={name}
           />
@@ -91,7 +93,9 @@ export function EventCard({
           <button
             className="icon-button"
             disabled={busy}
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              setEditing(true);
+            }}
             type="button"
           >
             <Pencil size={16} aria-label="Editar nome" />
@@ -109,7 +113,9 @@ export function EventCard({
           <button
             className="button button--primary button--compact"
             disabled={busy}
-            onClick={() => void onSelect(event.id)}
+            onClick={() => {
+              void onSelect(event.id);
+            }}
             type="button"
           >
             <CirclePlay size={16} aria-hidden="true" />
@@ -121,7 +127,9 @@ export function EventCard({
           <button
             className="button button--secondary button--compact"
             disabled={busy}
-            onClick={() => void onChangeStatus(event.id, 'closed')}
+            onClick={() => {
+              void onChangeStatus(event.id, 'closed');
+            }}
             type="button"
           >
             <Square size={15} aria-hidden="true" />
@@ -134,7 +142,9 @@ export function EventCard({
             <button
               className="button button--secondary button--compact"
               disabled={busy}
-              onClick={() => void onChangeStatus(event.id, 'open')}
+              onClick={() => {
+                void onChangeStatus(event.id, 'open');
+              }}
               type="button"
             >
               <RotateCcw size={16} aria-hidden="true" />
@@ -143,7 +153,9 @@ export function EventCard({
             <button
               className="button button--ghost button--compact"
               disabled={busy}
-              onClick={() => void onChangeStatus(event.id, 'archived')}
+              onClick={() => {
+                void onChangeStatus(event.id, 'archived');
+              }}
               type="button"
             >
               <Archive size={16} aria-hidden="true" />
@@ -156,7 +168,9 @@ export function EventCard({
           <button
             className="button button--ghost button--compact"
             disabled={busy}
-            onClick={() => void onChangeStatus(event.id, 'closed')}
+            onClick={() => {
+              void onChangeStatus(event.id, 'closed');
+            }}
             type="button"
           >
             <RotateCcw size={16} aria-hidden="true" />
