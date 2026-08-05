@@ -11,9 +11,9 @@ const comboWriteFields = {
   components: z.array(comboComponentInputSchema).min(1).max(50),
 } as const;
 
-type ComponentCollection = {
+interface ComponentCollection {
   readonly components: readonly { readonly productId: string }[];
-};
+}
 
 function validateUniqueComponents(value: ComponentCollection, context: z.RefinementCtx): void {
   const uniqueProductIds = new Set(value.components.map((component) => component.productId));
