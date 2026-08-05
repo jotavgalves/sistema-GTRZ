@@ -1,9 +1,9 @@
 import { CalendarPlus, RefreshCw } from 'lucide-react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, type SyntheticEvent } from 'react';
 
 import type { EventStatus } from '@gtrz/contracts';
 
-import { useSession } from '../../shared/session/SessionContext';
+import { useSession } from '../../shared/session/session-context';
 import { EventCard } from './EventCard';
 import { useEvents } from './useEvents';
 
@@ -31,7 +31,7 @@ export function EventsPage(): React.JSX.Element {
     [events],
   );
 
-  async function handleCreate(formEvent: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleCreate(formEvent: SyntheticEvent<HTMLFormElement>): Promise<void> {
     formEvent.preventDefault();
     setSubmitting(true);
     setFormError(null);
@@ -80,7 +80,9 @@ export function EventsPage(): React.JSX.Element {
         <button
           className="button button--secondary"
           disabled={loading}
-          onClick={() => void reload()}
+          onClick={() => {
+            void reload();
+          }}
           type="button"
         >
           <RefreshCw size={17} aria-hidden="true" />
@@ -122,7 +124,9 @@ export function EventsPage(): React.JSX.Element {
             <input
               maxLength={100}
               minLength={2}
-              onChange={(inputEvent) => setName(inputEvent.target.value)}
+              onChange={(inputEvent) => {
+                setName(inputEvent.target.value);
+              }}
               placeholder="Ex.: La Rumba Neon — Agosto"
               required
               value={name}
@@ -132,7 +136,9 @@ export function EventsPage(): React.JSX.Element {
           <label className="form-field">
             <span>Data e horário</span>
             <input
-              onChange={(inputEvent) => setStartsAt(inputEvent.target.value)}
+              onChange={(inputEvent) => {
+                setStartsAt(inputEvent.target.value);
+              }}
               required
               type="datetime-local"
               value={startsAt}
