@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import {
   openDatabase,
-  verifyDatabaseIntegrity,
   type DatabaseContext,
+  verifyDatabaseIntegrity,
 } from '@gtrz/database';
 
 import { createMainWindow } from './create-main-window';
@@ -30,7 +30,7 @@ if (!hasSingleInstanceLock) {
     mainWindow.focus();
   });
 
-  app.whenReady().then(() => {
+  void app.whenReady().then(() => {
     try {
       const databasePath = path.join(app.getPath('userData'), 'gtrz-system.sqlite');
       database = openDatabase(databasePath);
