@@ -12,8 +12,8 @@ import {
 } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { gunzip, gzip } from 'node:zlib';
 import { promisify } from 'node:util';
+import { gunzip, gzip } from 'node:zlib';
 
 import { dialog } from 'electron';
 
@@ -150,7 +150,10 @@ export class BackupService {
   }
 
   async createBackup(kind: BackupKind): Promise<BackupRecord> {
-    this.#requireProduction();
+    if (kind === 'manual' || kind === 'pre-restore') {
+      this.#requireProduction();
+    }
+
     const destinationPath = await this.#getDestinationPath();
     await mkdir(destinationPath, { recursive: true });
     const temporaryDirectory = await mkdtemp(path.join(tmpdir(), 'gtrz-backup-'));
@@ -192,6 +195,11 @@ export class BackupService {
       await rm(temporaryPackagePath, { force: true });
       await rm(temporaryDirectory, { force: true, recursive: true });
     }
+  }
+
+  async verify(filePath: string): Promise<BackupRecord> {
+    this.#requireProduction();
+    return this.inspect(filePath);
   }
 
   async inspect(filePath: string): Promise<BackupRecord> {
