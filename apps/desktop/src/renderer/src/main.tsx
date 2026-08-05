@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 
 import { router } from './app/router';
-import { SessionProvider } from './shared/session/SessionContext';
+import { SessionProvider } from './shared/session/SessionProvider';
 
 const rootElement = document.getElementById('root');
 
