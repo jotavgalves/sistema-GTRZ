@@ -35,13 +35,8 @@ export function TablesPage(): React.JSX.Element {
   const servicePoints = state?.servicePoints ?? [];
   const catalog = state?.catalog ?? [];
   const openPoints = servicePoints.filter((item) => item.status === 'open');
-  const openTotalCents = openPoints.reduce(
-    (total, item) => total + item.activeOrderTotalCents,
-    0,
-  );
-  const availableItems = catalog.filter(
-    (item) => item.active && item.availableQuantity > 0,
-  ).length;
+  const openTotalCents = openPoints.reduce((total, item) => total + item.activeOrderTotalCents, 0);
+  const availableItems = catalog.filter((item) => item.active && item.availableQuantity > 0).length;
 
   return (
     <section className="feature-page">
@@ -49,9 +44,7 @@ export function TablesPage(): React.JSX.Element {
         <div>
           <span className="eyebrow">Operação completa do evento</span>
           <h1>Mesas e balcão</h1>
-          <p>
-            Abra comandas, adicione produtos ou combos e conclua pagamentos simples ou mistos.
-          </p>
+          <p>Abra comandas, adicione produtos ou combos e conclua pagamentos simples ou mistos.</p>
         </div>
         <button
           className="button button--secondary"

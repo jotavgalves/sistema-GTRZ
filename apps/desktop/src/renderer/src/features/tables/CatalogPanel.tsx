@@ -79,7 +79,8 @@ export function CatalogPanel({ items, busy, onAdd }: CatalogPanelProps): React.J
               <span>
                 <strong>{item.name}</strong>
                 <small>
-                  {item.kind === 'combo' ? 'Combo' : 'Produto'} · {item.availableQuantity} disponíveis
+                  {item.kind === 'combo' ? 'Combo' : 'Produto'} · {item.availableQuantity}{' '}
+                  disponíveis
                 </small>
               </span>
               <span className="catalog-item__price">{formatMoney(item.salePriceCents)}</span>

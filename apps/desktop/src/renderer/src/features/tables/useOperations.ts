@@ -54,7 +54,7 @@ export function useOperations(): OperationsViewState {
   }, [reload]);
 
   const run = useCallback(
-    async <T,>(operation: () => Promise<T>, successMessage?: string): Promise<T> => {
+    async <T>(operation: () => Promise<T>, successMessage?: string): Promise<T> => {
       setBusy(true);
       setError(null);
       setMessage(null);

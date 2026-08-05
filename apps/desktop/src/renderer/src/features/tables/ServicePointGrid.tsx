@@ -41,7 +41,9 @@ export function ServicePointGrid({
             </span>
             <span className="service-point-card__body">
               <strong>{servicePoint.label}</strong>
-              <small>{servicePoint.type === 'counter' ? 'Venda imediata' : 'Atendimento por mesa'}</small>
+              <small>
+                {servicePoint.type === 'counter' ? 'Venda imediata' : 'Atendimento por mesa'}
+              </small>
             </span>
             <span className={open ? 'status-badge status-badge--open' : 'status-badge'}>
               {open ? formatMoney(servicePoint.activeOrderTotalCents) : 'Livre'}

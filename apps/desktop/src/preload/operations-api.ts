@@ -48,10 +48,7 @@ export const operationsApi: OperationsApi = {
 
   async getOrder(orderId: string): Promise<Order> {
     const parsedInput = getOrderInputSchema.parse({ orderId });
-    const payload: unknown = await ipcRenderer.invoke(
-      IPC_CHANNELS.operationsGetOrder,
-      parsedInput,
-    );
+    const payload: unknown = await ipcRenderer.invoke(IPC_CHANNELS.operationsGetOrder, parsedInput);
     return orderSchema.parse(payload);
   },
 

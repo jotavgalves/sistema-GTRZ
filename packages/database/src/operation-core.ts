@@ -164,10 +164,7 @@ export function requireOrderRow(database: DatabaseContext, orderId: string): Ope
   return row;
 }
 
-export function requireOpenOrderRow(
-  database: DatabaseContext,
-  orderId: string,
-): OperationOrderRow {
+export function requireOpenOrderRow(database: DatabaseContext, orderId: string): OperationOrderRow {
   const order = requireOrderRow(database, orderId);
 
   if (order.status !== 'open') {
