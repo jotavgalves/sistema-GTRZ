@@ -437,7 +437,8 @@ export function recordStockMovement(
 
   const movementId = randomUUID();
   const now = Date.now();
-  const note = input.note?.trim() || null;
+  const trimmedNote = input.note?.trim();
+  const note = trimmedNote === undefined || trimmedNote.length === 0 ? null : trimmedNote;
 
   database.sqlite.transaction(() => {
     database.sqlite
