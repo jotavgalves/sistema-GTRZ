@@ -2,7 +2,7 @@ import { app, ipcMain } from 'electron';
 
 import { IPC_CHANNELS, systemInfoSchema, type SystemInfo } from '@gtrz/contracts';
 
-export interface RegisterIpcOptions {
+interface RegisterIpcOptions {
   readonly databaseReady: () => boolean;
 }
 
