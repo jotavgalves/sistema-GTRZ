@@ -5,7 +5,9 @@ import { _electron as electron } from 'playwright';
 
 const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
 
-async function ensureProduction(window: Awaited<ReturnType<Awaited<ReturnType<typeof electron.launch>>['firstWindow']>>): Promise<void> {
+async function ensureProduction(
+  window: Awaited<ReturnType<Awaited<ReturnType<typeof electron.launch>>['firstWindow']>>,
+): Promise<void> {
   const cashierBadge = window.getByText('Caixa', { exact: true });
 
   if (await cashierBadge.isVisible()) {
