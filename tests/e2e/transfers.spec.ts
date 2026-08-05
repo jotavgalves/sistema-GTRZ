@@ -33,7 +33,9 @@ test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', asy
     await window.getByRole('link', { name: 'Eventos' }).click();
     await window.getByPlaceholder('Ex.: La Rumba Neon — Agosto').fill(sourceEventName);
     await window.getByRole('button', { name: 'Criar evento' }).click();
-    const sourceEventCard = window.locator('article.event-card').filter({ hasText: sourceEventName });
+    const sourceEventCard = window
+      .locator('article.event-card')
+      .filter({ hasText: sourceEventName });
     await expect(sourceEventCard).toBeVisible();
     await sourceEventCard.getByRole('button', { name: 'Operar evento' }).click();
     await expect(sourceEventCard.getByText('Em operação', { exact: true })).toBeVisible();
