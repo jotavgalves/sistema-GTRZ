@@ -1,5 +1,5 @@
 import { KeyRound, Settings, ShieldCheck } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 
 export function SettingsPage(): React.JSX.Element {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -9,7 +9,7 @@ export function SettingsPage(): React.JSX.Element {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit(formEvent: FormEvent<HTMLFormElement>): Promise<void> {
+  async function handleSubmit(formEvent: SyntheticEvent<HTMLFormElement>): Promise<void> {
     formEvent.preventDefault();
     setSubmitting(true);
     setMessage(null);
@@ -77,7 +77,9 @@ export function SettingsPage(): React.JSX.Element {
             <span>Senha atual</span>
             <input
               autoComplete="current-password"
-              onChange={(inputEvent) => setCurrentPassword(inputEvent.target.value)}
+              onChange={(inputEvent) => {
+                setCurrentPassword(inputEvent.target.value);
+              }}
               required
               type="password"
               value={currentPassword}
@@ -89,7 +91,9 @@ export function SettingsPage(): React.JSX.Element {
             <input
               autoComplete="new-password"
               minLength={6}
-              onChange={(inputEvent) => setNewPassword(inputEvent.target.value)}
+              onChange={(inputEvent) => {
+                setNewPassword(inputEvent.target.value);
+              }}
               required
               type="password"
               value={newPassword}
@@ -101,7 +105,9 @@ export function SettingsPage(): React.JSX.Element {
             <input
               autoComplete="new-password"
               minLength={6}
-              onChange={(inputEvent) => setConfirmation(inputEvent.target.value)}
+              onChange={(inputEvent) => {
+                setConfirmation(inputEvent.target.value);
+              }}
               required
               type="password"
               value={confirmation}
