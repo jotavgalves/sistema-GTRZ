@@ -6,7 +6,7 @@ import type { SystemInfo } from '@gtrz/contracts';
 
 import { navigationModules } from '../../shared/navigation/modules';
 import { ProfileSwitcher } from '../../shared/session/ProfileSwitcher';
-import { useSession } from '../../shared/session/SessionContext';
+import { useSession } from '../../shared/session/session-context';
 
 function navigationClassName({ isActive }: { readonly isActive: boolean }): string {
   return isActive ? 'sidebar-link sidebar-link--active' : 'sidebar-link';
