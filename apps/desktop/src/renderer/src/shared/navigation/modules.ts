@@ -15,7 +15,7 @@ import {
 
 export type UserProfile = 'production' | 'cashier';
 
-export interface NavigationModule {
+interface NavigationModule {
   readonly key: string;
   readonly label: string;
   readonly path: string;
