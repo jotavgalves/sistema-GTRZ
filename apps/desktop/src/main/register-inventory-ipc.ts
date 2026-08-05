@@ -64,7 +64,12 @@ export function registerInventoryIpcHandlers(options: RegisterInventoryIpcOption
             type: input.type,
             quantity: input.quantity,
           }
-        : input;
+        : {
+            productId: input.productId,
+            type: input.type,
+            quantity: input.quantity,
+            note: input.note,
+          };
 
     return inventoryProductSchema.parse(recordStockMovement(options.getDatabase(), movementInput));
   });
