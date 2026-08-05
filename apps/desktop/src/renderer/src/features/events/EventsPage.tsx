@@ -55,10 +55,7 @@ export function EventsPage(): React.JSX.Element {
     }
   }
 
-  async function runEventAction(
-    eventId: string,
-    action: () => Promise<void>,
-  ): Promise<void> {
+  async function runEventAction(eventId: string, action: () => Promise<void>): Promise<void> {
     setBusyId(eventId);
 
     try {

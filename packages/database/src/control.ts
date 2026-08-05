@@ -52,9 +52,9 @@ function mapEvent(row: EventRow): DatabaseEvent {
 }
 
 function getMeta(database: DatabaseContext, key: string): string | null {
-  const row = database.sqlite
-    .prepare('SELECT value FROM app_meta WHERE key = ?')
-    .get(key) as { readonly value: string } | undefined;
+  const row = database.sqlite.prepare('SELECT value FROM app_meta WHERE key = ?').get(key) as
+    | { readonly value: string }
+    | undefined;
   return row?.value ?? null;
 }
 
@@ -204,10 +204,17 @@ export function createEvent(
       setMeta(database, META_KEYS.activeEventId, eventId);
     }
 
-    writeAudit(database, 'event.created', 'event', eventId, {
-      name,
-      startsAt: input.startsAt,
-    }, eventId);
+    writeAudit(
+      database,
+      'event.created',
+      'event',
+      eventId,
+      {
+        name,
+        startsAt: input.startsAt,
+      },
+      eventId,
+    );
   });
 
   create();
@@ -226,10 +233,17 @@ export function renameEvent(
     database.sqlite
       .prepare('UPDATE events SET name = ?, updated_at = ? WHERE id = ?')
       .run(name, Date.now(), input.eventId);
-    writeAudit(database, 'event.renamed', 'event', input.eventId, {
-      after: name,
-      before: current.name,
-    }, input.eventId);
+    writeAudit(
+      database,
+      'event.renamed',
+      'event',
+      input.eventId,
+      {
+        after: name,
+        before: current.name,
+      },
+      input.eventId,
+    );
   })();
 
   return requireEvent(database, input.eventId);
@@ -254,17 +268,21 @@ export function changeEventStatus(
       .prepare('UPDATE events SET status = ?, ends_at = ?, updated_at = ? WHERE id = ?')
       .run(input.status, endsAt, now, input.eventId);
 
-    if (
-      input.status !== 'open' &&
-      getMeta(database, META_KEYS.activeEventId) === input.eventId
-    ) {
+    if (input.status !== 'open' && getMeta(database, META_KEYS.activeEventId) === input.eventId) {
       deleteMeta(database, META_KEYS.activeEventId);
     }
 
-    writeAudit(database, `event.${input.status}`, 'event', input.eventId, {
-      after: input.status,
-      before: current.status,
-    }, input.eventId);
+    writeAudit(
+      database,
+      `event.${input.status}`,
+      'event',
+      input.eventId,
+      {
+        after: input.status,
+        before: current.status,
+      },
+      input.eventId,
+    );
   })();
 
   return requireEvent(database, input.eventId);

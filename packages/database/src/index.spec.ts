@@ -75,9 +75,9 @@ describe('database foundation', () => {
     const database = await createTemporaryDatabase();
 
     expect(switchProfile(database, 'cashier')).toMatchObject({ profile: 'cashier' });
-    expect(() =>
-      createEvent(database, { name: 'Evento bloqueado', startsAt: Date.now() }),
-    ).toThrow('Esta operação exige o perfil Produção.');
+    expect(() => createEvent(database, { name: 'Evento bloqueado', startsAt: Date.now() })).toThrow(
+      'Esta operação exige o perfil Produção.',
+    );
     expect(() => switchProfile(database, 'production', 'senha-incorreta')).toThrow(
       'Senha de Produção inválida.',
     );

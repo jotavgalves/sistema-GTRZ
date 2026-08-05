@@ -93,12 +93,9 @@ export function registerIpcHandlers(options: RegisterIpcOptions): void {
     );
   });
 
-  ipcMain.handle(
-    IPC_CHANNELS.settingsChangeProductionPassword,
-    (_event, payload: unknown) => {
-      const input = changeProductionPasswordInputSchema.parse(payload);
-      changeProductionPassword(options.database, input.currentPassword, input.newPassword);
-      return operationResultSchema.parse({ success: true });
-    },
-  );
+  ipcMain.handle(IPC_CHANNELS.settingsChangeProductionPassword, (_event, payload: unknown) => {
+    const input = changeProductionPasswordInputSchema.parse(payload);
+    changeProductionPassword(options.database, input.currentPassword, input.newPassword);
+    return operationResultSchema.parse({ success: true });
+  });
 }

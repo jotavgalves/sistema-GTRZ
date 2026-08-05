@@ -58,10 +58,7 @@ const api: GtrzDesktopApi = {
     },
     async setActive(input: SetActiveEventInput): Promise<SessionState> {
       const parsedInput = setActiveEventInputSchema.parse(input);
-      const payload: unknown = await ipcRenderer.invoke(
-        IPC_CHANNELS.eventsSetActive,
-        parsedInput,
-      );
+      const payload: unknown = await ipcRenderer.invoke(IPC_CHANNELS.eventsSetActive, parsedInput);
       return sessionStateSchema.parse(payload);
     },
   },
@@ -80,9 +77,7 @@ const api: GtrzDesktopApi = {
     },
   },
   settings: {
-    async changeProductionPassword(
-      input: ChangeProductionPasswordInput,
-    ): Promise<OperationResult> {
+    async changeProductionPassword(input: ChangeProductionPasswordInput): Promise<OperationResult> {
       const parsedInput = changeProductionPasswordInputSchema.parse(input);
       const payload: unknown = await ipcRenderer.invoke(
         IPC_CHANNELS.settingsChangeProductionPassword,

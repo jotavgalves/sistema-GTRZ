@@ -116,7 +116,7 @@ export function AppShell(): React.JSX.Element {
             <span>
               {sessionLoading
                 ? 'Carregando sessão local'
-                : sessionError ?? 'Dados armazenados exclusivamente neste computador'}
+                : (sessionError ?? 'Dados armazenados exclusivamente neste computador')}
             </span>
           </div>
 

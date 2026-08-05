@@ -82,9 +82,7 @@ export type ChangeEventStatusInput = z.infer<typeof changeEventStatusInputSchema
 export type SetActiveEventInput = z.infer<typeof setActiveEventInputSchema>;
 export type SessionState = z.infer<typeof sessionStateSchema>;
 export type SwitchProfileInput = z.infer<typeof switchProfileInputSchema>;
-export type ChangeProductionPasswordInput = z.infer<
-  typeof changeProductionPasswordInputSchema
->;
+export type ChangeProductionPasswordInput = z.infer<typeof changeProductionPasswordInputSchema>;
 export type OperationResult = z.infer<typeof operationResultSchema>;
 
 export interface GtrzDesktopApi {
