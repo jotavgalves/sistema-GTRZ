@@ -15,8 +15,8 @@
   },
   "include": ["electron.vite.config.ts", "src/**/*.ts", "src/**/*.tsx"],
   "references": [
-    { "path": "../../packages/contracts" },
-    { "path": "../../packages/domain" },
-    { "path": "../../packages/database" }
+    { "path": "../../packages/contracts/tsconfig.json" },
+    { "path": "../../packages/domain/tsconfig.json" },
+    { "path": "../../packages/database/tsconfig.json" }
   ]
 }
