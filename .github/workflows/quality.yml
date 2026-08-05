@@ -14,7 +14,7 @@ jobs:
   quality:
     name: TypeScript, arquitetura e testes
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout
@@ -24,7 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.12.0'
-          cache: npm
 
       - name: Instalar dependências
         run: npm install --ignore-scripts
@@ -37,3 +36,6 @@ jobs:
 
       - name: Gerar build
         run: npm run build --workspace @gtrz/desktop
+
+      - name: Executar smoke E2E do Electron
+        run: npx playwright test
