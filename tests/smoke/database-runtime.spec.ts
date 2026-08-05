@@ -4,9 +4,8 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { createEvent, listEvents, openDatabase } from '@gtrz/database';
-
 import { DatabaseRuntime } from '../../apps/desktop/src/main/database-runtime';
+import { createEvent, listEvents, openDatabase } from '../../packages/database/src/index';
 
 let temporaryDirectory: string | null = null;
 
