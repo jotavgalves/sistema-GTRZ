@@ -25,7 +25,7 @@ import {
   verifyDatabaseFile,
 } from '@gtrz/database';
 
-import { DatabaseRuntime } from './database-runtime';
+import type { DatabaseRuntime } from './database-runtime';
 
 const gzipAsync = promisify(gzip);
 const gunzipAsync = promisify(gunzip);
