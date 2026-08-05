@@ -41,11 +41,7 @@ if (!hasSingleInstanceLock) {
       databaseRuntime = new DatabaseRuntime(databasePath);
       const backupService = new BackupService({
         appVersion: app.getVersion(),
-        defaultDestinationPath: path.join(
-          app.getPath('documents'),
-          'GTRZ System',
-          'Backups',
-        ),
+        defaultDestinationPath: path.join(app.getPath('documents'), 'GTRZ System', 'Backups'),
         settingsPath: path.join(userDataPath, 'backup-settings.json'),
         databaseRuntime,
       });

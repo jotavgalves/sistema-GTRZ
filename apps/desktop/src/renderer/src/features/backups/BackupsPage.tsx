@@ -35,7 +35,8 @@ export function BackupsPage(): React.JSX.Element {
     verify,
   } = useBackups();
   const latestBackup = state?.backups.find((backup) => backup.integrity === 'valid');
-  const invalidCount = state?.backups.filter((backup) => backup.integrity === 'invalid').length ?? 0;
+  const invalidCount =
+    state?.backups.filter((backup) => backup.integrity === 'invalid').length ?? 0;
 
   async function confirmImport(): Promise<void> {
     const confirmed = window.confirm(
@@ -54,8 +55,8 @@ export function BackupsPage(): React.JSX.Element {
           <span className="eyebrow">Proteção do banco local</span>
           <h1>Backups</h1>
           <p>
-            Crie, verifique e importe pacotes completos do GTRZ System em pasta local, pendrive ou HD
-            externo.
+            Crie, verifique e importe pacotes completos do GTRZ System em pasta local, pendrive ou
+            HD externo.
           </p>
         </div>
         <div className="feature-actions">
@@ -133,8 +134,8 @@ export function BackupsPage(): React.JSX.Element {
           <div className="backup-protection-note">
             <ShieldCheck size={20} aria-hidden="true" />
             <p>
-              Cada pacote recebe checksum SHA-256 e contém um snapshot SQLite verificado antes de ser
-              aceito.
+              Cada pacote recebe checksum SHA-256 e contém um snapshot SQLite verificado antes de
+              ser aceito.
             </p>
           </div>
 

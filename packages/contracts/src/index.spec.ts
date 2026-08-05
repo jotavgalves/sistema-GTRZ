@@ -82,9 +82,10 @@ describe('backup contracts', () => {
 
   it('aceita pacote íntegro e estado com destino configurado', () => {
     expect(backupRecordSchema.parse(record)).toEqual(record);
-    expect(
-      backupStateSchema.parse({ destinationPath: 'D:/Backups', backups: [record] }),
-    ).toEqual({ destinationPath: 'D:/Backups', backups: [record] });
+    expect(backupStateSchema.parse({ destinationPath: 'D:/Backups', backups: [record] })).toEqual({
+      destinationPath: 'D:/Backups',
+      backups: [record],
+    });
   });
 
   it('diferencia importação cancelada de restauração concluída', () => {

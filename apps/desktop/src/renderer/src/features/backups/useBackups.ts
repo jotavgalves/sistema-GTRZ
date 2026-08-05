@@ -46,22 +46,19 @@ export function useBackups(): BackupsViewState {
     void reload();
   }, [reload]);
 
-  const run = useCallback(
-    async (operation: () => Promise<void>): Promise<void> => {
-      setBusy(true);
-      setError(null);
-      setMessage(null);
+  const run = useCallback(async (operation: () => Promise<void>): Promise<void> => {
+    setBusy(true);
+    setError(null);
+    setMessage(null);
 
-      try {
-        await operation();
-      } catch (operationError: unknown) {
-        setError(getErrorMessage(operationError));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [],
-  );
+    try {
+      await operation();
+    } catch (operationError: unknown) {
+      setError(getErrorMessage(operationError));
+    } finally {
+      setBusy(false);
+    }
+  }, []);
 
   const chooseDestination = useCallback(async (): Promise<void> => {
     await run(async () => {

@@ -17,12 +17,7 @@ import { gunzip, gzip } from 'node:zlib';
 
 import { dialog } from 'electron';
 
-import type {
-  BackupKind,
-  BackupRecord,
-  BackupState,
-  RestoreBackupResult,
-} from '@gtrz/contracts';
+import type { BackupKind, BackupRecord, BackupState, RestoreBackupResult } from '@gtrz/contracts';
 import {
   appendAudit,
   createDatabaseSnapshot,
