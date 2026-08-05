@@ -1,0 +1,39 @@
+name: Qualidade e arquitetura
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: TypeScript, arquitetura e testes
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm install --ignore-scripts
+
+      - name: Reconstruir dependências nativas do Electron
+        run: npx electron-builder install-app-deps
+
+      - name: Validar qualidade
+        run: npm run quality
+
+      - name: Gerar build
+        run: npm run build --workspace @gtrz/desktop
