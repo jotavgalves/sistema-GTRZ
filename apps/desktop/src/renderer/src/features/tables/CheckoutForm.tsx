@@ -38,7 +38,7 @@ function parseMoney(value: string): number {
 
 function newPayment(method: PaymentMethod = 'cash'): PaymentDraft {
   return {
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    id: `${String(Date.now())}-${Math.random().toString(16).slice(2)}`,
     method,
     amount: '',
     received: '',
