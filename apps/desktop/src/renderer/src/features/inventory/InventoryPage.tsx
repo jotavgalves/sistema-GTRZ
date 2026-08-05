@@ -34,8 +34,8 @@ export function InventoryPage(): React.JSX.Element {
   const [kind, setKind] = useState<ProductKind | 'all'>('all');
   const [categoryId, setCategoryId] = useState('all');
   const production = sessionState?.profile === 'production';
-  const categories = state?.categories ?? [];
-  const products = state?.products ?? [];
+  const categories = useMemo(() => state?.categories ?? [], [state?.categories]);
+  const products = useMemo(() => state?.products ?? [], [state?.products]);
   const hasActiveEvent = state?.activeEventId !== null && state?.activeEventId !== undefined;
 
   const filteredProducts = useMemo(() => {
