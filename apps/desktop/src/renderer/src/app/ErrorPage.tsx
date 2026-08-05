@@ -1,5 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
-import { isRouteErrorResponse, Link, useRouteError } from 'react-router-dom';
+import { isRouteErrorResponse, Link, useRouteError } from 'react-router';
 
 function getErrorMessage(error: unknown): string {
   if (isRouteErrorResponse(error)) {
