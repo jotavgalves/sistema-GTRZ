@@ -36,7 +36,7 @@ if (!hasSingleInstanceLock) {
       }
 
       registerIpcHandlers({
-        databaseReady: () => database !== null && database.sqlite.open,
+        databaseReady: () => database?.sqlite.open ?? false,
       });
 
       mainWindow = createMainWindow();
