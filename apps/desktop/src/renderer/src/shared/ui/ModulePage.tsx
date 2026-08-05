@@ -1,12 +1,12 @@
 import type { LucideIcon } from 'lucide-react';
 
-export interface ModuleMetric {
+interface ModuleMetric {
   readonly label: string;
   readonly value: string;
   readonly detail: string;
 }
 
-export interface ModulePageProps {
+interface ModulePageProps {
   readonly title: string;
   readonly description: string;
   readonly icon: LucideIcon;
