@@ -4,6 +4,7 @@
     { "path": "./packages/contracts" },
     { "path": "./packages/domain" },
     { "path": "./packages/database" },
-    { "path": "./apps/desktop" }
+    { "path": "./apps/desktop" },
+    { "path": "./tsconfig.tools.json" }
   ]
 }
