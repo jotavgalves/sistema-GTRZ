@@ -1,0 +1,80 @@
+import path from 'node:path';
+
+import { expect, test } from '@playwright/test';
+import { _electron as electron } from 'playwright';
+
+const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
+
+test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', async () => {
+  const electronApplication = await electron.launch({ args: [applicationPath] });
+
+  try {
+    const window = await electronApplication.firstWindow();
+    await window.waitForLoadState('domcontentloaded');
+    const suffix = String(Date.now());
+    const sourceEventName = `Origem transferência ${suffix}`;
+    const destinationEventName = `Destino transferência ${suffix}`;
+    const categoryName = `Transferíveis ${suffix}`;
+    const productName = `Água transferência ${suffix}`;
+
+    await window.getByRole('link', { name: 'Eventos' }).click();
+    await window.getByPlaceholder('Ex.: La Rumba Neon — Agosto').fill(sourceEventName);
+    await window.getByRole('button', { name: 'Criar evento' }).click();
+    await expect(window.getByText(sourceEventName, { exact: true }).first()).toBeVisible();
+
+    await window.getByRole('link', { name: 'Estoque' }).click();
+    await window.getByPlaceholder('Ex.: Cervejas').fill(categoryName);
+    await window.getByRole('button', { name: 'Criar categoria' }).click();
+    await expect(
+      window.locator('.category-chips').getByText(categoryName, { exact: true }),
+    ).toBeVisible();
+
+    const productForm = window.locator('form.product-form');
+    await productForm.getByLabel('Nome', { exact: true }).fill(productName);
+    await productForm.getByRole('combobox').first().selectOption({ label: categoryName });
+    await productForm.getByLabel('Preço de custo', { exact: true }).fill('2.00');
+    await productForm.getByLabel('Preço de venda', { exact: true }).fill('5.00');
+    await productForm.getByLabel('Aviso de estoque baixo', { exact: true }).fill('2');
+    await productForm.getByRole('button', { name: 'Cadastrar produto' }).click();
+
+    let productCard = window.locator('article.inventory-card').filter({ hasText: productName });
+    await productCard.getByRole('button', { name: 'Movimentar' }).click();
+    const movementForm = window.locator('form.movement-form');
+    await movementForm.getByLabel('Quantidade', { exact: true }).fill('8');
+    await movementForm.getByRole('button', { name: 'Registrar movimento' }).click();
+    productCard = window.locator('article.inventory-card').filter({ hasText: productName });
+    await expect(productCard.getByText('8 un.', { exact: true })).toBeVisible();
+
+    await window.getByRole('link', { name: 'Eventos' }).click();
+    await window.getByPlaceholder('Ex.: La Rumba Neon — Agosto').fill(destinationEventName);
+    await window.getByRole('button', { name: 'Criar evento' }).click();
+    await expect(window.getByText(destinationEventName, { exact: true }).first()).toBeVisible();
+
+    await window.getByRole('link', { name: 'Estoque' }).click();
+    const transferForm = window.locator('form.transfer-form');
+    await transferForm
+      .getByLabel('Evento de origem', { exact: true })
+      .selectOption({ label: `${sourceEventName} · aberto` });
+    await transferForm
+      .getByLabel('Evento de destino', { exact: true })
+      .selectOption({ label: destinationEventName });
+    await transferForm
+      .getByLabel('Produto a transferir', { exact: true })
+      .selectOption({ label: productName });
+    await transferForm.getByLabel('Quantidade a transferir', { exact: true }).fill('3');
+    await transferForm.getByRole('button', { name: 'Transferir estoque' }).click();
+
+    await expect(window.getByText('Transferência concluída de forma atômica.')).toBeVisible();
+    productCard = window.locator('article.inventory-card').filter({ hasText: productName });
+    await expect(productCard.getByText('3 un.', { exact: true })).toBeVisible();
+
+    const transferCard = window.locator('article.transfer-card').filter({ hasText: productName }).first();
+    await expect(transferCard).toBeVisible();
+    await expect(transferCard.getByText(sourceEventName, { exact: true })).toBeVisible();
+    await expect(transferCard.getByText(destinationEventName, { exact: true })).toBeVisible();
+    await expect(transferCard.getByText('8 → 5', { exact: true })).toBeVisible();
+    await expect(transferCard.getByText('0 → 3', { exact: true })).toBeVisible();
+  } finally {
+    await electronApplication.close();
+  }
+});
