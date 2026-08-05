@@ -64,8 +64,8 @@ O sistema terá somente dois perfis:
 Requisitos:
 
 - Windows 10 ou 11 x64;
-- Node.js 22.12 ou superior;
-- npm 11.
+- Node.js 22.13 ou superior;
+- npm 10.9.8 ou compatível.
 
 ```bash
 npm install
