@@ -2,13 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import { appendAudit } from './audit';
 import { getSessionState } from './control';
-import {
-  deductOrderStock,
-  listOperationCatalog,
-  requireAvailableCatalogItem,
-} from './operation-stock';
+import { listOperationCatalog } from './operation-stock';
 import type {
-  DatabaseCloseOrderPaymentInput,
   DatabaseOperationState,
   DatabaseOrder,
   DatabaseOrderItem,
@@ -47,7 +42,7 @@ interface ServicePointRow {
   readonly updated_at: number;
 }
 
-interface OrderRow {
+export interface OperationOrderRow {
   readonly id: string;
   readonly event_id: string;
   readonly service_point_id: string;
@@ -83,7 +78,7 @@ interface PaymentRow {
   readonly created_at: number;
 }
 
-function requireActiveEvent(database: DatabaseContext): string {
+export function requireActiveOperationEvent(database: DatabaseContext): string {
   const event = getSessionState(database).activeEvent;
 
   if (event === null) {
@@ -139,7 +134,10 @@ function mapPayment(row: PaymentRow): DatabasePayment {
   };
 }
 
-function listOrderItems(database: DatabaseContext, orderId: string): readonly DatabaseOrderItem[] {
+export function listOrderItems(
+  database: DatabaseContext,
+  orderId: string,
+): readonly DatabaseOrderItem[] {
   const rows = database.sqlite
     .prepare(
       `SELECT id, order_id, item_kind, item_id, item_name, quantity,
@@ -164,7 +162,7 @@ function listPayments(database: DatabaseContext, orderId: string): readonly Data
   return rows.map(mapPayment);
 }
 
-function requireOrderRow(database: DatabaseContext, orderId: string): OrderRow {
+export function requireOrderRow(database: DatabaseContext, orderId: string): OperationOrderRow {
   const row = database.sqlite
     .prepare(
       `SELECT id, event_id, service_point_id, service_point_label, status,
@@ -172,7 +170,7 @@ function requireOrderRow(database: DatabaseContext, orderId: string): OrderRow {
        FROM orders
        WHERE id = ?`,
     )
-    .get(orderId) as OrderRow | undefined;
+    .get(orderId) as OperationOrderRow | undefined;
 
   if (row === undefined) {
     throw new Error('A comanda informada não existe.');
@@ -181,21 +179,24 @@ function requireOrderRow(database: DatabaseContext, orderId: string): OrderRow {
   return row;
 }
 
-function requireOpenOrder(database: DatabaseContext, orderId: string): OrderRow {
+export function requireOpenOrderRow(
+  database: DatabaseContext,
+  orderId: string,
+): OperationOrderRow {
   const order = requireOrderRow(database, orderId);
 
   if (order.status !== 'open') {
     throw new Error('Somente comandas abertas podem ser alteradas.');
   }
 
-  if (order.event_id !== requireActiveEvent(database)) {
+  if (order.event_id !== requireActiveOperationEvent(database)) {
     throw new Error('A comanda não pertence ao evento ativo.');
   }
 
   return order;
 }
 
-function mapOrder(database: DatabaseContext, row: OrderRow): DatabaseOrder {
+function mapOrder(database: DatabaseContext, row: OperationOrderRow): DatabaseOrder {
   const items = listOrderItems(database, row.id);
   const payments = listPayments(database, row.id);
   const paidCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
@@ -251,7 +252,7 @@ function ensureCounter(database: DatabaseContext, eventId: string): void {
   })();
 }
 
-function listServicePoints(
+export function listServicePoints(
   database: DatabaseContext,
   eventId: string,
 ): readonly DatabaseServicePoint[] {
@@ -278,7 +279,7 @@ function listServicePoints(
   return rows.map(mapServicePoint);
 }
 
-function recomputeOpenOrder(database: DatabaseContext, orderId: string, now: number): void {
+export function recomputeOpenOrder(database: DatabaseContext, orderId: string, now: number): void {
   const total = database.sqlite
     .prepare('SELECT COALESCE(SUM(total_cents), 0) AS value FROM order_items WHERE order_id = ?')
     .get(orderId) as { readonly value: number };
@@ -311,7 +312,7 @@ export function createServicePoint(
   input: { readonly label: string; readonly type: DatabaseServicePointType },
 ): DatabaseServicePoint {
   requireProduction(database);
-  const eventId = requireActiveEvent(database);
+  const eventId = requireActiveOperationEvent(database);
   const label = input.label.trim();
   const duplicate = database.sqlite
     .prepare(
@@ -365,7 +366,7 @@ export function createServicePoint(
 }
 
 export function openOrder(database: DatabaseContext, servicePointId: string): DatabaseOrder {
-  const eventId = requireActiveEvent(database);
+  const eventId = requireActiveOperationEvent(database);
   const servicePoint = listServicePoints(database, eventId).find(
     (item) => item.id === servicePointId,
   );
@@ -403,227 +404,4 @@ export function openOrder(database: DatabaseContext, servicePointId: string): Da
 
 export function getOrder(database: DatabaseContext, orderId: string): DatabaseOrder {
   return mapOrder(database, requireOrderRow(database, orderId));
-}
-
-export function addOrderItem(
-  database: DatabaseContext,
-  input: {
-    readonly orderId: string;
-    readonly itemKind: DatabaseOrderItemKind;
-    readonly itemId: string;
-    readonly quantity: number;
-  },
-): DatabaseOrder {
-  const order = requireOpenOrder(database, input.orderId);
-  const existing = database.sqlite
-    .prepare(
-      `SELECT id, quantity FROM order_items
-       WHERE order_id = ? AND item_kind = ? AND item_id = ?`,
-    )
-    .get(input.orderId, input.itemKind, input.itemId) as
-    | { readonly id: string; readonly quantity: number }
-    | undefined;
-  const nextQuantity = (existing?.quantity ?? 0) + input.quantity;
-  const item = requireAvailableCatalogItem(
-    database,
-    order.event_id,
-    input.itemKind,
-    input.itemId,
-    nextQuantity,
-  );
-  const now = Date.now();
-
-  database.sqlite.transaction(() => {
-    if (existing === undefined) {
-      database.sqlite
-        .prepare(
-          `INSERT INTO order_items
-           (id, order_id, item_kind, item_id, item_name, quantity,
-            unit_price_cents, total_cents, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        )
-        .run(
-          randomUUID(),
-          input.orderId,
-          input.itemKind,
-          input.itemId,
-          item.name,
-          input.quantity,
-          item.salePriceCents,
-          item.salePriceCents * input.quantity,
-          now,
-        );
-    } else {
-      database.sqlite
-        .prepare(
-          `UPDATE order_items
-           SET quantity = ?, total_cents = unit_price_cents * ?
-           WHERE id = ?`,
-        )
-        .run(nextQuantity, nextQuantity, existing.id);
-    }
-
-    recomputeOpenOrder(database, input.orderId, now);
-    appendAudit(database, {
-      action: 'operations.item-added',
-      entityType: 'order',
-      entityId: input.orderId,
-      eventId: order.event_id,
-      details: {
-        itemId: input.itemId,
-        itemKind: input.itemKind,
-        itemName: item.name,
-        quantity: input.quantity,
-      },
-    });
-  })();
-
-  return getOrder(database, input.orderId);
-}
-
-export function removeOrderItem(
-  database: DatabaseContext,
-  input: { readonly orderId: string; readonly orderItemId: string },
-): DatabaseOrder {
-  const order = requireOpenOrder(database, input.orderId);
-  const item = database.sqlite
-    .prepare('SELECT item_name, quantity FROM order_items WHERE id = ? AND order_id = ?')
-    .get(input.orderItemId, input.orderId) as
-    | { readonly item_name: string; readonly quantity: number }
-    | undefined;
-
-  if (item === undefined) {
-    throw new Error('O item informado não pertence à comanda.');
-  }
-
-  const now = Date.now();
-  database.sqlite.transaction(() => {
-    database.sqlite.prepare('DELETE FROM order_items WHERE id = ?').run(input.orderItemId);
-    recomputeOpenOrder(database, input.orderId, now);
-    appendAudit(database, {
-      action: 'operations.item-removed',
-      entityType: 'order',
-      entityId: input.orderId,
-      eventId: order.event_id,
-      details: { itemName: item.item_name, quantity: item.quantity },
-    });
-  })();
-
-  return getOrder(database, input.orderId);
-}
-
-function normalizePayments(
-  payments: readonly DatabaseCloseOrderPaymentInput[],
-  totalCents: number,
-): readonly DatabasePayment[] {
-  const paidCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
-
-  if (paidCents !== totalCents) {
-    throw new Error(
-      `A soma dos pagamentos deve ser igual ao total da comanda: ${String(totalCents)} centavos.`,
-    );
-  }
-
-  return payments.map((payment) => {
-    if (payment.method !== 'cash' && payment.receivedCents !== undefined) {
-      throw new Error('Valor recebido e troco só podem ser informados para pagamento em dinheiro.');
-    }
-
-    const receivedCents =
-      payment.method === 'cash' ? (payment.receivedCents ?? payment.amountCents) : null;
-
-    if (receivedCents !== null && receivedCents < payment.amountCents) {
-      throw new Error('O valor recebido em dinheiro é menor que o valor aplicado.');
-    }
-
-    return {
-      id: randomUUID(),
-      orderId: '',
-      method: payment.method,
-      amountCents: payment.amountCents,
-      receivedCents,
-      changeCents: receivedCents === null ? 0 : receivedCents - payment.amountCents,
-      createdAt: 0,
-    };
-  });
-}
-
-export function closeOrder(
-  database: DatabaseContext,
-  input: {
-    readonly orderId: string;
-    readonly discountCents: number;
-    readonly payments: readonly DatabaseCloseOrderPaymentInput[];
-  },
-): DatabaseOrder {
-  const order = requireOpenOrder(database, input.orderId);
-  const items = listOrderItems(database, input.orderId);
-
-  if (items.length === 0) {
-    throw new Error('Inclua pelo menos um item antes de fechar a comanda.');
-  }
-
-  if (input.discountCents > order.subtotal_cents) {
-    throw new Error('O desconto não pode ser maior que o subtotal.');
-  }
-
-  const totalCents = order.subtotal_cents - input.discountCents;
-
-  if (totalCents <= 0) {
-    throw new Error('O total da comanda precisa ser maior que zero.');
-  }
-
-  const payments = normalizePayments(input.payments, totalCents);
-  const now = Date.now();
-  database.sqlite.transaction(() => {
-    deductOrderStock(database, order.event_id, order.id, items, now);
-    const insertPayment = database.sqlite.prepare(
-      `INSERT INTO payments
-       (id, order_id, method, amount_cents, received_cents, change_cents, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    );
-
-    for (const payment of payments) {
-      insertPayment.run(
-        payment.id,
-        order.id,
-        payment.method,
-        payment.amountCents,
-        payment.receivedCents,
-        payment.changeCents,
-        now,
-      );
-    }
-
-    database.sqlite
-      .prepare(
-        `UPDATE orders
-         SET status = 'paid', discount_cents = ?, total_cents = ?,
-             closed_at = ?, updated_at = ?
-         WHERE id = ?`,
-      )
-      .run(input.discountCents, totalCents, now, now, order.id);
-    database.sqlite
-      .prepare('UPDATE service_points SET updated_at = ? WHERE id = ?')
-      .run(now, order.service_point_id);
-    appendAudit(database, {
-      action: 'operations.order-paid',
-      entityType: 'order',
-      entityId: order.id,
-      eventId: order.event_id,
-      details: {
-        discountCents: input.discountCents,
-        payments: payments.map((payment) => ({
-          amountCents: payment.amountCents,
-          changeCents: payment.changeCents,
-          method: payment.method,
-          receivedCents: payment.receivedCents,
-        })),
-        subtotalCents: order.subtotal_cents,
-        totalCents,
-      },
-    });
-  })();
-
-  return getOrder(database, order.id);
 }
