@@ -66,8 +66,6 @@ export function registerInventoryIpcHandlers(options: RegisterInventoryIpcOption
           }
         : input;
 
-    return inventoryProductSchema.parse(
-      recordStockMovement(options.getDatabase(), movementInput),
-    );
+    return inventoryProductSchema.parse(recordStockMovement(options.getDatabase(), movementInput));
   });
 }
