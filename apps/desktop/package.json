@@ -34,16 +34,28 @@
       "output": "../../release",
       "buildResources": "resources"
     },
-    "files": ["out/**/*", "package.json"],
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
     "extraResources": [
       {
         "from": "resources/branding",
         "to": "branding",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "GTRZ-System-${version}-Setup.${ext}"
     },
     "nsis": {
