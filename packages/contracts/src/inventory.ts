@@ -23,7 +23,7 @@ export const productCategorySchema = z.object({
 export const productFinancialsSchema = z.object({
   costCents: z.number().int().nonnegative(),
   grossProfitCents: z.number().int(),
-  marginPercent: z.number().finite(),
+  marginPercent: z.number(),
 });
 
 export const inventoryProductSchema = z.object({
