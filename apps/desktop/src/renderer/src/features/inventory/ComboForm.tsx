@@ -42,7 +42,7 @@ function inputToCents(value: string): number {
   return Math.round(amount * 100);
 }
 
-function initialComponents(combo: InventoryCombo | undefined): readonly ComboComponentInput[] {
+function initialComponents(combo: InventoryCombo | undefined): ComboComponentInput[] {
   return (
     combo?.components.map((component) => ({
       productId: component.productId,
@@ -58,7 +58,7 @@ export function ComboForm(props: ComboFormProps): React.JSX.Element {
   );
   const [name, setName] = useState(props.combo?.name ?? '');
   const [salePrice, setSalePrice] = useState(centsToInput(props.combo?.salePriceCents));
-  const [components, setComponents] = useState<readonly ComboComponentInput[]>(
+  const [components, setComponents] = useState<ComboComponentInput[]>(
     initialComponents(props.combo),
   );
   const [selectedProductId, setSelectedProductId] = useState(activeProducts[0]?.id ?? '');
