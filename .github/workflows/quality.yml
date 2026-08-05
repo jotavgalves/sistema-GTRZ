@@ -6,6 +6,9 @@ on:
   push:
     branches: [main, 'feat/**', 'fix/**']
 
+permissions:
+  contents: write
+
 concurrency:
   group: quality-${{ github.ref }}
   cancel-in-progress: true
@@ -19,6 +22,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: feat/fundacao-tecnica
+          fetch-depth: 0
 
       - name: Node.js
         uses: actions/setup-node@v4
@@ -27,6 +33,22 @@ jobs:
 
       - name: Instalar dependências
         run: npm install --ignore-scripts
+
+      - name: Aplicar formatação determinística
+        run: npm run format
+
+      - name: Registrar formatação e lockfile
+        shell: bash
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "Arquivos já formatados."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "style: aplica formatação automática"
+            git push origin HEAD:feat/fundacao-tecnica
+          fi
 
       - name: Reconstruir dependências nativas do Electron
         run: npx electron-builder install-app-deps
