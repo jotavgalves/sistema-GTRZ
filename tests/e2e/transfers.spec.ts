@@ -61,7 +61,12 @@ test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', asy
     await window.getByRole('link', { name: 'Eventos' }).click();
     await window.getByPlaceholder('Ex.: La Rumba Neon — Agosto').fill(destinationEventName);
     await window.getByRole('button', { name: 'Criar evento' }).click();
-    await expect(window.getByText(destinationEventName, { exact: true }).first()).toBeVisible();
+    const destinationEventCard = window
+      .locator('article.event-card')
+      .filter({ hasText: destinationEventName });
+    await expect(destinationEventCard).toBeVisible();
+    await destinationEventCard.getByRole('button', { name: 'Operar evento' }).click();
+    await expect(destinationEventCard.getByText('Em operação', { exact: true })).toBeVisible();
 
     await window.getByRole('link', { name: 'Estoque' }).click();
     const transferForm = window.locator('form.transfer-form');
@@ -78,19 +83,7 @@ test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', asy
     await transferForm.getByRole('button', { name: 'Transferir estoque' }).click();
 
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
-    await expect
-      .poll(
-        async () => {
-          if (await productCard.getByText('3 un.', { exact: true }).isVisible()) {
-            return 'success';
-          }
-
-          const formErrors = await transferForm.locator('.form-error').allTextContents();
-          return formErrors.join(' | ') || 'pending';
-        },
-        { timeout: 5_000 },
-      )
-      .toBe('success');
+    await expect(productCard.getByText('3 un.', { exact: true })).toBeVisible();
 
     const transferCard = window
       .locator('article.transfer-card')
