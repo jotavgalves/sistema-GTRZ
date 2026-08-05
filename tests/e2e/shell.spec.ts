@@ -95,7 +95,9 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
 
     await window.getByPlaceholder('Ex.: Cervejas').fill(categoryName);
     await window.getByRole('button', { name: 'Criar categoria' }).click();
-    await expect(window.getByText(categoryName, { exact: true }).first()).toBeVisible();
+    await expect(
+      window.locator('.category-chips').getByText(categoryName, { exact: true }),
+    ).toBeVisible();
 
     await window.getByLabel('Nome').fill(productName);
     await window.getByLabel('Categoria').selectOption({ label: categoryName });
