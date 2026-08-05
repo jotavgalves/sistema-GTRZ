@@ -11,6 +11,7 @@
   },
   "include": [
     "vitest.config.ts",
+    "playwright.config.ts",
     "tests/**/*.ts",
     "packages/**/*.spec.ts"
   ],
