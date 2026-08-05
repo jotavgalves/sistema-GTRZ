@@ -1,13 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
 import { appendAudit } from './audit';
-import { requireAvailableCatalogItem } from './operation-stock';
-import type { DatabaseOrder, DatabaseOrderItemKind } from './operation-types';
 import {
   getOrder,
   recomputeOpenOrder,
   requireOpenOrderRow,
-} from './operations';
+} from './operation-core';
+import { requireAvailableCatalogItem } from './operation-stock';
+import type { DatabaseOrder, DatabaseOrderItemKind } from './operation-types';
 import type { DatabaseContext } from './types';
 
 export function addOrderItem(
