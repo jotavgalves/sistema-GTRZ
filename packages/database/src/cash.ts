@@ -192,6 +192,29 @@ function getMovementAggregates(database: DatabaseContext, sessionId: string): Ag
     .get(sessionId) as AggregateRow;
 }
 
+function getCommercialRevenue(database: DatabaseContext, eventId: string): number {
+  const row = database.sqlite
+    .prepare(
+      `SELECT COALESCE(SUM(total_cents), 0) AS total
+       FROM sales
+       WHERE event_id = ? AND status = 'paid'`,
+    )
+    .get(eventId) as { readonly total: number };
+  return row.total;
+}
+
+function getVoucherRedemption(database: DatabaseContext, eventId: string): number {
+  const row = database.sqlite
+    .prepare(
+      `SELECT COALESCE(SUM(sp.amount_cents), 0) AS total
+       FROM sale_payments sp
+       INNER JOIN sales s ON s.id = sp.sale_id
+       WHERE s.event_id = ? AND s.status = 'paid' AND sp.method = 'voucher'`,
+    )
+    .get(eventId) as { readonly total: number };
+  return row.total;
+}
+
 export function getCashSummary(database: DatabaseContext): DatabaseCashSummary {
   const eventId = getSessionState(database).activeEvent?.id;
 
@@ -213,31 +236,18 @@ export function getCashSummary(database: DatabaseContext): DatabaseCashSummary {
   }
 
   const session = getLatestSession(database, eventId);
-  const revenueRow = database.sqlite
-    .prepare(
-      `SELECT
-         COALESCE(SUM(total_cents), 0) AS commercial_revenue_cents,
-         COALESCE(SUM(
-           CASE WHEN sp.method = 'voucher' THEN sp.amount_cents ELSE 0 END
-         ), 0) AS voucher_redemption_cents
-       FROM sales s
-       LEFT JOIN sale_payments sp ON sp.sale_id = s.id
-       WHERE s.event_id = ? AND s.status = 'paid'`,
-    )
-    .get(eventId) as {
-    readonly commercial_revenue_cents: number;
-    readonly voucher_redemption_cents: number;
-  };
+  const commercialRevenueCents = getCommercialRevenue(database, eventId);
+  const voucherRedemptionCents = getVoucherRedemption(database, eventId);
 
   if (session === null) {
     return {
       session: null,
-      commercialRevenueCents: revenueRow.commercial_revenue_cents,
+      commercialRevenueCents,
       actualInflowCents: 0,
       cashSalesCents: 0,
       pixSalesCents: 0,
       cardSalesCents: 0,
-      voucherRedemptionCents: revenueRow.voucher_redemption_cents,
+      voucherRedemptionCents,
       suppliesCents: 0,
       withdrawalsCents: 0,
       expensesPaidCents: 0,
@@ -263,12 +273,12 @@ export function getCashSummary(database: DatabaseContext): DatabaseCashSummary {
 
   return {
     session,
-    commercialRevenueCents: revenueRow.commercial_revenue_cents,
+    commercialRevenueCents,
     actualInflowCents,
     cashSalesCents: aggregate.cash_sales_cents,
     pixSalesCents: aggregate.pix_sales_cents,
     cardSalesCents: aggregate.card_sales_cents,
-    voucherRedemptionCents: revenueRow.voucher_redemption_cents,
+    voucherRedemptionCents,
     suppliesCents: aggregate.supplies_cents,
     withdrawalsCents: aggregate.withdrawals_cents,
     expensesPaidCents: aggregate.expenses_paid_cents - aggregate.expense_reversals_cents,
@@ -392,8 +402,8 @@ export function addManualCashMovement(
     throw new Error('A sangria não pode superar o saldo esperado em dinheiro.');
   }
 
-  const movementId = database.sqlite.transaction(() => {
-    const id = recordCashMovement(database, {
+  database.sqlite.transaction(() => {
+    const movementId = recordCashMovement(database, {
       sessionId: session.id,
       eventId,
       type: input.type,
@@ -405,13 +415,11 @@ export function addManualCashMovement(
     appendAudit(database, {
       action: input.type === 'supply' ? 'cash.supplied' : 'cash.withdrawn',
       entityType: 'cash-movement',
-      entityId: id,
+      entityId: movementId,
       eventId,
       details: { amountCents: input.amountCents, note: input.note.trim() },
     });
-    return id;
   })();
 
-  void movementId;
   return getCashSummary(database);
 }
