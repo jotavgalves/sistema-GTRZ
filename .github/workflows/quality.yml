@@ -32,6 +32,14 @@ jobs:
       - name: Instalar dependências reproduzíveis
         run: npm ci --ignore-scripts
 
+      - name: Diagnosticar auditoria completa
+        shell: bash
+        run: npm audit --json || true
+
+      - name: Diagnosticar dependências de produção
+        shell: bash
+        run: npm audit --omit=dev --json || true
+
       - name: Reconstruir dependências nativas do Electron
         run: npx electron-builder install-app-deps
 
