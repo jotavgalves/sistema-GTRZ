@@ -48,6 +48,11 @@ jobs:
               "export * from './voucher-deletion';\nexport * from './vouchers';",
           )
           replace_once(
+              'packages/database/src/index.ts',
+              "export * from './voucher-deletion';\nexport * from './vouchers';",
+              "export * from './voucher-administration';\nexport * from './voucher-deletion';\nexport * from './vouchers';",
+          )
+          replace_once(
               'packages/contracts/src/index.ts',
               "  vouchersCreate: 'vouchers:create',\n  vouchersChangeStatus: 'vouchers:change-status',",
               "  vouchersCreate: 'vouchers:create',\n  vouchersUpdate: 'vouchers:update',\n  vouchersChangeStatus: 'vouchers:change-status',\n  vouchersPreviewDeletion: 'vouchers:preview-deletion',\n  vouchersDelete: 'vouchers:delete',",
@@ -77,6 +82,16 @@ jobs:
               '        void onDelete(normalizedReason);',
               '        void onDelete(normalizedReason).catch(() => undefined);',
           )
+          replace_once(
+              'apps/desktop/src/renderer/src/features/vouchers/VoucherCard.tsx',
+              "                void onChangeStatus(voucher.id, 'cancelled');",
+              "                void onChangeStatus(voucher.id, 'cancelled').catch(() => undefined);",
+          )
+          replace_once(
+              'apps/desktop/src/renderer/src/features/vouchers/VoucherCard.tsx',
+              "                void onChangeStatus(voucher.id, 'active');",
+              "                void onChangeStatus(voucher.id, 'active').catch(() => undefined);",
+          )
 
       - name: Formatar
         run: >-
@@ -88,12 +103,13 @@ jobs:
           apps/desktop/src/renderer/src/features/vouchers/VoucherForm.tsx
           apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx
           apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx
+          apps/desktop/src/renderer/src/features/vouchers/VoucherCard.tsx
 
       - name: Publicar conexões
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages/database/src/index.ts packages/contracts/src/index.ts packages/contracts/src/operations.ts apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx
+          git add packages/database/src/index.ts packages/contracts/src/index.ts packages/contracts/src/operations.ts apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherCard.tsx
           if ! git diff --cached --quiet; then
             git commit -m 'chore: conecta gestão de vouchers ao checkout [skip ci]'
             git push origin HEAD:feat/navigation-voucher-management-final
