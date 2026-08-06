@@ -13,7 +13,7 @@ async function ensureProduction(window: Page): Promise<void> {
   }
 }
 
-test('SMK-OPR-001 — abre mesa, recebe em dinheiro e baixa o estoque', async () => {
+test('SMK-OPR-001 — vende, estorna e devolve o estoque pela interface', async () => {
   const electronApplication = await electron.launch({ args: [applicationPath] });
 
   try {
@@ -76,6 +76,18 @@ test('SMK-OPR-001 — abre mesa, recebe em dinheiro e baixa o estoque', async ()
     await window.getByRole('link', { name: 'Estoque' }).click();
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
     await expect(productCard.getByText('4 un.', { exact: true })).toBeVisible();
+
+    await window.getByRole('link', { name: 'Mesas e balcão' }).click();
+    const recentOrder = window.locator('article.recent-order-card').filter({ hasText: tableName });
+    await expect(recentOrder).toContainText('Paga');
+    await recentOrder.getByPlaceholder('Ex.: lançamento duplicado').fill('Pagamento duplicado');
+    await recentOrder.getByRole('button', { name: 'Estornar venda' }).click();
+    await expect(window.getByText('Comanda cancelada e operação auditada.')).toBeVisible();
+    await expect(recentOrder).toContainText('Cancelada');
+
+    await window.getByRole('link', { name: 'Estoque' }).click();
+    productCard = window.locator('article.inventory-card').filter({ hasText: productName });
+    await expect(productCard.getByText('5 un.', { exact: true })).toBeVisible();
   } finally {
     await electronApplication.close();
   }
