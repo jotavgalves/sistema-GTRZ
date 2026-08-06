@@ -71,6 +71,7 @@ export const operationStateSchema = z.object({
   activeEventId: z.uuid().nullable(),
   servicePoints: z.array(servicePointSchema),
   catalog: z.array(operationCatalogItemSchema),
+  recentOrders: z.array(orderSchema),
 });
 
 export const createServicePointInputSchema = z.object({
@@ -112,6 +113,11 @@ export const closeOrderInputSchema = z.object({
     .min(1),
 });
 
+export const cancelOrderInputSchema = z.object({
+  orderId: z.uuid(),
+  reason: z.string().trim().min(3).max(240),
+});
+
 export type ServicePointType = z.infer<typeof servicePointTypeSchema>;
 export type ServicePointStatus = z.infer<typeof servicePointStatusSchema>;
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
@@ -129,6 +135,7 @@ export type GetOrderInput = z.infer<typeof getOrderInputSchema>;
 export type AddOrderItemInput = z.infer<typeof addOrderItemInputSchema>;
 export type RemoveOrderItemInput = z.infer<typeof removeOrderItemInputSchema>;
 export type CloseOrderInput = z.infer<typeof closeOrderInputSchema>;
+export type CancelOrderInput = z.infer<typeof cancelOrderInputSchema>;
 
 export interface OperationsApi {
   getState(): Promise<OperationState>;
@@ -138,4 +145,5 @@ export interface OperationsApi {
   addItem(input: AddOrderItemInput): Promise<Order>;
   removeItem(input: RemoveOrderItemInput): Promise<Order>;
   closeOrder(input: CloseOrderInput): Promise<Order>;
+  cancelOrder(input: CancelOrderInput): Promise<Order>;
 }
