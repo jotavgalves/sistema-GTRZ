@@ -226,6 +226,53 @@ export const voucherTransactions = sqliteTable('voucher_transactions', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
+export const cashRegisters = sqliteTable('cash_registers', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => events.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  status: text('status', { enum: ['open', 'closed'] }).notNull(),
+  openingCashCents: integer('opening_cash_cents').notNull(),
+  expectedCashCents: integer('expected_cash_cents').notNull(),
+  countedCashCents: integer('counted_cash_cents'),
+  varianceCents: integer('variance_cents'),
+  openedAt: integer('opened_at', { mode: 'timestamp_ms' }).notNull(),
+  closedAt: integer('closed_at', { mode: 'timestamp_ms' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const cashMovements = sqliteTable('cash_movements', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => events.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  cashRegisterId: text('cash_register_id')
+    .notNull()
+    .references(() => cashRegisters.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  type: text('type', { enum: ['opening', 'supply', 'withdrawal'] }).notNull(),
+  amountCents: integer('amount_cents').notNull(),
+  note: text('note'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const expenses = sqliteTable('expenses', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => events.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  category: text('category').notNull(),
+  description: text('description').notNull(),
+  amountCents: integer('amount_cents').notNull(),
+  paymentMethod: text('payment_method', {
+    enum: ['cash', 'pix', 'credit-card', 'debit-card'],
+  }).notNull(),
+  note: text('note'),
+  status: text('status', { enum: ['active', 'cancelled'] }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  cancelledAt: integer('cancelled_at', { mode: 'timestamp_ms' }),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
 export const auditLog = sqliteTable('audit_log', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   eventId: text('event_id'),
@@ -240,10 +287,13 @@ export const auditLog = sqliteTable('audit_log', {
 export const technicalSchema = {
   appMeta,
   auditLog,
+  cashMovements,
+  cashRegisters,
   comboComponents,
   combos,
   eventStock,
   events,
+  expenses,
   orderItems,
   orders,
   payments,
