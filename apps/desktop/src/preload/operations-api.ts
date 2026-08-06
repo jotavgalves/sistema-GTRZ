@@ -2,6 +2,7 @@ import { ipcRenderer } from 'electron';
 
 import {
   addOrderItemInputSchema,
+  cancelOrderInputSchema,
   closeOrderInputSchema,
   createServicePointInputSchema,
   getOrderInputSchema,
@@ -12,6 +13,7 @@ import {
   removeOrderItemInputSchema,
   servicePointSchema,
   type AddOrderItemInput,
+  type CancelOrderInput,
   type CloseOrderInput,
   type CreateServicePointInput,
   type OpenOrderInput,
@@ -71,6 +73,15 @@ export const operationsApi: OperationsApi = {
     const parsedInput = closeOrderInputSchema.parse(input);
     const payload: unknown = await ipcRenderer.invoke(
       IPC_CHANNELS.operationsCloseOrder,
+      parsedInput,
+    );
+    return orderSchema.parse(payload);
+  },
+
+  async cancelOrder(input: CancelOrderInput): Promise<Order> {
+    const parsedInput = cancelOrderInputSchema.parse(input);
+    const payload: unknown = await ipcRenderer.invoke(
+      IPC_CHANNELS.operationsCancelOrder,
       parsedInput,
     );
     return orderSchema.parse(payload);
