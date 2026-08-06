@@ -67,10 +67,7 @@ function listCodes(database: DatabaseContext, saleId: string): readonly Database
   return rows.map(mapCode);
 }
 
-export function mapTicketSale(
-  database: DatabaseContext,
-  row: TicketSaleRow,
-): DatabaseTicketSale {
+export function mapTicketSale(database: DatabaseContext, row: TicketSaleRow): DatabaseTicketSale {
   return {
     id: row.id,
     eventId: row.event_id,
