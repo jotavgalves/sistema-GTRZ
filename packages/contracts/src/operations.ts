@@ -40,6 +40,12 @@ export const paymentSchema = z.object({
   createdAt: z.number().int().nonnegative(),
 });
 
+export const voucherRedemptionSchema = z.object({
+  voucherId: z.uuid(),
+  code: z.string().min(4).max(32),
+  amountCents: z.number().int().positive(),
+});
+
 export const orderSchema = z.object({
   id: z.uuid(),
   eventId: z.uuid(),
@@ -53,6 +59,7 @@ export const orderSchema = z.object({
   remainingCents: z.number().int().nonnegative(),
   items: z.array(orderItemSchema),
   payments: z.array(paymentSchema),
+  voucherRedemptions: z.array(voucherRedemptionSchema),
   openedAt: z.number().int().nonnegative(),
   closedAt: z.number().int().nonnegative().nullable(),
   updatedAt: z.number().int().nonnegative(),
@@ -99,19 +106,31 @@ export const removeOrderItemInputSchema = z.object({
   orderItemId: z.uuid(),
 });
 
-export const closeOrderInputSchema = z.object({
-  orderId: z.uuid(),
-  discountCents: z.number().int().nonnegative().default(0),
-  payments: z
-    .array(
-      z.object({
-        method: paymentMethodSchema,
-        amountCents: z.number().int().positive(),
-        receivedCents: z.number().int().positive().optional(),
-      }),
-    )
-    .min(1),
-});
+export const closeOrderInputSchema = z
+  .object({
+    orderId: z.uuid(),
+    discountCents: z.number().int().nonnegative().default(0),
+    payments: z
+      .array(
+        z.object({
+          method: paymentMethodSchema,
+          amountCents: z.number().int().positive(),
+          receivedCents: z.number().int().positive().optional(),
+        }),
+      )
+      .default([]),
+    voucherUses: z
+      .array(
+        z.object({
+          code: z.string().trim().min(4).max(32),
+          amountCents: z.number().int().positive(),
+        }),
+      )
+      .default([]),
+  })
+  .refine((input) => input.payments.length + input.voucherUses.length > 0, {
+    message: 'Informe ao menos um pagamento ou voucher.',
+  });
 
 export const cancelOrderInputSchema = z.object({
   orderId: z.uuid(),
@@ -126,6 +145,7 @@ export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
 export type ServicePoint = z.infer<typeof servicePointSchema>;
 export type OrderItem = z.infer<typeof orderItemSchema>;
 export type Payment = z.infer<typeof paymentSchema>;
+export type VoucherRedemption = z.infer<typeof voucherRedemptionSchema>;
 export type Order = z.infer<typeof orderSchema>;
 export type OperationCatalogItem = z.infer<typeof operationCatalogItemSchema>;
 export type OperationState = z.infer<typeof operationStateSchema>;
