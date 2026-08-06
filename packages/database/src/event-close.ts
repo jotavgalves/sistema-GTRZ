@@ -69,7 +69,7 @@ function requireProductionAndActiveEvent(database: DatabaseContext, eventId: str
     .prepare('SELECT id, name, status FROM events WHERE id = ?')
     .get(eventId) as EventRow | undefined;
 
-  if (event === undefined || event.status !== 'open') {
+  if (event?.status !== 'open') {
     throw new Error('Somente eventos abertos podem ser encerrados.');
   }
 
