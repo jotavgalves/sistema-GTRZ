@@ -87,7 +87,7 @@ export function mapTicketSale(database: DatabaseContext, row: TicketSaleRow): Da
   };
 }
 
-export function listTicketLots(
+function listTicketLots(
   database: DatabaseContext,
   eventId: string,
 ): readonly DatabaseTicketLot[] {
@@ -118,7 +118,7 @@ export function listTicketLots(
   return rows.map(mapLot);
 }
 
-export function listTicketSales(
+function listTicketSales(
   database: DatabaseContext,
   eventId: string,
 ): readonly DatabaseTicketSale[] {
