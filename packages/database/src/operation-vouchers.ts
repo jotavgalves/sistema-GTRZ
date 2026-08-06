@@ -239,6 +239,10 @@ export function validateOrderVoucherUses(
 
   const use = uses[0];
 
+  if (use === undefined) {
+    return [];
+  }
+
   if (normalizeCode(use.code) !== allocation.code) {
     throw new Error('O voucher informado não corresponde ao voucher vinculado à mesa.');
   }
