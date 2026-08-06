@@ -47,9 +47,12 @@ test('SMK-INS-001 — consolida evento e pesquisa sua trilha de auditoria', asyn
     const searchInput = main.getByPlaceholder('Ex.: estorno, ingresso, nome do evento');
     await searchInput.fill(eventName);
     await main.getByRole('button', { name: 'Aplicar filtros' }).click();
-    const auditCard = main.locator('article.audit-card').filter({ hasText: eventName }).first();
-    await expect(auditCard).toBeVisible();
-    await expect(auditCard).toContainText('event.created');
+    const createdAuditCard = main
+      .locator('article.audit-card')
+      .filter({ hasText: eventName })
+      .filter({ hasText: 'event.created' });
+    await expect(createdAuditCard).toHaveCount(1);
+    await expect(createdAuditCard).toBeVisible();
   } finally {
     await electronApplication.close();
   }
