@@ -10,6 +10,12 @@
 - preservar funcionamento offline, migrações e dados existentes;
 - validar a entrega com testes automatizados, build e jornadas E2E.
 
+## Marcas selecionadas
+
+- logomarca padrão vermelha, sem o subtítulo “Eventos”, para a navegação;
+- símbolo padrão vermelho para a janela, o executável, atalhos e instalador;
+- versão branca da logomarca como alternativa de alto contraste.
+
 ## Critérios de conclusão
 
 - logomarca oficial visível na navegação e na abertura do aplicativo;
