@@ -189,6 +189,43 @@ export const payments = sqliteTable('payments', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
 });
 
+export const vouchers = sqliteTable('vouchers', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => events.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  code: text('code').notNull(),
+  label: text('label').notNull(),
+  initialBalanceCents: integer('initial_balance_cents').notNull(),
+  remainingBalanceCents: integer('remaining_balance_cents').notNull(),
+  status: text('status', { enum: ['active', 'exhausted', 'cancelled'] }).notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+export const voucherTransactions = sqliteTable('voucher_transactions', {
+  id: text('id').primaryKey(),
+  eventId: text('event_id')
+    .notNull()
+    .references(() => events.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  voucherId: text('voucher_id')
+    .notNull()
+    .references(() => vouchers.id, { onDelete: 'restrict', onUpdate: 'cascade' }),
+  voucherCode: text('voucher_code').notNull(),
+  orderId: text('order_id').references(() => orders.id, {
+    onDelete: 'restrict',
+    onUpdate: 'cascade',
+  }),
+  type: text('type', {
+    enum: ['issue', 'redemption', 'cancellation', 'reactivation', 'refund'],
+  }).notNull(),
+  amountCents: integer('amount_cents').notNull(),
+  balanceBeforeCents: integer('balance_before_cents').notNull(),
+  balanceAfterCents: integer('balance_after_cents').notNull(),
+  note: text('note'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
 export const auditLog = sqliteTable('audit_log', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   eventId: text('event_id'),
@@ -216,4 +253,6 @@ export const technicalSchema = {
   servicePoints,
   stockMovements,
   stockTransfers,
+  voucherTransactions,
+  vouchers,
 };
