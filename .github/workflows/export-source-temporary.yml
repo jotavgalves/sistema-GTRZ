@@ -1,0 +1,29 @@
+name: Exportar fonte temporariamente
+
+on:
+  push:
+    branches:
+      - feat/operacao-vouchers-despesas-auditoria
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Empacotar fonte
+        run: |
+          tar --exclude='.git' --exclude='node_modules' --exclude='gtrz-source.tar.gz' -czf gtrz-source.tar.gz .
+
+      - name: Publicar fonte
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtrz-source-temporary
+          path: gtrz-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
