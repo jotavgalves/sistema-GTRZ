@@ -15,6 +15,7 @@ import type {
   DatabaseServicePointType,
 } from './operation-types';
 import type { DatabaseContext } from './types';
+import { listOrderVoucherRedemptions } from './vouchers';
 
 interface ServicePointRow {
   readonly id: string;
@@ -181,7 +182,10 @@ export function requireOpenOrderRow(database: DatabaseContext, orderId: string):
 function mapOrder(database: DatabaseContext, row: OperationOrderRow): DatabaseOrder {
   const items = listOrderItems(database, row.id);
   const payments = listPayments(database, row.id);
-  const paidCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
+  const voucherRedemptions = listOrderVoucherRedemptions(database, row.id);
+  const paidCents =
+    payments.reduce((total, payment) => total + payment.amountCents, 0) +
+    voucherRedemptions.reduce((total, redemption) => total + redemption.amountCents, 0);
 
   return {
     id: row.id,
@@ -196,6 +200,7 @@ function mapOrder(database: DatabaseContext, row: OperationOrderRow): DatabaseOr
     remainingCents: Math.max(row.total_cents - paidCents, 0),
     items,
     payments,
+    voucherRedemptions,
     openedAt: row.opened_at,
     closedAt: row.closed_at,
     updatedAt: row.updated_at,
