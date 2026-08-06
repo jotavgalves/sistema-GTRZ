@@ -1,7 +1,9 @@
-import { CreditCard, Link2, Plus, TicketCheck, Trash2, Unlink, WalletCards } from 'lucide-react';
+import { CreditCard, Plus, Trash2, WalletCards } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import type { CloseOrderInput, Order, PaymentMethod, Voucher } from '@gtrz/contracts';
+import type { CloseOrderInput, Order, PaymentMethod } from '@gtrz/contracts';
+
+import { VoucherCheckout } from './VoucherCheckout';
 
 interface CheckoutFormProps {
   readonly order: Order;
@@ -69,30 +71,11 @@ export function CheckoutForm({
   const [discount, setDiscount] = useState('');
   const [payments, setPayments] = useState<readonly PaymentDraft[]>([newPayment()]);
   const [voucherAmount, setVoucherAmount] = useState('');
-  const [availableVouchers, setAvailableVouchers] = useState<readonly Voucher[]>([]);
   const discountCents = parseMoney(discount);
   const discountInvalid = discountCents > order.subtotalCents;
   const totalCents = Math.max(order.subtotalCents - discountCents, 0);
   const allocation = order.voucherAllocation;
   const voucherCents = parseMoney(voucherAmount);
-
-  useEffect(() => {
-    let active = true;
-
-    void window.gtrz.vouchers.getState().then((voucherState) => {
-      if (active) {
-        setAvailableVouchers(
-          voucherState.vouchers.filter(
-            (voucher) => voucher.status === 'active' && voucher.remainingBalanceCents > 0,
-          ),
-        );
-      }
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [order.id, allocation?.voucherId]);
 
   useEffect(() => {
     if (allocation === null) {
@@ -226,88 +209,17 @@ export function CheckoutForm({
         ) : null}
       </div>
 
-      <section className="voucher-checkout" aria-label="Voucher da comanda">
-        <div className="voucher-checkout__heading">
-          <TicketCheck size={18} aria-hidden="true" />
-          <div>
-            <strong>Voucher vinculado à mesa</strong>
-            <small>Selecione o voucher e o sistema associa automaticamente à comanda.</small>
-          </div>
-        </div>
-
-        <div className="voucher-checkout__selector">
-          <select
-            aria-label="Voucher vinculado à comanda"
-            disabled={busy}
-            onChange={(event) => {
-              const code = event.target.value;
-
-              if (code.length === 0) {
-                void onUnbindVoucher();
-              } else {
-                void onBindVoucher(code);
-              }
-            }}
-            value={allocation?.code ?? ''}
-          >
-            <option value="">Nenhum voucher</option>
-            {availableVouchers.map((voucher) => (
-              <option key={voucher.id} value={voucher.code}>
-                {voucher.code} · {voucher.label} · {formatMoney(voucher.remainingBalanceCents)}
-              </option>
-            ))}
-          </select>
-          {allocation === null ? <Link2 size={18} aria-hidden="true" /> : null}
-          {allocation !== null ? (
-            <button
-              aria-label="Remover voucher da comanda"
-              className="icon-button"
-              disabled={busy}
-              onClick={() => {
-                void onUnbindVoucher();
-              }}
-              title="Remover voucher"
-              type="button"
-            >
-              <Unlink size={17} aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
-
-        {allocation === null ? (
-          <p className="voucher-checkout__empty">Nenhum voucher vinculado.</p>
-        ) : (
-          <div className="voucher-checkout__card">
-            <span>
-              <strong>{allocation.label}</strong>
-              <small>{allocation.code}</small>
-            </span>
-            <span>
-              <small>Saldo disponível</small>
-              <strong>{formatMoney(allocation.remainingBalanceCents)}</strong>
-            </span>
-            <label className="form-field">
-              <span>Valor a utilizar</span>
-              <input
-                aria-invalid={voucherInvalid}
-                disabled={busy}
-                inputMode="decimal"
-                onChange={(event) => {
-                  setVoucherAmount(event.target.value);
-                }}
-                placeholder="0,00"
-                value={voucherAmount}
-              />
-            </label>
-          </div>
-        )}
-
-        {allocation !== null && voucherCents > allocation.remainingBalanceCents ? (
-          <p className="form-error">
-            O voucher possui somente {formatMoney(allocation.remainingBalanceCents)} disponíveis.
-          </p>
-        ) : null}
-      </section>
+      <VoucherCheckout
+        allocation={allocation}
+        busy={busy}
+        invalid={voucherInvalid}
+        onBind={onBindVoucher}
+        onUnbind={onUnbindVoucher}
+        onValueChange={setVoucherAmount}
+        orderId={order.id}
+        value={voucherAmount}
+        valueCents={voucherCents}
+      />
 
       <div className="payment-list">
         {payments.map((payment, index) => {
