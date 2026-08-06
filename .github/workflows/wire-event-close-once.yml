@@ -1,0 +1,140 @@
+name: Ligar encerramento integrado
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    if: github.event.pull_request.head.ref == 'feat/operacao-evento'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: feat/operacao-evento
+          fetch-depth: 0
+
+      - name: Aplicar ligações
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              content = file.read_text(encoding='utf-8')
+              if new in content:
+                  return
+              if old not in content:
+                  raise RuntimeError(f'Padrão não encontrado em {path}: {old[:80]}')
+              file.write_text(content.replace(old, new), encoding='utf-8')
+
+          register = 'apps/desktop/src/main/register-ipc.ts'
+          replace(
+              register,
+              "import { registerComboIpcHandlers } from './register-combo-ipc';\n",
+              "import { registerComboIpcHandlers } from './register-combo-ipc';\nimport { registerEventCloseIpcHandlers } from './register-event-close-ipc';\n",
+          )
+          replace(
+              register,
+              "  ipcMain.handle(IPC_CHANNELS.eventsChangeStatus, async (_event, payload: unknown) => {\n    const input = changeEventStatusInputSchema.parse(payload);\n    const updatedEvent = changeEventStatus(options.getDatabase(), input);\n\n    if (input.status === 'closed') {\n      try {\n        await options.backupService.createBackup('event-close');\n      } catch (error: unknown) {\n        const message =\n          error instanceof Error ? error.message : 'Falha desconhecida ao gerar o backup.';\n        throw new Error(`O evento foi encerrado, mas o backup automático falhou: ${message}`);\n      }\n    }\n\n    return eventSchema.parse(updatedEvent);\n  });",
+              "  ipcMain.handle(IPC_CHANNELS.eventsChangeStatus, (_event, payload: unknown) => {\n    const input = changeEventStatusInputSchema.parse(payload);\n    const database = options.getDatabase();\n    const current = listEvents(database).find((event) => event.id === input.eventId);\n\n    if (current?.status === 'open' && input.status === 'closed') {\n      throw new Error(\n        'Use o encerramento integrado para conciliar o caixa e gerar o backup final.',\n      );\n    }\n\n    return eventSchema.parse(changeEventStatus(database, input));\n  });",
+          )
+          replace(
+              register,
+              "  registerComboIpcHandlers({ getDatabase: options.getDatabase });\n  registerFinanceIpcHandlers({ getDatabase: options.getDatabase });",
+              "  registerComboIpcHandlers({ getDatabase: options.getDatabase });\n  registerEventCloseIpcHandlers({\n    getDatabase: options.getDatabase,\n    backupService: options.backupService,\n  });\n  registerFinanceIpcHandlers({ getDatabase: options.getDatabase });",
+          )
+
+          preload = 'apps/desktop/src/preload/index.ts'
+          replace(
+              preload,
+              "import { comboApi } from './combo-api';\n",
+              "import { comboApi } from './combo-api';\nimport { eventCloseApi } from './event-close-api';\n",
+          )
+          replace(
+              preload,
+              "  session: {\n",
+              "  eventClose: eventCloseApi,\n  session: {\n",
+          )
+
+          card = 'apps/desktop/src/renderer/src/features/events/EventCard.tsx'
+          replace(
+              card,
+              "  readonly onRename: (eventId: string, name: string) => Promise<void>;\n  readonly onChangeStatus: (eventId: string, status: EventStatus) => Promise<void>;",
+              "  readonly onRename: (eventId: string, name: string) => Promise<void>;\n  readonly onRequestClose: (eventId: string) => void;\n  readonly onChangeStatus: (eventId: string, status: EventStatus) => Promise<void>;",
+          )
+          replace(
+              card,
+              "  onRename,\n  onChangeStatus,",
+              "  onRename,\n  onRequestClose,\n  onChangeStatus,",
+          )
+          replace(
+              card,
+              "        {event.status === 'open' ? (\n          <button\n            className=\"button button--secondary button--compact\"\n            disabled={busy}\n            onClick={() => {\n              void onChangeStatus(event.id, 'closed');\n            }}\n            type=\"button\"\n          >\n            <Square size={15} aria-hidden=\"true\" />\n            Encerrar\n          </button>\n        ) : null}",
+              "        {event.status === 'open' && isActive ? (\n          <button\n            className=\"button button--secondary button--compact\"\n            disabled={busy}\n            onClick={() => {\n              onRequestClose(event.id);\n            }}\n            type=\"button\"\n          >\n            <Square size={15} aria-hidden=\"true\" />\n            Encerrar\n          </button>\n        ) : null}",
+          )
+
+          page = 'apps/desktop/src/renderer/src/features/events/EventsPage.tsx'
+          replace(
+              page,
+              "import type { EventStatus } from '@gtrz/contracts';",
+              "import type { EventCloseResult, EventStatus } from '@gtrz/contracts';",
+          )
+          replace(
+              page,
+              "import { EventCard } from './EventCard';\n",
+              "import { EventCard } from './EventCard';\nimport { EventClosePanel } from './EventClosePanel';\n",
+          )
+          replace(
+              page,
+              "  const { state: sessionState } = useSession();",
+              "  const { state: sessionState, refresh: refreshSession } = useSession();",
+          )
+          replace(
+              page,
+              "  const [formError, setFormError] = useState<string | null>(null);",
+              "  const [formError, setFormError] = useState<string | null>(null);\n  const [closingEventId, setClosingEventId] = useState<string | null>(null);\n  const [closeMessage, setCloseMessage] = useState<string | null>(null);",
+          )
+          replace(
+              page,
+              "  async function handleStatus(eventId: string, status: EventStatus): Promise<void> {\n    await runEventAction(eventId, () => changeStatus(eventId, status));\n  }",
+              "  async function handleStatus(eventId: string, status: EventStatus): Promise<void> {\n    await runEventAction(eventId, () => changeStatus(eventId, status));\n  }\n\n  async function handleCloseCompleted(result: EventCloseResult): Promise<void> {\n    setClosingEventId(null);\n    setCloseMessage(\n      `Evento encerrado. Backup verificado: ${result.backup.fileName}.`,\n    );\n    await Promise.all([reload(), refreshSession()]);\n  }",
+          )
+          replace(
+              page,
+              "      <div className=\"control-layout\">",
+              "      {closeMessage === null ? null : (\n        <div className=\"event-close-success\">{closeMessage}</div>\n      )}\n\n      {sessionState?.activeEvent !== null &&\n      sessionState?.activeEvent !== undefined &&\n      closingEventId === sessionState.activeEvent.id ? (\n        <EventClosePanel\n          eventId={sessionState.activeEvent.id}\n          eventName={sessionState.activeEvent.name}\n          onCompleted={handleCloseCompleted}\n        />\n      ) : null}\n\n      <div className=\"control-layout\">",
+          )
+          replace(
+              page,
+              "              onRename={(eventId, nextName) =>\n                runEventAction(eventId, () => rename(eventId, nextName))\n              }\n              onSelect={(eventId) => runEventAction(eventId, () => select(eventId))}",
+              "              onRename={(eventId, nextName) =>\n                runEventAction(eventId, () => rename(eventId, nextName))\n              }\n              onRequestClose={(eventId) => {\n                setCloseMessage(null);\n                setClosingEventId(eventId);\n              }}\n              onSelect={(eventId) => runEventAction(eventId, () => select(eventId))}",
+          )
+
+          global_css = 'apps/desktop/src/renderer/src/styles/global.css'
+          replace(
+              global_css,
+              "@import './tickets.css';",
+              "@import './tickets.css';\n@import './event-close.css';",
+          )
+
+      - name: Registrar ligação
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/desktop/src/main/register-ipc.ts \
+            apps/desktop/src/preload/index.ts \
+            apps/desktop/src/renderer/src/features/events/EventCard.tsx \
+            apps/desktop/src/renderer/src/features/events/EventsPage.tsx \
+            apps/desktop/src/renderer/src/styles/global.css
+          git commit -m "feat: liga encerramento integrado de ponta a ponta"
+          git push origin HEAD:feat/operacao-evento
