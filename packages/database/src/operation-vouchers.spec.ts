@@ -105,7 +105,7 @@ describe('voucher vinculado à comanda', () => {
         payments: [{ method: 'cash', amountCents: 500, receivedCents: 1000 }],
         voucherUses: [{ code: voucher.code, amountCents: 500 }],
       }),
-    ).toThrow('Disponível: R$ 4,00.');
+    ).toThrow(/Disponível: R\$\s4,00\./u);
     expect(getOrder(database, orderId)).toMatchObject({
       status: 'open',
       voucherAllocation: { remainingBalanceCents: 400 },
