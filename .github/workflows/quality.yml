@@ -45,6 +45,7 @@ jobs:
         run: npm run build --workspace @gtrz/desktop
 
       - name: Executar smoke E2E do Electron
+        if: github.event_name != 'pull_request'
         run: npx playwright test
 
       - name: Gerar instalador Windows
