@@ -142,7 +142,7 @@ export function AuditPage(): React.JSX.Element {
           <span className="audit-filter-count">
             {activeFilterCount === 0
               ? 'Nenhum filtro ativo'
-              : `${activeFilterCount} ${activeFilterCount === 1 ? 'filtro ativo' : 'filtros ativos'}`}
+              : `${String(activeFilterCount)} ${activeFilterCount === 1 ? 'filtro ativo' : 'filtros ativos'}`}
           </span>
         </div>
 
