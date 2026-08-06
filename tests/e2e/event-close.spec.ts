@@ -1,9 +1,11 @@
 import path from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { _electron as electron } from 'playwright';
 
 const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
+
+type CloseOutcome = 'success' | 'failure' | 'pending';
 
 async function ensureProduction(window: Page): Promise<void> {
   if (await window.getByText('Caixa', { exact: true }).isVisible()) {
@@ -11,6 +13,28 @@ async function ensureProduction(window: Page): Promise<void> {
     await window.getByRole('button', { name: 'Entrar em Produção' }).click();
     await expect(window.getByText('Produção', { exact: true })).toBeVisible();
   }
+}
+
+async function waitForCloseOutcome(
+  window: Page,
+  successMessage: Locator,
+  failureMessage: Locator,
+): Promise<CloseOutcome> {
+  const deadline = Date.now() + 15_000;
+
+  while (Date.now() < deadline) {
+    if (await successMessage.isVisible()) {
+      return 'success';
+    }
+
+    if (await failureMessage.isVisible()) {
+      return 'failure';
+    }
+
+    await window.waitForTimeout(150);
+  }
+
+  return 'pending';
 }
 
 test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
@@ -47,18 +71,24 @@ test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
     await expect(closePanel).toContainText('R$ 100,00');
     await closePanel.getByPlaceholder('0,00').fill('100,00');
     await closePanel.getByRole('checkbox').check();
-    await closePanel.getByRole('button', { name: 'Encerrar evento com backup' }).click();
+    const closeButton = closePanel.getByRole('button', { name: 'Encerrar evento com backup' });
+    await closeButton.click();
+    await expect(
+      closePanel.getByRole('button', { name: 'Encerrando e verificando backup…' }),
+    ).toBeVisible();
 
     const successMessage = window.getByText(/Evento encerrado\. Backup verificado:/u);
     const failureMessage = window.locator('.event-close-panel .form-error');
-    const outcome = await Promise.race([
-      successMessage.waitFor({ state: 'visible', timeout: 15_000 }).then(() => 'success' as const),
-      failureMessage.waitFor({ state: 'visible', timeout: 15_000 }).then(() => 'failure' as const),
-    ]);
+    const outcome = await waitForCloseOutcome(window, successMessage, failureMessage);
 
     if (outcome === 'failure') {
       const failureText = (await failureMessage.textContent()) ?? 'erro não informado';
       throw new Error(`Encerramento rejeitado pelo sistema: ${failureText}`);
+    }
+
+    if (outcome === 'pending') {
+      const buttonText = (await closePanel.locator('button.event-close-submit').textContent()) ?? '';
+      throw new Error(`Encerramento permaneceu pendente. Estado do botão: ${buttonText.trim()}`);
     }
 
     await expect(eventCard.getByText('Encerrado', { exact: true })).toBeVisible();
