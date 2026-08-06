@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { ComboApi } from './combos';
+import type { EventCloseApi } from './event-close';
 import type { CashApi, ExpenseApi } from './finance';
 import type { InventoryApi } from './inventory';
 import type { OperationsApi } from './operations';
@@ -8,6 +9,7 @@ import type { TicketApi } from './tickets';
 import type { VoucherApi } from './vouchers';
 
 export * from './combos';
+export * from './event-close';
 export * from './finance';
 export * from './inventory';
 export * from './operations';
@@ -21,6 +23,8 @@ export const IPC_CHANNELS = {
   eventsRename: 'events:rename',
   eventsChangeStatus: 'events:change-status',
   eventsSetActive: 'events:set-active',
+  eventClosePreview: 'event-close:preview',
+  eventCloseComplete: 'event-close:complete',
   sessionGetState: 'session:get-state',
   sessionSwitchProfile: 'session:switch-profile',
   settingsChangeProductionPassword: 'settings:change-production-password',
@@ -183,6 +187,7 @@ export interface GtrzDesktopApi {
     changeStatus(input: ChangeEventStatusInput): Promise<GtrzEvent>;
     setActive(input: SetActiveEventInput): Promise<SessionState>;
   };
+  readonly eventClose: EventCloseApi;
   readonly session: {
     getState(): Promise<SessionState>;
     switchProfile(input: SwitchProfileInput): Promise<SessionState>;
