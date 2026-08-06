@@ -201,7 +201,9 @@ describe('vouchers database', () => {
       initialBalanceCents: 1500,
     });
 
-    expect(changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' })).toMatchObject({
+    expect(
+      changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' }),
+    ).toMatchObject({
       status: 'cancelled',
       remainingBalanceCents: 1500,
     });
@@ -209,9 +211,9 @@ describe('vouchers database', () => {
       'active',
     );
     switchProfile(database, 'cashier');
-    expect(() =>
-      createVoucher(database, { label: 'Proibido', initialBalanceCents: 100 }),
-    ).toThrow('A administração de vouchers exige o perfil Produção.');
+    expect(() => createVoucher(database, { label: 'Proibido', initialBalanceCents: 100 })).toThrow(
+      'A administração de vouchers exige o perfil Produção.',
+    );
     expect(() =>
       changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' }),
     ).toThrow('A administração de vouchers exige o perfil Produção.');
