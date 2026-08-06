@@ -3,10 +3,12 @@ import { z } from 'zod';
 import type { ComboApi } from './combos';
 import type { InventoryApi } from './inventory';
 import type { OperationsApi } from './operations';
+import type { VoucherApi } from './vouchers';
 
 export * from './combos';
 export * from './inventory';
 export * from './operations';
+export * from './vouchers';
 
 export const IPC_CHANNELS = {
   systemGetInfo: 'system:get-info',
@@ -41,6 +43,9 @@ export const IPC_CHANNELS = {
   operationsRemoveItem: 'operations:remove-item',
   operationsCloseOrder: 'operations:close-order',
   operationsCancelOrder: 'operations:cancel-order',
+  vouchersGetState: 'vouchers:get-state',
+  vouchersCreate: 'vouchers:create',
+  vouchersChangeStatus: 'vouchers:change-status',
 } as const;
 
 export const systemInfoSchema = z.object({
@@ -179,4 +184,5 @@ export interface GtrzDesktopApi {
   readonly inventory: InventoryApi;
   readonly combos: ComboApi;
   readonly operations: OperationsApi;
+  readonly vouchers: VoucherApi;
 }
