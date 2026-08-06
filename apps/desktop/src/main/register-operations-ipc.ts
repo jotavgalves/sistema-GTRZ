@@ -2,6 +2,7 @@ import { ipcMain } from 'electron';
 
 import {
   addOrderItemInputSchema,
+  cancelOrderInputSchema,
   closeOrderInputSchema,
   createServicePointInputSchema,
   getOrderInputSchema,
@@ -14,6 +15,7 @@ import {
 } from '@gtrz/contracts';
 import {
   addOrderItem,
+  cancelOrder,
   closeOrder,
   createServicePoint,
   getOperationState,
@@ -36,6 +38,7 @@ const OPERATION_CHANNELS = [
   IPC_CHANNELS.operationsAddItem,
   IPC_CHANNELS.operationsRemoveItem,
   IPC_CHANNELS.operationsCloseOrder,
+  IPC_CHANNELS.operationsCancelOrder,
 ] as const;
 
 function normalizePayment(
@@ -97,5 +100,10 @@ export function registerOperationsIpcHandlers(options: RegisterOperationsIpcOpti
         payments: input.payments.map(normalizePayment),
       }),
     );
+  });
+
+  ipcMain.handle(IPC_CHANNELS.operationsCancelOrder, (_event, payload: unknown) => {
+    const input = cancelOrderInputSchema.parse(payload);
+    return orderSchema.parse(cancelOrder(options.getDatabase(), input));
   });
 }
