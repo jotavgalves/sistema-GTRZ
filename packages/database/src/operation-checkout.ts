@@ -48,7 +48,7 @@ export function closeOrder(
     readonly orderId: string;
     readonly discountCents: number;
     readonly payments: readonly DatabaseCloseOrderPaymentInput[];
-    readonly voucherUses: readonly DatabaseVoucherUseInput[];
+    readonly voucherUses?: readonly DatabaseVoucherUseInput[];
   },
 ): DatabaseOrder {
   const order = requireOpenOrderRow(database, input.orderId);
@@ -68,9 +68,10 @@ export function closeOrder(
     throw new Error('O total da comanda precisa ser maior que zero.');
   }
 
+  const voucherUses = input.voucherUses ?? [];
   const payments = normalizePayments(input.payments);
   const paymentCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
-  const voucherCents = input.voucherUses.reduce((total, use) => total + use.amountCents, 0);
+  const voucherCents = voucherUses.reduce((total, use) => total + use.amountCents, 0);
 
   if (paymentCents + voucherCents !== totalCents) {
     throw new Error(
@@ -81,7 +82,7 @@ export function closeOrder(
   const now = Date.now();
   database.sqlite.transaction(() => {
     deductOrderStock(database, order.event_id, order.id, items, now);
-    const redemptions = redeemVouchers(database, order.event_id, order.id, input.voucherUses, now);
+    const redemptions = redeemVouchers(database, order.event_id, order.id, voucherUses, now);
     const insertPayment = database.sqlite.prepare(
       `INSERT INTO payments
        (id, order_id, method, amount_cents, received_cents, change_cents, created_at)
