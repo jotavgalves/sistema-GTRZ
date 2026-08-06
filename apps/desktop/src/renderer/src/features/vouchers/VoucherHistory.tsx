@@ -7,12 +7,19 @@ interface VoucherHistoryProps {
 }
 
 const TYPE_LABELS = {
-  issue: 'Emissão',
   redemption: 'Uso',
   cancellation: 'Cancelamento',
   reactivation: 'Reativação',
   refund: 'Restituição',
 } as const;
+
+function describeTransaction(transaction: VoucherTransaction): string {
+  if (transaction.type === 'issue') {
+    return transaction.balanceBeforeCents === 0 ? 'Emissão' : 'Acréscimo';
+  }
+
+  return TYPE_LABELS[transaction.type];
+}
 
 function formatMoney(cents: number): string {
   return new Intl.NumberFormat('pt-BR', {
@@ -49,7 +56,7 @@ export function VoucherHistory({ transactions }: VoucherHistoryProps): React.JSX
                 <strong>{transaction.voucherCode}</strong>
                 <small>{formatDate(transaction.createdAt)}</small>
               </span>
-              <span>{TYPE_LABELS[transaction.type]}</span>
+              <span>{describeTransaction(transaction)}</span>
               <span>{formatMoney(transaction.amountCents)}</span>
               <strong>
                 {formatMoney(transaction.balanceBeforeCents)} →{' '}
