@@ -6,12 +6,18 @@ on:
       - feat/operacao-vouchers-despesas-auditoria
     paths:
       - automation/stage2.ready
+  pull_request:
+    branches:
+      - main
+    types:
+      - reopened
 
 permissions:
   contents: write
 
 jobs:
   apply:
+    if: github.event_name == 'push' || github.event.pull_request.head.ref == 'feat/operacao-vouchers-despesas-auditoria'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout da branch
@@ -24,6 +30,7 @@ jobs:
         shell: bash
         run: |
           cat automation/stage2.spart.* | base64 --decode | xz --decompress > /tmp/stage2.patch
+          git apply --check /tmp/stage2.patch
           git apply --index /tmp/stage2.patch
           rm -rf automation
           rm -f .github/workflows/apply-stage2-temporary.yml
