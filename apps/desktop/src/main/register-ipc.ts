@@ -37,7 +37,6 @@ import { registerFinanceIpcHandlers } from './register-finance-ipc';
 import { registerInventoryIpcHandlers } from './register-inventory-ipc';
 import { registerOperationsIpcHandlers } from './register-operations-ipc';
 import { registerTicketIpcHandlers } from './register-ticket-ipc';
-import { registerTicketIpcHandlers } from './register-ticket-ipc';
 import { registerVoucherIpcHandlers } from './register-voucher-ipc';
 
 interface RegisterIpcOptions {
@@ -155,7 +154,6 @@ export function registerIpcHandlers(options: RegisterIpcOptions): void {
   registerComboIpcHandlers({ getDatabase: options.getDatabase });
   registerFinanceIpcHandlers({ getDatabase: options.getDatabase });
   registerOperationsIpcHandlers({ getDatabase: options.getDatabase });
-  registerTicketIpcHandlers({ getDatabase: options.getDatabase });
   registerTicketIpcHandlers({ getDatabase: options.getDatabase });
   registerVoucherIpcHandlers({ getDatabase: options.getDatabase });
 }
