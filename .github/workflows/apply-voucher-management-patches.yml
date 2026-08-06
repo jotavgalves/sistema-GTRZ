@@ -63,6 +63,11 @@ jobs:
               '        orderId={order.id}\n        servicePointId={order.servicePointId}\n        value={voucherAmount}',
           )
           replace_once(
+              'apps/desktop/src/renderer/src/features/vouchers/VoucherForm.tsx',
+              "        void onSubmit(input).then(() => {\n          setLabel('');\n          setCode('');\n          setBalance('');\n          setServicePointId('');\n        });",
+              "        void onSubmit(input)\n          .then(() => {\n            setLabel('');\n            setCode('');\n            setBalance('');\n            setServicePointId('');\n          })\n          .catch(() => undefined);",
+          )
+          replace_once(
               'apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx',
               '        }).then(onCancel);',
               '        })\n          .then(onCancel)\n          .catch(() => undefined);',
@@ -80,6 +85,7 @@ jobs:
           packages/contracts/src/index.ts
           packages/contracts/src/operations.ts
           apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx
+          apps/desktop/src/renderer/src/features/vouchers/VoucherForm.tsx
           apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx
           apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx
 
@@ -87,7 +93,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages/database/src/index.ts packages/contracts/src/index.ts packages/contracts/src/operations.ts apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx
+          git add packages/database/src/index.ts packages/contracts/src/index.ts packages/contracts/src/operations.ts apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx
           if ! git diff --cached --quiet; then
             git commit -m 'chore: conecta gestão de vouchers ao checkout [skip ci]'
             git push origin HEAD:feat/navigation-voucher-management-final
