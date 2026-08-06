@@ -4,6 +4,7 @@ import { getOrder, requireActiveOperationEvent, requireOrderRow } from './operat
 import { restoreOrderStock } from './operation-stock';
 import type { DatabaseOrder } from './operation-types';
 import type { DatabaseContext } from './types';
+import { refundOrderVouchers } from './vouchers';
 
 function requireProduction(database: DatabaseContext): void {
   if (getSessionState(database).profile !== 'production') {
@@ -30,10 +31,12 @@ export function cancelOrder(
   const reason = input.reason.trim();
   const now = Date.now();
   let restoredUnits = 0;
+  let refundedVoucherCents = 0;
 
   database.sqlite.transaction(() => {
     if (order.status === 'paid') {
       restoredUnits = restoreOrderStock(database, eventId, order.id, now);
+      refundedVoucherCents = refundOrderVouchers(database, eventId, order.id, now);
     }
 
     database.sqlite
@@ -51,6 +54,7 @@ export function cancelOrder(
       details: {
         previousStatus: order.status,
         reason,
+        refundedVoucherCents,
         restoredUnits,
         totalCents: order.total_cents,
       },
