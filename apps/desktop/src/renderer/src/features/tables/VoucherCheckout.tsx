@@ -68,6 +68,20 @@ export function VoucherCheckout({
 
   const automaticSelection = allocation?.servicePointId === servicePointId ? allocation.code : '';
 
+  const applyManualCode = (): void => {
+    const code = manualCode.trim();
+
+    if (code.length < 4) {
+      return;
+    }
+
+    void onBind(code)
+      .then(() => {
+        setManualCode('');
+      })
+      .catch(() => undefined);
+  };
+
   return (
     <section className="voucher-checkout" aria-label="Voucher da comanda">
       <div className="voucher-checkout__heading">
@@ -120,23 +134,7 @@ export function VoucherCheckout({
         ) : null}
       </div>
 
-      <form
-        className="voucher-checkout__manual"
-        onSubmit={(event) => {
-          event.preventDefault();
-          const code = manualCode.trim();
-
-          if (code.length < 4) {
-            return;
-          }
-
-          void onBind(code)
-            .then(() => {
-              setManualCode('');
-            })
-            .catch(() => undefined);
-        }}
-      >
+      <div className="voucher-checkout__manual">
         <label className="form-field">
           <span>Aplicar outro voucher pelo código</span>
           <input
@@ -145,6 +143,12 @@ export function VoucherCheckout({
             onChange={(event) => {
               setManualCode(event.target.value.toLocaleUpperCase('pt-BR'));
             }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                applyManualCode();
+              }
+            }}
             placeholder="Digite ou leia o código"
             value={manualCode}
           />
@@ -152,12 +156,13 @@ export function VoucherCheckout({
         <button
           className="button button--secondary button--compact"
           disabled={busy || manualCode.trim().length < 4}
-          type="submit"
+          onClick={applyManualCode}
+          type="button"
         >
           <Search size={15} aria-hidden="true" />
           Aplicar código
         </button>
-      </form>
+      </div>
 
       {allocation === null ? (
         <p className="voucher-checkout__empty">Nenhum voucher aplicado nesta compra.</p>
