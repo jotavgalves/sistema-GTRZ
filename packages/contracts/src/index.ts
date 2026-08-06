@@ -4,12 +4,14 @@ import type { ComboApi } from './combos';
 import type { CashApi, ExpenseApi } from './finance';
 import type { InventoryApi } from './inventory';
 import type { OperationsApi } from './operations';
+import type { TicketApi } from './tickets';
 import type { VoucherApi } from './vouchers';
 
 export * from './combos';
 export * from './finance';
 export * from './inventory';
 export * from './operations';
+export * from './tickets';
 export * from './vouchers';
 
 export const IPC_CHANNELS = {
@@ -55,6 +57,11 @@ export const IPC_CHANNELS = {
   expensesGetState: 'expenses:get-state',
   expensesCreate: 'expenses:create',
   expensesCancel: 'expenses:cancel',
+  ticketsGetState: 'tickets:get-state',
+  ticketsCreateLot: 'tickets:create-lot',
+  ticketsUpdateLot: 'tickets:update-lot',
+  ticketsCreateSale: 'tickets:create-sale',
+  ticketsCancelSale: 'tickets:cancel-sale',
 } as const;
 
 export const systemInfoSchema = z.object({
@@ -196,4 +203,5 @@ export interface GtrzDesktopApi {
   readonly vouchers: VoucherApi;
   readonly cash: CashApi;
   readonly expenses: ExpenseApi;
+  readonly tickets: TicketApi;
 }
