@@ -4,6 +4,7 @@ import { useSession } from '../../shared/session/session-context';
 import { CatalogPanel } from './CatalogPanel';
 import { CreateTableForm } from './CreateTableForm';
 import { OrderPanel } from './OrderPanel';
+import { RecentOrdersPanel } from './RecentOrdersPanel';
 import { ServicePointGrid } from './ServicePointGrid';
 import { useOperations } from './useOperations';
 
@@ -29,11 +30,13 @@ export function TablesPage(): React.JSX.Element {
     addItem,
     removeItem,
     closeCurrentOrder,
+    cancelOrder,
     clearOrder,
   } = useOperations();
   const production = sessionState?.profile === 'production';
   const servicePoints = state?.servicePoints ?? [];
   const catalog = state?.catalog ?? [];
+  const recentOrders = state?.recentOrders ?? [];
   const openPoints = servicePoints.filter((item) => item.status === 'open');
   const openTotalCents = openPoints.reduce((total, item) => total + item.activeOrderTotalCents, 0);
   const availableItems = catalog.filter((item) => item.active && item.availableQuantity > 0).length;
@@ -107,6 +110,10 @@ export function TablesPage(): React.JSX.Element {
           {!loading ? (
             <ServicePointGrid busy={busy} onOpen={openServicePoint} servicePoints={servicePoints} />
           ) : null}
+
+          {production && !loading ? (
+            <RecentOrdersPanel busy={busy} onCancel={cancelOrder} orders={recentOrders} />
+          ) : null}
         </>
       ) : null}
 
@@ -116,9 +123,11 @@ export function TablesPage(): React.JSX.Element {
           <OrderPanel
             busy={busy}
             onBack={clearOrder}
+            onCancelOrder={(reason) => cancelOrder(order.id, reason)}
             onCloseOrder={closeCurrentOrder}
             onRemoveItem={removeItem}
             order={order}
+            production={production}
           />
         </div>
       )}
