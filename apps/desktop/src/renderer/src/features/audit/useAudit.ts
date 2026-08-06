@@ -18,7 +18,7 @@ export function useAudit(): AuditViewState {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (input: AuditQueryInput = {}): Promise<void> => {
+  const load = useCallback(async (input: AuditQueryInput = { limit: 100 }): Promise<void> => {
     setLoading(true);
     setError(null);
 
