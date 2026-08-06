@@ -100,7 +100,11 @@ export function OperationalHealth({
       ? { value: 'Aberto', detail: 'Disponível para movimentações', status: 'success' as const }
       : state.cashRegisterStatus === 'closed'
         ? { value: 'Fechado', detail: 'Conciliação já concluída', status: 'neutral' as const }
-        : { value: 'Não aberto', detail: 'Abra o caixa antes das vendas', status: 'warning' as const };
+        : {
+            value: 'Não aberto',
+            detail: 'Abra o caixa antes das vendas',
+            status: 'warning' as const,
+          };
 
   return (
     <article className="panel insight-panel">
@@ -114,7 +118,9 @@ export function OperationalHealth({
       <div className="insight-health-grid">
         <HealthItem
           detail={
-            state.orders.open === 0 ? 'Nenhuma pendência de atendimento' : 'Precisam ser pagas ou canceladas'
+            state.orders.open === 0
+              ? 'Nenhuma pendência de atendimento'
+              : 'Precisam ser pagas ou canceladas'
           }
           label="Comandas abertas"
           status={state.orders.open === 0 ? 'success' : 'warning'}
@@ -180,7 +186,8 @@ export function TicketCapacity({ state }: { readonly state: DashboardState }): R
         <span style={{ width: `${String(clampPercent(occupancy) * 100)}%` }} />
       </div>
       <small className="ticket-capacity__note">
-        {state.tickets.sold} pagos · {state.tickets.courtesy} cortesias · {capacity} de capacidade total
+        {state.tickets.sold} pagos · {state.tickets.courtesy} cortesias · {capacity} de capacidade
+        total
       </small>
     </article>
   );
