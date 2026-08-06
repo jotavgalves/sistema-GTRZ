@@ -87,7 +87,8 @@ test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
     }
 
     if (outcome === 'pending') {
-      const buttonText = (await closePanel.locator('button.event-close-submit').textContent()) ?? '';
+      const buttonText =
+        (await closePanel.locator('button.event-close-submit').textContent()) ?? '';
       throw new Error(`Encerramento permaneceu pendente. Estado do botão: ${buttonText.trim()}`);
     }
 
