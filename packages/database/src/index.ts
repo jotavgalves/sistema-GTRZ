@@ -1,6 +1,7 @@
 import BetterSqlite3 from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
+import { financeMigration } from './finance-migration';
 import { technicalSchema } from './schema';
 import type { DatabaseContext } from './types';
 
@@ -317,6 +318,7 @@ const migrations: readonly Migration[] = [
         ON voucher_transactions (order_id, type);
     `,
   },
+  financeMigration,
 ];
 
 function ensureMigrationTable(sqlite: BetterSqlite3.Database): void {
@@ -381,8 +383,10 @@ export function verifyDatabaseIntegrity(database: DatabaseContext): boolean {
 
 export * from './audit';
 export * from './backup';
+export * from './cash';
 export * from './combos';
 export * from './control';
+export * from './expenses';
 export * from './inventory';
 export * from './operations';
 export * from './stock-transfers';

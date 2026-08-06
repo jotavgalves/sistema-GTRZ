@@ -174,8 +174,13 @@ function getSalesByMethod(database: DatabaseContext, eventId: string): DatabaseS
        WHERE o.event_id = ? AND o.status = 'paid' AND vt.type = 'redemption'`,
     )
     .get(eventId) as { readonly amount_cents: number };
-  totals.voucherCents = voucher.amount_cents;
-  return totals;
+  return {
+    cashCents,
+    pixCents,
+    creditCardCents,
+    debitCardCents,
+    voucherCents: voucher.amount_cents,
+  };
 }
 
 function getExpenseTotals(
@@ -228,14 +233,16 @@ function calculateState(database: DatabaseContext, eventId: string): DatabaseCas
   const movements =
     registerRow === null
       ? []
-      : (database.sqlite
-          .prepare(
-            `SELECT id, event_id, cash_register_id, type, amount_cents, note, created_at
+      : (
+          database.sqlite
+            .prepare(
+              `SELECT id, event_id, cash_register_id, type, amount_cents, note, created_at
              FROM cash_movements
              WHERE cash_register_id = ?
              ORDER BY created_at DESC, id DESC`,
-          )
-          .all(registerRow.id) as CashMovementRow[]).map(mapMovement);
+            )
+            .all(registerRow.id) as CashMovementRow[]
+        ).map(mapMovement);
   const salesByMethod = getSalesByMethod(database, eventId);
   const expenses = getExpenseTotals(database, eventId);
   const movementTotals = getMovementTotals(database, registerRow?.id ?? null);
@@ -430,14 +437,7 @@ export function closeCashRegister(
              variance_cents = ?, closed_at = ?, updated_at = ?
          WHERE id = ?`,
       )
-      .run(
-        current.expectedCashCents,
-        countedCashCents,
-        varianceCents,
-        now,
-        now,
-        register.id,
-      );
+      .run(current.expectedCashCents, countedCashCents, varianceCents, now, now, register.id);
     appendAudit(database, {
       action: 'cash.closed',
       entityType: 'cash-register',

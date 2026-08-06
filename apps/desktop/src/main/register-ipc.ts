@@ -33,6 +33,7 @@ import {
 
 import type { BackupService } from './backup-service';
 import { registerComboIpcHandlers } from './register-combo-ipc';
+import { registerFinanceIpcHandlers } from './register-finance-ipc';
 import { registerInventoryIpcHandlers } from './register-inventory-ipc';
 import { registerOperationsIpcHandlers } from './register-operations-ipc';
 import { registerVoucherIpcHandlers } from './register-voucher-ipc';
@@ -150,6 +151,7 @@ export function registerIpcHandlers(options: RegisterIpcOptions): void {
 
   registerInventoryIpcHandlers({ getDatabase: options.getDatabase });
   registerComboIpcHandlers({ getDatabase: options.getDatabase });
+  registerFinanceIpcHandlers({ getDatabase: options.getDatabase });
   registerOperationsIpcHandlers({ getDatabase: options.getDatabase });
   registerVoucherIpcHandlers({ getDatabase: options.getDatabase });
 }

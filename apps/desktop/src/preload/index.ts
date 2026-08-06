@@ -35,6 +35,7 @@ import {
 } from '@gtrz/contracts';
 
 import { comboApi } from './combo-api';
+import { cashApi, expenseApi } from './finance-api';
 import { inventoryApi } from './inventory-api';
 import { operationsApi } from './operations-api';
 import { voucherApi } from './voucher-api';
@@ -126,6 +127,8 @@ const api: GtrzDesktopApi = {
   combos: comboApi,
   operations: operationsApi,
   vouchers: voucherApi,
+  cash: cashApi,
+  expenses: expenseApi,
 };
 
 contextBridge.exposeInMainWorld('gtrz', api);
