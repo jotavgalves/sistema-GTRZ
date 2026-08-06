@@ -23,3 +23,12 @@
 - Ao confirmar, todas as vendas pagas que consumiram o voucher são estornadas.
 - Estoque, pagamentos e saldo do voucher são recompostos pelas regras transacionais existentes.
 - O voucher é cancelado, desvinculado da mesa e removido das telas operacionais.
+
+## Validações obrigatórias
+
+- migração de bancos existentes sem perda de dados;
+- bloqueio de redução do saldo por edição;
+- aplicação manual em mesa diferente da mesa cadastrada;
+- restrição da lista automática à mesa atual;
+- exclusão com estorno integral de venda, estoque e voucher;
+- ausência da tela intermediária de permissões durante a troca de abas.
