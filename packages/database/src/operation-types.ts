@@ -69,6 +69,7 @@ export interface DatabaseOperationState {
   readonly activeEventId: string | null;
   readonly servicePoints: readonly DatabaseServicePoint[];
   readonly catalog: readonly DatabaseOperationCatalogItem[];
+  readonly recentOrders: readonly DatabaseOrder[];
 }
 
 export interface DatabaseCloseOrderPaymentInput {
