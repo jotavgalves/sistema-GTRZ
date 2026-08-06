@@ -1,4 +1,4 @@
-import { CreditCard, Plus, Trash2, WalletCards } from 'lucide-react';
+import { CreditCard, Plus, TicketCheck, Trash2, WalletCards } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import type { CloseOrderInput, Order, PaymentMethod } from '@gtrz/contracts';
@@ -48,11 +48,15 @@ function newPayment(method: PaymentMethod = 'cash'): PaymentDraft {
 export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React.JSX.Element {
   const [discount, setDiscount] = useState('');
   const [payments, setPayments] = useState<readonly PaymentDraft[]>([newPayment()]);
+  const [voucherCode, setVoucherCode] = useState('');
+  const [voucherAmount, setVoucherAmount] = useState('');
   const discountCents = parseMoney(discount);
   const totalCents = Math.max(order.subtotalCents - discountCents, 0);
+  const voucherCents = parseMoney(voucherAmount);
   const informedCents = useMemo(
-    () => payments.reduce((total, payment) => total + parseMoney(payment.amount), 0),
-    [payments],
+    () =>
+      payments.reduce((total, payment) => total + parseMoney(payment.amount), 0) + voucherCents,
+    [payments, voucherCents],
   );
 
   const updatePayment = (id: string, patch: Partial<PaymentDraft>): void => {
@@ -75,15 +79,24 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
               : { method: payment.method, amountCents };
           })
           .filter((payment) => payment.amountCents > 0);
+        const normalizedCode = voucherCode.trim();
+        const voucherUses =
+          normalizedCode.length >= 4 && voucherCents > 0
+            ? [{ code: normalizedCode, amountCents: voucherCents }]
+            : [];
 
-        void onClose({ discountCents, payments: normalizedPayments });
+        void onClose({
+          discountCents,
+          payments: normalizedPayments,
+          voucherUses,
+        });
       }}
     >
       <div className="checkout-form__heading">
         <WalletCards size={19} aria-hidden="true" />
         <div>
           <h3>Fechar comanda</h3>
-          <p>Use um ou mais meios de pagamento.</p>
+          <p>Combine voucher, dinheiro, PIX, crédito ou débito.</p>
         </div>
       </div>
 
@@ -107,6 +120,33 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
           Informado: {formatMoney(informedCents)} · Restante:{' '}
           {formatMoney(Math.max(totalCents - informedCents, 0))}
         </small>
+      </div>
+
+      <div className="voucher-payment-row">
+        <TicketCheck size={18} aria-hidden="true" />
+        <label className="form-field">
+          <span>Código do voucher</span>
+          <input
+            disabled={busy}
+            onChange={(event) => {
+              setVoucherCode(event.target.value.toLocaleUpperCase('pt-BR'));
+            }}
+            placeholder="GTRZ-XXXXXXXX"
+            value={voucherCode}
+          />
+        </label>
+        <label className="form-field">
+          <span>Valor do voucher</span>
+          <input
+            disabled={busy}
+            inputMode="decimal"
+            onChange={(event) => {
+              setVoucherAmount(event.target.value);
+            }}
+            placeholder="0,00"
+            value={voucherAmount}
+          />
+        </label>
       </div>
 
       <div className="payment-list">
