@@ -14,7 +14,6 @@ export function SessionProvider({ children }: PropsWithChildren): React.JSX.Elem
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async (): Promise<void> => {
-    setLoading(true);
     setError(null);
 
     try {
