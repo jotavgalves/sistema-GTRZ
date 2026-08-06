@@ -57,16 +57,38 @@ jobs:
               "  status: z.enum(['active', 'exhausted', 'cancelled']),\n  createdAt:",
               "  status: z.enum(['active', 'exhausted', 'cancelled']),\n  servicePointId: z.uuid().nullable(),\n  servicePointLabel: z.string().trim().min(1).max(40).nullable(),\n  createdAt:",
           )
+          replace_once(
+              'apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx',
+              '        orderId={order.id}\n        value={voucherAmount}',
+              '        orderId={order.id}\n        servicePointId={order.servicePointId}\n        value={voucherAmount}',
+          )
+          replace_once(
+              'apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx',
+              '        }).then(onCancel);',
+              '        })\n          .then(onCancel)\n          .catch(() => undefined);',
+          )
+          replace_once(
+              'apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx',
+              '        void onDelete(normalizedReason);',
+              '        void onDelete(normalizedReason).catch(() => undefined);',
+          )
 
       - name: Formatar
-        run: npx prettier --write packages/database/src/index.ts packages/contracts/src/index.ts packages/contracts/src/operations.ts
+        run: >-
+          npx prettier --write
+          packages/database/src/index.ts
+          packages/contracts/src/index.ts
+          packages/contracts/src/operations.ts
+          apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx
+          apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx
+          apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx
 
       - name: Publicar conexões
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages/database/src/index.ts packages/contracts/src/index.ts packages/contracts/src/operations.ts
+          git add packages/database/src/index.ts packages/contracts/src/index.ts packages/contracts/src/operations.ts apps/desktop/src/renderer/src/features/tables/CheckoutForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherEditForm.tsx apps/desktop/src/renderer/src/features/vouchers/VoucherDeletePanel.tsx
           if ! git diff --cached --quiet; then
-            git commit -m 'chore: conecta migração e canais de vouchers [skip ci]'
+            git commit -m 'chore: conecta gestão de vouchers ao checkout [skip ci]'
             git push origin HEAD:feat/navigation-voucher-management-final
           fi
