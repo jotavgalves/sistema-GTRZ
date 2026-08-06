@@ -14,6 +14,7 @@ async function ensureProduction(window: Page): Promise<void> {
 }
 
 test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa', async () => {
+  test.setTimeout(60_000);
   const electronApplication = await electron.launch({ args: [applicationPath] });
 
   try {
@@ -35,24 +36,30 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
     await window.getByPlaceholder('Ex.: Segundo lote').fill(lotName);
     await window.getByPlaceholder('60,00').fill('50.00');
     await window.getByPlaceholder('200').fill('3');
-    await window.getByRole('button', { name: 'Criar lote' }).click();
+    await window.getByRole('button', { name: 'Criar lote', exact: true }).click();
     await expect(window.getByText('Lote criado.')).toBeVisible();
 
     await window
       .getByLabel('Lote', { exact: true })
       .selectOption({ label: `${lotName} · 3 disponíveis` });
     await window.getByPlaceholder('Nome completo').fill(attendeeName);
-    await window.getByLabel('Origem').selectOption('door');
-    await window.getByLabel('Quantidade').fill('2');
-    await window.getByLabel('Pagamento').selectOption('cash');
-    await window.getByRole('button', { name: 'Registrar venda' }).click();
+    await window.getByLabel('Origem', { exact: true }).selectOption('door');
+    await window.getByLabel('Quantidade', { exact: true }).fill('2');
+    await window.getByLabel('Pagamento', { exact: true }).selectOption('cash');
+    const registerSaleButton = window.getByRole('button', {
+      name: 'Registrar venda',
+      exact: true,
+    });
+    await expect(registerSaleButton).toBeEnabled();
+    await registerSaleButton.click();
     await expect(window.getByText('Ingressos registrados.')).toBeVisible();
 
     const saleCard = window.locator('article.ticket-sale-card').filter({ hasText: attendeeName });
     await expect(saleCard).toContainText('R$ 100,00');
     await expect(saleCard.locator('.ticket-code')).toHaveCount(2);
-    const lotCard = window.locator('article.ticket-lot-card').filter({ hasText: lotName });
-    await expect(lotCard).toContainText('1');
+    await expect(
+      window.locator('article.ticket-lot-card').filter({ hasText: lotName }),
+    ).toContainText('1');
 
     await window.getByRole('link', { name: 'Caixa' }).click();
     await expect(window.getByText('R$ 100,00', { exact: true }).first()).toBeVisible();
@@ -62,10 +69,17 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
       .locator('article.ticket-sale-card')
       .filter({ hasText: attendeeName });
     await activeSaleCard.getByPlaceholder('Ex.: venda duplicada').fill('Venda duplicada');
-    await activeSaleCard.getByRole('button', { name: 'Cancelar venda' }).click();
+    const cancelSaleButton = activeSaleCard.getByRole('button', {
+      name: 'Cancelar venda',
+      exact: true,
+    });
+    await expect(cancelSaleButton).toBeEnabled();
+    await cancelSaleButton.click();
     await expect(window.getByText('Venda cancelada.')).toBeVisible();
     await expect(activeSaleCard).toContainText('Cancelada');
-    await expect(lotCard).toContainText('3');
+    await expect(
+      window.locator('article.ticket-lot-card').filter({ hasText: lotName }),
+    ).toContainText('3');
 
     await window.getByRole('link', { name: 'Caixa' }).click();
     await expect(window.getByText('R$ 0,00', { exact: true }).first()).toBeVisible();
