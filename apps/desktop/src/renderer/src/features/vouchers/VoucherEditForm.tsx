@@ -44,7 +44,9 @@ export function VoucherEditForm({
           label: label.trim(),
           servicePointId: servicePointId.length === 0 ? null : servicePointId,
           addBalanceCents,
-        }).then(onCancel);
+        })
+          .then(onCancel)
+          .catch(() => undefined);
       }}
     >
       <label className="form-field">
@@ -99,7 +101,9 @@ export function VoucherEditForm({
           placeholder="0,00"
           value={addBalance}
         />
-        <small>O saldo nunca é reduzido por edição. Informe somente o valor que será acrescentado.</small>
+        <small>
+          O saldo nunca é reduzido por edição. Informe somente o valor que será acrescentado.
+        </small>
       </label>
       <div className="voucher-edit-form__actions">
         <button

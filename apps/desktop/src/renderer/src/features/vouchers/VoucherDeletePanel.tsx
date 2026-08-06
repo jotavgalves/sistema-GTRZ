@@ -36,7 +36,7 @@ export function VoucherDeletePanel({
           return;
         }
 
-        void onDelete(normalizedReason);
+        void onDelete(normalizedReason).catch(() => undefined);
       }}
     >
       <div className="voucher-delete-panel__warning">
