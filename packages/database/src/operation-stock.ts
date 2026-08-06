@@ -28,6 +28,11 @@ interface StockRequirement {
   quantity: number;
 }
 
+interface SaleMovementRow {
+  readonly product_id: string;
+  readonly quantity: number;
+}
+
 export function listOperationCatalog(
   database: DatabaseContext,
   eventId: string | null,
@@ -205,4 +210,53 @@ export function deductOrderStock(
       now,
     );
   }
+}
+
+export function restoreOrderStock(
+  database: DatabaseContext,
+  eventId: string,
+  orderId: string,
+  now: number,
+): number {
+  const saleNote = `Venda da comanda ${orderId}`;
+  const movements = database.sqlite
+    .prepare(
+      `SELECT product_id, SUM(quantity) AS quantity
+       FROM stock_movements
+       WHERE event_id = ? AND type = 'sale' AND note = ?
+       GROUP BY product_id`,
+    )
+    .all(eventId, saleNote) as SaleMovementRow[];
+
+  if (movements.length === 0) {
+    throw new Error('A venda não possui movimentos de estoque que possam ser devolvidos.');
+  }
+
+  const updateStock = database.sqlite.prepare(
+    `INSERT INTO event_stock (event_id, product_id, quantity, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(event_id, product_id)
+     DO UPDATE SET quantity = event_stock.quantity + excluded.quantity,
+                   updated_at = excluded.updated_at`,
+  );
+  const insertMovement = database.sqlite.prepare(
+    `INSERT INTO stock_movements
+     (id, event_id, product_id, type, quantity, delta, note, created_at)
+     VALUES (?, ?, ?, 'return', ?, ?, ?, ?)`,
+  );
+
+  for (const movement of movements) {
+    updateStock.run(eventId, movement.product_id, movement.quantity, now);
+    insertMovement.run(
+      randomUUID(),
+      eventId,
+      movement.product_id,
+      movement.quantity,
+      movement.quantity,
+      `Estorno da comanda ${orderId}`,
+      now,
+    );
+  }
+
+  return movements.reduce((total, movement) => total + movement.quantity, 0);
 }
