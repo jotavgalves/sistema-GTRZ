@@ -52,7 +52,7 @@ function requireVoucher(database: DatabaseContext, voucherId: string, eventId: s
     )
     .get(voucherId) as VoucherRow | undefined;
 
-  if (voucher === undefined || voucher.deleted_at !== null) {
+  if (voucher?.deleted_at !== null) {
     throw new Error('O voucher informado não existe ou já foi excluído.');
   }
 

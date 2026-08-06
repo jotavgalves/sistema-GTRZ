@@ -151,7 +151,7 @@ function requireVoucherById(database: DatabaseContext, voucherId: string): Vouch
     | VoucherRow
     | undefined;
 
-  if (row === undefined || row.deleted_at !== null) {
+  if (row?.deleted_at !== null) {
     throw new Error('O voucher informado não existe ou foi excluído.');
   }
 
@@ -168,7 +168,7 @@ function requireVoucherByCode(
     .prepare(selectVoucherSql('v.event_id = ? AND v.code = ? COLLATE NOCASE'))
     .get(eventId, normalizedCode) as VoucherRow | undefined;
 
-  if (row === undefined || row.deleted_at !== null) {
+  if (row?.deleted_at !== null) {
     throw new Error(`Voucher ${normalizedCode} não encontrado neste evento.`);
   }
 
