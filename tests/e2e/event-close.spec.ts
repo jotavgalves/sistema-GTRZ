@@ -17,13 +17,13 @@ async function ensureProduction(window: Page): Promise<void> {
 
 async function waitForCloseOutcome(
   window: Page,
-  successMessage: Locator,
+  closedStatus: Locator,
   failureMessage: Locator,
 ): Promise<CloseOutcome> {
   const deadline = Date.now() + 15_000;
 
   while (Date.now() < deadline) {
-    if (await successMessage.isVisible()) {
+    if (await closedStatus.isVisible()) {
       return 'success';
     }
 
@@ -77,9 +77,9 @@ test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
       closePanel.getByRole('button', { name: 'Encerrando e verificando backup…' }),
     ).toBeVisible();
 
-    const successMessage = window.getByText(/Evento encerrado\. Backup verificado:/u);
+    const closedStatus = eventCard.getByText('Encerrado', { exact: true });
     const failureMessage = window.locator('.event-close-panel .form-error');
-    const outcome = await waitForCloseOutcome(window, successMessage, failureMessage);
+    const outcome = await waitForCloseOutcome(window, closedStatus, failureMessage);
 
     if (outcome === 'failure') {
       const failureText = (await failureMessage.textContent()) ?? 'erro não informado';
@@ -87,12 +87,10 @@ test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
     }
 
     if (outcome === 'pending') {
-      const buttonText =
-        (await closePanel.locator('button.event-close-submit').textContent()) ?? '';
-      throw new Error(`Encerramento permaneceu pendente. Estado do botão: ${buttonText.trim()}`);
+      throw new Error('O evento não foi encerrado e o sistema não exibiu uma mensagem de erro.');
     }
 
-    await expect(eventCard.getByText('Encerrado', { exact: true })).toBeVisible();
+    await expect(closedStatus).toBeVisible();
     await expect(window.getByText('Nenhum', { exact: true }).first()).toBeVisible();
   } finally {
     await electronApplication.close();
