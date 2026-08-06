@@ -388,6 +388,7 @@ export * from './backup';
 export * from './cash';
 export * from './combos';
 export * from './control';
+export * from './event-close';
 export * from './expenses';
 export * from './inventory';
 export * from './operations';
