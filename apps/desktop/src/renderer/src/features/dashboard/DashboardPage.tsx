@@ -85,7 +85,11 @@ function OperationalHealth({ state }: { readonly state: DashboardState }): React
         </div>
       </div>
       <div className="insight-health-grid">
-        <div className={state.orders.open > 0 ? 'insight-health insight-health--warning' : 'insight-health'}>
+        <div
+          className={
+            state.orders.open > 0 ? 'insight-health insight-health--warning' : 'insight-health'
+          }
+        >
           <span>Comandas abertas</span>
           <strong>{state.orders.open}</strong>
         </div>
@@ -143,7 +147,9 @@ export function DashboardPage(): React.JSX.Element {
       </header>
 
       {error === null ? null : <p className="form-error">{error}</p>}
-      {loading && state === null ? <div className="route-state">Carregando indicadores…</div> : null}
+      {loading && state === null ? (
+        <div className="route-state">Carregando indicadores…</div>
+      ) : null}
 
       {!loading && state?.activeEvent === null ? (
         <div className="empty-state">

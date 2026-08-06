@@ -58,8 +58,8 @@ export function AuditPage(): React.JSX.Element {
           <span className="eyebrow">Trilha imutável de operações</span>
           <h1>Auditoria</h1>
           <p>
-            Pesquise criações, alterações, vendas, estornos, estoque, vouchers, ingressos e
-            acessos protegidos.
+            Pesquise criações, alterações, vendas, estornos, estoque, vouchers, ingressos e acessos
+            protegidos.
           </p>
         </div>
         <button

@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  auditQueryInputSchema,
-  auditStateSchema,
-  dashboardStateSchema,
-} from './insights';
+import { auditQueryInputSchema, auditStateSchema, dashboardStateSchema } from './insights';
 
 const auditRecord = {
   id: 1,

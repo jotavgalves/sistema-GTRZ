@@ -201,7 +201,10 @@ function listAuditRecords(
   return rows.map(mapAuditRecord);
 }
 
-function getOrderCounts(database: DatabaseContext, eventId: string): DatabaseDashboardState['orders'] {
+function getOrderCounts(
+  database: DatabaseContext,
+  eventId: string,
+): DatabaseDashboardState['orders'] {
   const rows = database.sqlite
     .prepare(
       `SELECT status, COUNT(*) AS amount
@@ -246,7 +249,10 @@ export function getDashboardState(database: DatabaseContext): DatabaseDashboardS
     expectedCashCents: cashState.expectedCashCents,
     cashRegisterStatus: cashState.register?.status ?? 'not-opened',
     salesByMethod: cashState.salesByMethod,
-    orders: activeEvent === null ? { open: 0, paid: 0, cancelled: 0 } : getOrderCounts(database, activeEvent.id),
+    orders:
+      activeEvent === null
+        ? { open: 0, paid: 0, cancelled: 0 }
+        : getOrderCounts(database, activeEvent.id),
     tickets: {
       sold: activeTicketSales
         .filter((sale) => sale.source !== 'courtesy')
