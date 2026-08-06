@@ -1,10 +1,11 @@
-import { Link2, TicketCheck, Unlink } from 'lucide-react';
+import { Link2, Search, TicketCheck, Unlink } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import type { Voucher, VoucherAllocation } from '@gtrz/contracts';
 
 interface VoucherCheckoutProps {
   readonly orderId: string;
+  readonly servicePointId: string;
   readonly allocation: VoucherAllocation | null;
   readonly busy: boolean;
   readonly value: string;
@@ -24,6 +25,7 @@ function formatMoney(cents: number): string {
 
 export function VoucherCheckout({
   orderId,
+  servicePointId,
   allocation,
   busy,
   value,
@@ -34,51 +36,68 @@ export function VoucherCheckout({
   onUnbind,
 }: VoucherCheckoutProps): React.JSX.Element {
   const [availableVouchers, setAvailableVouchers] = useState<readonly Voucher[]>([]);
+  const [manualCode, setManualCode] = useState('');
 
   useEffect(() => {
     let active = true;
 
-    void window.gtrz.vouchers.getState().then((voucherState) => {
-      if (active) {
-        setAvailableVouchers(
-          voucherState.vouchers.filter(
-            (voucher) => voucher.status === 'active' && voucher.remainingBalanceCents > 0,
-          ),
-        );
-      }
-    });
+    void window.gtrz.vouchers
+      .getState()
+      .then((voucherState) => {
+        if (active) {
+          setAvailableVouchers(
+            voucherState.vouchers.filter(
+              (voucher) =>
+                voucher.status === 'active' &&
+                voucher.remainingBalanceCents > 0 &&
+                voucher.servicePointId === servicePointId,
+            ),
+          );
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setAvailableVouchers([]);
+        }
+      });
 
     return () => {
       active = false;
     };
-  }, [orderId, allocation?.voucherId]);
+  }, [orderId, servicePointId, allocation?.voucherId]);
+
+  const automaticSelection =
+    allocation?.servicePointId === servicePointId ? allocation.code : '';
 
   return (
     <section className="voucher-checkout" aria-label="Voucher da comanda">
       <div className="voucher-checkout__heading">
         <TicketCheck size={18} aria-hidden="true" />
         <div>
-          <strong>Voucher vinculado à mesa</strong>
-          <small>Selecione o voucher e o sistema associa automaticamente à comanda.</small>
+          <strong>Voucher da mesa</strong>
+          <small>
+            A lista exibe somente vouchers criados para esta mesa. Qualquer outro voucher exige o
+            código manual.
+          </small>
         </div>
       </div>
 
       <div className="voucher-checkout__selector">
         <select
-          aria-label="Voucher vinculado à comanda"
+          aria-label="Voucher automático da mesa"
           disabled={busy}
           onChange={(event) => {
             const code = event.target.value;
 
             if (code.length === 0) {
-              void onUnbind();
+              void onUnbind().catch(() => undefined);
             } else {
-              void onBind(code);
+              void onBind(code).catch(() => undefined);
             }
           }}
-          value={allocation?.code ?? ''}
+          value={automaticSelection}
         >
-          <option value="">Nenhum voucher</option>
+          <option value="">Nenhum voucher automático</option>
           {availableVouchers.map((voucher) => (
             <option key={voucher.id} value={voucher.code}>
               {voucher.code} · {voucher.label} · {formatMoney(voucher.remainingBalanceCents)}
@@ -92,7 +111,7 @@ export function VoucherCheckout({
             className="icon-button"
             disabled={busy}
             onClick={() => {
-              void onUnbind();
+              void onUnbind().catch(() => undefined);
             }}
             title="Remover voucher"
             type="button"
@@ -102,13 +121,57 @@ export function VoucherCheckout({
         ) : null}
       </div>
 
+      <form
+        className="voucher-checkout__manual"
+        onSubmit={(event) => {
+          event.preventDefault();
+          const code = manualCode.trim();
+
+          if (code.length < 4) {
+            return;
+          }
+
+          void onBind(code)
+            .then(() => {
+              setManualCode('');
+            })
+            .catch(() => undefined);
+        }}
+      >
+        <label className="form-field">
+          <span>Aplicar outro voucher pelo código</span>
+          <input
+            disabled={busy}
+            maxLength={32}
+            onChange={(event) => {
+              setManualCode(event.target.value.toLocaleUpperCase('pt-BR'));
+            }}
+            placeholder="Digite ou leia o código"
+            value={manualCode}
+          />
+        </label>
+        <button
+          className="button button--secondary button--compact"
+          disabled={busy || manualCode.trim().length < 4}
+          type="submit"
+        >
+          <Search size={15} aria-hidden="true" />
+          Aplicar código
+        </button>
+      </form>
+
       {allocation === null ? (
-        <p className="voucher-checkout__empty">Nenhum voucher vinculado.</p>
+        <p className="voucher-checkout__empty">Nenhum voucher aplicado nesta compra.</p>
       ) : (
         <div className="voucher-checkout__card">
           <span>
             <strong>{allocation.label}</strong>
-            <small>{allocation.code}</small>
+            <small>
+              {allocation.code} ·{' '}
+              {allocation.servicePointId === servicePointId
+                ? 'vinculado a esta mesa'
+                : 'aplicado manualmente'}
+            </small>
           </span>
           <span>
             <small>Saldo disponível</small>
