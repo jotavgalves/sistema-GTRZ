@@ -1,12 +1,4 @@
-import {
-  CreditCard,
-  Link2,
-  Plus,
-  TicketCheck,
-  Trash2,
-  Unlink,
-  WalletCards,
-} from 'lucide-react';
+import { CreditCard, Link2, Plus, TicketCheck, Trash2, Unlink, WalletCards } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import type { CloseOrderInput, Order, PaymentMethod, Voucher } from '@gtrz/contracts';

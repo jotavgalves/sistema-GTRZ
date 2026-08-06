@@ -69,11 +69,7 @@ export function closeOrder(
     throw new Error('O total da comanda precisa ser maior que zero.');
   }
 
-  const voucherUses = validateOrderVoucherUses(
-    database,
-    order.id,
-    input.voucherUses ?? [],
-  );
+  const voucherUses = validateOrderVoucherUses(database, order.id, input.voucherUses ?? []);
   const payments = normalizePayments(input.payments);
   const paymentCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
   const voucherCents = voucherUses.reduce((total, use) => total + use.amountCents, 0);
