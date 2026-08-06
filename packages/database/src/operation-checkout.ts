@@ -81,13 +81,7 @@ export function closeOrder(
   const now = Date.now();
   database.sqlite.transaction(() => {
     deductOrderStock(database, order.event_id, order.id, items, now);
-    const redemptions = redeemVouchers(
-      database,
-      order.event_id,
-      order.id,
-      input.voucherUses,
-      now,
-    );
+    const redemptions = redeemVouchers(database, order.event_id, order.id, input.voucherUses, now);
     const insertPayment = database.sqlite.prepare(
       `INSERT INTO payments
        (id, order_id, method, amount_cents, received_cents, change_cents, created_at)

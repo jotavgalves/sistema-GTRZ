@@ -54,8 +54,7 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
   const totalCents = Math.max(order.subtotalCents - discountCents, 0);
   const voucherCents = parseMoney(voucherAmount);
   const informedCents = useMemo(
-    () =>
-      payments.reduce((total, payment) => total + parseMoney(payment.amount), 0) + voucherCents,
+    () => payments.reduce((total, payment) => total + parseMoney(payment.amount), 0) + voucherCents,
     [payments, voucherCents],
   );
 
