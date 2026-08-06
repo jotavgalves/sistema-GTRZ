@@ -17,7 +17,7 @@ export const dashboardApi: DashboardApi = {
 };
 
 export const auditApi: AuditApi = {
-  async list(input = {}) {
+  async list(input = { limit: 100 }) {
     const parsedInput = auditQueryInputSchema.parse(input);
     const payload: unknown = await ipcRenderer.invoke(IPC_CHANNELS.auditList, parsedInput);
     return auditStateSchema.parse(payload);
