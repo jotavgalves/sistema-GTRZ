@@ -202,10 +202,7 @@ function mapOrder(database: DatabaseContext, row: OperationOrderRow): DatabaseOr
   };
 }
 
-function listRecentOrders(
-  database: DatabaseContext,
-  eventId: string,
-): readonly DatabaseOrder[] {
+function listRecentOrders(database: DatabaseContext, eventId: string): readonly DatabaseOrder[] {
   const rows = database.sqlite
     .prepare(
       `SELECT id, event_id, service_point_id, service_point_label, status,

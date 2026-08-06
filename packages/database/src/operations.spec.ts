@@ -193,9 +193,9 @@ describe('event operations database', () => {
 
     expect(cancelled.status).toBe('cancelled');
     expect(getStock(database, event.id, catalog.waterId)).toBe(10);
-    expect(getOperationState(database).servicePoints.find((item) => item.id === table.id)?.status).toBe(
-      'available',
-    );
+    expect(
+      getOperationState(database).servicePoints.find((item) => item.id === table.id)?.status,
+    ).toBe('available');
     expect(getOperationState(database).recentOrders[0]?.id).toBe(order.id);
     expect(
       database.sqlite

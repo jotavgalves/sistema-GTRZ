@@ -67,7 +67,9 @@ export function RecentOrdersPanel({
               </div>
 
               <p className="recent-order-card__items">
-                {order.items.map((item) => `${String(item.quantity)}× ${item.itemName}`).join(' · ')}
+                {order.items
+                  .map((item) => `${String(item.quantity)}× ${item.itemName}`)
+                  .join(' · ')}
               </p>
 
               {order.status === 'paid' ? (
