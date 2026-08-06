@@ -60,7 +60,7 @@ function formatDetailValue(key: string, value: unknown): string {
     return String(value);
   }
 
-  return JSON.stringify(value) ?? String(value);
+  return JSON.stringify(value);
 }
 
 function getDetailHighlights(
