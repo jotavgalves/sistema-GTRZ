@@ -146,23 +146,20 @@ function getSalesByMethod(database: DatabaseContext, eventId: string): DatabaseS
        GROUP BY p.method`,
     )
     .all(eventId) as PaymentSummaryRow[];
-  const totals: DatabaseSalesByMethod = {
-    cashCents: 0,
-    pixCents: 0,
-    creditCardCents: 0,
-    debitCardCents: 0,
-    voucherCents: 0,
-  };
+  let cashCents = 0;
+  let pixCents = 0;
+  let creditCardCents = 0;
+  let debitCardCents = 0;
 
   for (const row of rows) {
     if (row.method === 'cash') {
-      totals.cashCents = row.amount_cents;
+      cashCents = row.amount_cents;
     } else if (row.method === 'pix') {
-      totals.pixCents = row.amount_cents;
+      pixCents = row.amount_cents;
     } else if (row.method === 'credit-card') {
-      totals.creditCardCents = row.amount_cents;
+      creditCardCents = row.amount_cents;
     } else {
-      totals.debitCardCents = row.amount_cents;
+      debitCardCents = row.amount_cents;
     }
   }
 
