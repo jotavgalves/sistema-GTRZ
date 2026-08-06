@@ -57,7 +57,8 @@ test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
     ]);
 
     if (outcome === 'failure') {
-      throw new Error(`Encerramento rejeitado pelo sistema: ${await failureMessage.textContent()}`);
+      const failureText = (await failureMessage.textContent()) ?? 'erro não informado';
+      throw new Error(`Encerramento rejeitado pelo sistema: ${failureText}`);
     }
 
     await expect(eventCard.getByText('Encerrado', { exact: true })).toBeVisible();
