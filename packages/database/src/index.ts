@@ -400,6 +400,7 @@ export * from './operations';
 export * from './stock-transfers';
 export * from './ticket-finance';
 export * from './tickets';
+export * from './voucher-administration';
 export * from './voucher-deletion';
 export * from './vouchers';
 export type { DatabaseContext } from './types';

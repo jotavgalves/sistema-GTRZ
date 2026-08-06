@@ -127,7 +127,7 @@ export function VoucherCard({
               className="button button--ghost button--compact"
               disabled={busy}
               onClick={() => {
-                void onChangeStatus(voucher.id, 'cancelled');
+                void onChangeStatus(voucher.id, 'cancelled').catch(() => undefined);
               }}
               type="button"
             >
@@ -140,7 +140,7 @@ export function VoucherCard({
               className="button button--secondary button--compact"
               disabled={busy}
               onClick={() => {
-                void onChangeStatus(voucher.id, 'active');
+                void onChangeStatus(voucher.id, 'active').catch(() => undefined);
               }}
               type="button"
             >
