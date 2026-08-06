@@ -15,23 +15,18 @@ async function ensureProduction(window: Page): Promise<void> {
 }
 
 async function closeApplication(application: ElectronApplication): Promise<void> {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-  try {
-    await Promise.race([
-      application.close(),
-      new Promise<void>((resolve) => {
-        timeoutId = setTimeout(() => {
-          application.process().kill();
-          resolve();
-        }, actionTimeout);
-      }),
-    ]);
-  } finally {
-    if (timeoutId !== null) {
+  await new Promise<void>((resolve) => {
+    const timeoutId = setTimeout(() => {
+      application.process().kill();
+      resolve();
+    }, actionTimeout);
+    const finish = (): void => {
       clearTimeout(timeoutId);
-    }
-  }
+      resolve();
+    };
+
+    void application.close().then(finish, finish);
+  });
 }
 
 test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa', async () => {
