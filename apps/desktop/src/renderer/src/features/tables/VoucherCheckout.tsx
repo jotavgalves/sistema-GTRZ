@@ -66,8 +66,7 @@ export function VoucherCheckout({
     };
   }, [orderId, servicePointId, allocation?.voucherId]);
 
-  const automaticSelection =
-    allocation?.servicePointId === servicePointId ? allocation.code : '';
+  const automaticSelection = allocation?.servicePointId === servicePointId ? allocation.code : '';
 
   return (
     <section className="voucher-checkout" aria-label="Voucher da comanda">

@@ -29,7 +29,10 @@ test('SMK-NAV-002 — troca abas sem renderizar a tela intermediária de permiss
       if (target !== null) {
         observer.observe(target, { childList: true, subtree: true, characterData: true });
       }
-      Object.assign(window, { __gtrzPermissionFlashes: observed, __gtrzPermissionObserver: observer });
+      Object.assign(window, {
+        __gtrzPermissionFlashes: observed,
+        __gtrzPermissionObserver: observer,
+      });
     });
 
     await window.getByRole('link', { name: 'Despesas' }).click();

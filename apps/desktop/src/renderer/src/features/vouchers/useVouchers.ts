@@ -45,7 +45,9 @@ export function useVouchers(): VoucherViewState {
         window.gtrz.operations.getState(),
       ]);
       setState(voucherState);
-      setTables(operationState.servicePoints.filter((servicePoint) => servicePoint.type === 'table'));
+      setTables(
+        operationState.servicePoints.filter((servicePoint) => servicePoint.type === 'table'),
+      );
     } catch (loadError: unknown) {
       setError(getErrorMessage(loadError));
     } finally {

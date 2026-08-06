@@ -147,9 +147,9 @@ function mapTransaction(row: VoucherTransactionRow): DatabaseVoucherTransaction 
 }
 
 function requireVoucherById(database: DatabaseContext, voucherId: string): VoucherRow {
-  const row = database.sqlite
-    .prepare(selectVoucherSql('v.id = ?'))
-    .get(voucherId) as VoucherRow | undefined;
+  const row = database.sqlite.prepare(selectVoucherSql('v.id = ?')).get(voucherId) as
+    | VoucherRow
+    | undefined;
 
   if (row === undefined || row.deleted_at !== null) {
     throw new Error('O voucher informado não existe ou foi excluído.');
