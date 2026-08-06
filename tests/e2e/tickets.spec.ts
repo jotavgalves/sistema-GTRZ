@@ -30,7 +30,14 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
     await window.getByRole('link', { name: 'Eventos' }).click();
     await window.getByPlaceholder('Ex.: La Rumba Neon — Agosto').fill(eventName);
     await window.getByRole('button', { name: 'Criar evento' }).click();
-    await expect(window.getByText(eventName, { exact: true }).first()).toBeVisible();
+    const eventCard = window.locator('article.event-card').filter({ hasText: eventName });
+    await expect(eventCard).toBeVisible();
+    const operateButton = eventCard.getByRole('button', { name: 'Operar evento' });
+
+    if (await operateButton.isVisible()) {
+      await operateButton.click();
+      await expect(eventCard.getByText('Em operação')).toBeVisible();
+    }
 
     await window.getByRole('link', { name: 'Ingressos' }).click();
     await expect(window.getByRole('heading', { name: 'Ingressos' })).toBeVisible();
