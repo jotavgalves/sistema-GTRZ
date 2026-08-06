@@ -1,20 +1,20 @@
 name: Formatar ingressos
 
 on:
-  push:
-    branches: [feat/operacao-evento]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   format:
-    if: github.actor != 'github-actions[bot]'
+    if: github.event.pull_request.head.ref == 'feat/operacao-evento'
     runs-on: windows-latest
     timeout-minutes: 15
 
     steps:
-      - name: Checkout
+      - name: Checkout da branch
         uses: actions/checkout@v5
         with:
           ref: feat/operacao-evento
