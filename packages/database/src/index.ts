@@ -267,6 +267,56 @@ const migrations: readonly Migration[] = [
       CREATE INDEX payments_order_created_idx ON payments (order_id, created_at);
     `,
   },
+  {
+    version: 7,
+    name: 'vouchers-and-balance-ledger',
+    sql: `
+      CREATE TABLE vouchers (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        code TEXT NOT NULL COLLATE NOCASE,
+        label TEXT NOT NULL,
+        initial_balance_cents INTEGER NOT NULL CHECK (initial_balance_cents > 0),
+        remaining_balance_cents INTEGER NOT NULL CHECK (remaining_balance_cents >= 0),
+        status TEXT NOT NULL CHECK (status IN ('active', 'exhausted', 'cancelled')),
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        CHECK (remaining_balance_cents <= initial_balance_cents),
+        FOREIGN KEY (event_id) REFERENCES events(id) ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE UNIQUE INDEX vouchers_event_code_unique
+        ON vouchers (event_id, code COLLATE NOCASE);
+      CREATE INDEX vouchers_event_status_updated_idx
+        ON vouchers (event_id, status, updated_at DESC);
+
+      CREATE TABLE voucher_transactions (
+        id TEXT PRIMARY KEY NOT NULL,
+        event_id TEXT NOT NULL,
+        voucher_id TEXT NOT NULL,
+        voucher_code TEXT NOT NULL,
+        order_id TEXT,
+        type TEXT NOT NULL CHECK (type IN (
+          'issue', 'redemption', 'cancellation', 'reactivation', 'refund'
+        )),
+        amount_cents INTEGER NOT NULL CHECK (amount_cents >= 0),
+        balance_before_cents INTEGER NOT NULL CHECK (balance_before_cents >= 0),
+        balance_after_cents INTEGER NOT NULL CHECK (balance_after_cents >= 0),
+        note TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES events(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (voucher_id) REFERENCES vouchers(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON UPDATE CASCADE ON DELETE RESTRICT
+      );
+
+      CREATE INDEX voucher_transactions_event_created_idx
+        ON voucher_transactions (event_id, created_at DESC);
+      CREATE INDEX voucher_transactions_voucher_created_idx
+        ON voucher_transactions (voucher_id, created_at DESC);
+      CREATE INDEX voucher_transactions_order_type_idx
+        ON voucher_transactions (order_id, type);
+    `,
+  },
 ];
 
 function ensureMigrationTable(sqlite: BetterSqlite3.Database): void {
@@ -336,4 +386,5 @@ export * from './control';
 export * from './inventory';
 export * from './operations';
 export * from './stock-transfers';
+export * from './vouchers';
 export type { DatabaseContext } from './types';
