@@ -9,20 +9,16 @@ import type {
   DatabasePayment,
 } from './operation-types';
 import type { DatabaseContext } from './types';
+import { redeemVouchers, type DatabaseVoucherUseInput } from './vouchers';
 
 function normalizePayments(
   payments: readonly DatabaseCloseOrderPaymentInput[],
-  totalCents: number,
 ): readonly DatabasePayment[] {
-  const paidCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
-
-  if (paidCents !== totalCents) {
-    throw new Error(
-      `A soma dos pagamentos deve ser igual ao total da comanda: ${String(totalCents)} centavos.`,
-    );
-  }
-
   return payments.map((payment) => {
+    if (!Number.isInteger(payment.amountCents) || payment.amountCents <= 0) {
+      throw new Error('Os valores de pagamento devem ser positivos.');
+    }
+
     if (payment.method !== 'cash' && payment.receivedCents !== undefined) {
       throw new Error('Valor recebido e troco só podem ser informados para pagamento em dinheiro.');
     }
@@ -52,6 +48,7 @@ export function closeOrder(
     readonly orderId: string;
     readonly discountCents: number;
     readonly payments: readonly DatabaseCloseOrderPaymentInput[];
+    readonly voucherUses: readonly DatabaseVoucherUseInput[];
   },
 ): DatabaseOrder {
   const order = requireOpenOrderRow(database, input.orderId);
@@ -71,10 +68,26 @@ export function closeOrder(
     throw new Error('O total da comanda precisa ser maior que zero.');
   }
 
-  const payments = normalizePayments(input.payments, totalCents);
+  const payments = normalizePayments(input.payments);
+  const paymentCents = payments.reduce((total, payment) => total + payment.amountCents, 0);
+  const voucherCents = input.voucherUses.reduce((total, use) => total + use.amountCents, 0);
+
+  if (paymentCents + voucherCents !== totalCents) {
+    throw new Error(
+      `A soma de pagamentos e vouchers deve ser igual ao total da comanda: ${String(totalCents)} centavos.`,
+    );
+  }
+
   const now = Date.now();
   database.sqlite.transaction(() => {
     deductOrderStock(database, order.event_id, order.id, items, now);
+    const redemptions = redeemVouchers(
+      database,
+      order.event_id,
+      order.id,
+      input.voucherUses,
+      now,
+    );
     const insertPayment = database.sqlite.prepare(
       `INSERT INTO payments
        (id, order_id, method, amount_cents, received_cents, change_cents, created_at)
@@ -119,6 +132,7 @@ export function closeOrder(
         })),
         subtotalCents: order.subtotal_cents,
         totalCents,
+        vouchers: redemptions,
       },
     });
   })();
