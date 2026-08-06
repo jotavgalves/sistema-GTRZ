@@ -135,6 +135,7 @@ describe('gestão avançada de vouchers', () => {
     expect(previewVoucherDeletion(database, voucher.id)).toMatchObject({
       paidOrderCount: 1,
       paidOrderTotalCents: 1000,
+      restoredUnits: 1,
       voucherRedemptionCents: 400,
     });
 
@@ -142,7 +143,7 @@ describe('gestão avançada de vouchers', () => {
       voucherId: voucher.id,
       reason: 'Voucher emitido para a pessoa errada',
     });
-    expect(result.paidOrderCount).toBe(1);
+    expect(result).toMatchObject({ paidOrderCount: 1, restoredUnits: 1 });
     expect(getOrder(database, orderWithItem.id).status).toBe('cancelled');
     expect(getStock(database, event.id, productId)).toBe(5);
     expect(getVoucherState(database).vouchers).toHaveLength(0);
