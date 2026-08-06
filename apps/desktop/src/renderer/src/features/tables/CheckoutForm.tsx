@@ -141,9 +141,8 @@ export function CheckoutForm({
   });
   const voucherInvalid =
     voucherCents > 0 &&
-    (allocation === null ||
-      allocation.status !== 'active' ||
-      voucherCents > allocation.remainingBalanceCents ||
+    (allocation?.status !== 'active' ||
+      voucherCents > (allocation?.remainingBalanceCents ?? 0) ||
       voucherCents > totalCents);
   const canSubmit =
     !busy &&
