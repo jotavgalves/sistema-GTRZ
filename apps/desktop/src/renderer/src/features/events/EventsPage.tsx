@@ -24,6 +24,7 @@ export function EventsPage(): React.JSX.Element {
   const [formError, setFormError] = useState<string | null>(null);
   const [closingEventId, setClosingEventId] = useState<string | null>(null);
   const [closeMessage, setCloseMessage] = useState<string | null>(null);
+  const activeEvent = sessionState?.activeEvent ?? null;
 
   const counters = useMemo(
     () => ({
@@ -114,18 +115,16 @@ export function EventsPage(): React.JSX.Element {
         </article>
         <article className="summary-card summary-card--accent">
           <span>Em operação</span>
-          <strong>{sessionState?.activeEvent?.name ?? 'Nenhum'}</strong>
+          <strong>{activeEvent?.name ?? 'Nenhum'}</strong>
         </article>
       </div>
 
       {closeMessage === null ? null : <div className="event-close-success">{closeMessage}</div>}
 
-      {sessionState?.activeEvent !== null &&
-      sessionState?.activeEvent !== undefined &&
-      closingEventId === sessionState.activeEvent.id ? (
+      {activeEvent !== null && closingEventId === activeEvent.id ? (
         <EventClosePanel
-          eventId={sessionState.activeEvent.id}
-          eventName={sessionState.activeEvent.name}
+          eventId={activeEvent.id}
+          eventName={activeEvent.name}
           onCompleted={handleCloseCompleted}
         />
       ) : null}
@@ -194,7 +193,7 @@ export function EventsPage(): React.JSX.Element {
             <EventCard
               busy={busyId === event.id}
               event={event}
-              isActive={sessionState?.activeEvent?.id === event.id}
+              isActive={activeEvent?.id === event.id}
               key={event.id}
               onChangeStatus={(eventId, status) => handleStatus(eventId, status)}
               onRename={(eventId, nextName) =>
