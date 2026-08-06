@@ -49,8 +49,10 @@ export function VoucherDeletePanel({
             <p>
               A exclusão cancelará {impact.paidOrderCount}{' '}
               {impact.paidOrderCount === 1 ? 'venda' : 'vendas'}, no total de{' '}
-              {formatMoney(impact.paidOrderTotalCents)}. Estoque, pagamentos e{' '}
-              {formatMoney(impact.voucherRedemptionCents)} consumidos do voucher serão estornados.
+              {formatMoney(impact.paidOrderTotalCents)}, devolverá {impact.restoredUnits}{' '}
+              {impact.restoredUnits === 1 ? 'unidade' : 'unidades'} ao estoque e estornará os
+              pagamentos, incluindo {formatMoney(impact.voucherRedemptionCents)} consumidos do
+              voucher.
             </p>
           )}
         </div>
