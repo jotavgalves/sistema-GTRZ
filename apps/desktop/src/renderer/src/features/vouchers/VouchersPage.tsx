@@ -13,8 +13,20 @@ function formatMoney(cents: number): string {
 }
 
 export function VouchersPage(): React.JSX.Element {
-  const { state, loading, busy, error, message, reload, createVoucher, changeStatus } =
-    useVouchers();
+  const {
+    state,
+    tables,
+    loading,
+    busy,
+    error,
+    message,
+    reload,
+    createVoucher,
+    updateVoucher,
+    changeStatus,
+    previewDeletion,
+    deleteVoucher,
+  } = useVouchers();
   const vouchers = state?.vouchers ?? [];
   const transactions = state?.transactions ?? [];
   const activeVouchers = vouchers.filter((voucher) => voucher.status === 'active');
@@ -28,9 +40,12 @@ export function VouchersPage(): React.JSX.Element {
     <section className="feature-page">
       <header className="feature-header">
         <div>
-          <span className="eyebrow">Crédito controlado por evento</span>
+          <span className="eyebrow">Crédito controlado por evento e mesa</span>
           <h1>Vouchers</h1>
-          <p>Emita créditos, acompanhe saldos individuais e audite cada uso ou restituição.</p>
+          <p>
+            Crie créditos, vincule-os a uma mesa, aumente saldos e exclua com estorno completo das
+            vendas relacionadas.
+          </p>
         </div>
         <button
           className="button button--secondary"
@@ -55,12 +70,12 @@ export function VouchersPage(): React.JSX.Element {
           <strong>{formatMoney(availableCents)}</strong>
         </article>
         <article className="summary-card">
-          <span>Cancelados</span>
-          <strong>{cancelledVouchers.length}</strong>
+          <span>Mesas cadastradas</span>
+          <strong>{tables.length}</strong>
         </article>
         <article className="summary-card">
-          <span>Movimentações</span>
-          <strong>{transactions.length}</strong>
+          <span>Cancelados</span>
+          <strong>{cancelledVouchers.length}</strong>
         </article>
       </div>
 
@@ -77,7 +92,7 @@ export function VouchersPage(): React.JSX.Element {
       {state?.activeEventId !== null && state !== null ? (
         <div className="voucher-layout">
           <article className="panel">
-            <VoucherForm busy={busy} onSubmit={createVoucher} />
+            <VoucherForm busy={busy} onSubmit={createVoucher} tables={tables} />
           </article>
           <div className="voucher-list" aria-live="polite">
             {loading ? <div className="route-state">Carregando vouchers…</div> : null}
@@ -93,6 +108,10 @@ export function VouchersPage(): React.JSX.Element {
                 busy={busy}
                 key={voucher.id}
                 onChangeStatus={changeStatus}
+                onDelete={deleteVoucher}
+                onPreviewDeletion={previewDeletion}
+                onUpdate={updateVoucher}
+                tables={tables}
                 voucher={voucher}
               />
             ))}
