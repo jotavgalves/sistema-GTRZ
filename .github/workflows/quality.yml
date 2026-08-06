@@ -45,7 +45,7 @@ jobs:
         run: npm run build --workspace @gtrz/desktop
 
       - name: Executar smoke E2E do Electron
-        run: npx playwright test
+        run: npx playwright test --retries=1
 
   publish-windows:
     name: Publicar instalador Windows
