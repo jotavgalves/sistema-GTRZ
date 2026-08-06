@@ -98,6 +98,7 @@ export function registerOperationsIpcHandlers(options: RegisterOperationsIpcOpti
         orderId: input.orderId,
         discountCents: input.discountCents,
         payments: input.payments.map(normalizePayment),
+        voucherUses: input.voucherUses,
       }),
     );
   });
