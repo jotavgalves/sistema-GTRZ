@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto';
 import { appendAudit } from './audit';
 import { getSessionState } from './control';
 import { getTicketSalesByMethod } from './ticket-finance';
-import { getTicketSalesByMethod } from './ticket-finance';
 import type { DatabaseContext } from './types';
 
 export type DatabaseCashRegisterStatus = 'open' | 'closed';
@@ -148,7 +147,6 @@ function getSalesByMethod(database: DatabaseContext, eventId: string): DatabaseS
        GROUP BY p.method`,
     )
     .all(eventId) as PaymentSummaryRow[];
-  const ticketSales = getTicketSalesByMethod(database, eventId);
   const ticketSales = getTicketSalesByMethod(database, eventId);
   let cashCents = 0;
   let pixCents = 0;
