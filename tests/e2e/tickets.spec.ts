@@ -1,7 +1,7 @@
 import path from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
-import { _electron as electron } from 'playwright';
+import { _electron as electron, type ElectronApplication } from 'playwright';
 
 const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
 const actionTimeout = 5_000;
@@ -11,6 +11,26 @@ async function ensureProduction(window: Page): Promise<void> {
     await window.getByPlaceholder('Digite a senha').fill('121225');
     await window.getByRole('button', { name: 'Entrar em Produção' }).click();
     await expect(window.getByText('Produção', { exact: true })).toBeVisible();
+  }
+}
+
+async function closeApplication(application: ElectronApplication): Promise<void> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    await Promise.race([
+      application.close(),
+      new Promise<void>((resolve) => {
+        timeoutId = setTimeout(() => {
+          application.process().kill();
+          resolve();
+        }, actionTimeout);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
   }
 }
 
@@ -100,6 +120,6 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
     await window.getByRole('link', { name: 'Caixa' }).click();
     await expect(window.getByText('R$ 0,00', { exact: true }).first()).toBeVisible();
   } finally {
-    await electronApplication.close();
+    await closeApplication(electronApplication);
   }
 });
