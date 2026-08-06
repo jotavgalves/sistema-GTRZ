@@ -78,7 +78,13 @@ export function registerFinanceIpcHandlers(options: RegisterFinanceIpcOptions): 
             amountCents: input.amountCents,
             paymentMethod: input.paymentMethod,
           }
-        : input;
+        : {
+            category: input.category,
+            description: input.description,
+            amountCents: input.amountCents,
+            paymentMethod: input.paymentMethod,
+            note: input.note,
+          };
     return expenseSchema.parse(createExpense(options.getDatabase(), databaseInput));
   });
 
