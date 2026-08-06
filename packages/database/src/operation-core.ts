@@ -202,6 +202,23 @@ function mapOrder(database: DatabaseContext, row: OperationOrderRow): DatabaseOr
   };
 }
 
+function listRecentOrders(
+  database: DatabaseContext,
+  eventId: string,
+): readonly DatabaseOrder[] {
+  const rows = database.sqlite
+    .prepare(
+      `SELECT id, event_id, service_point_id, service_point_label, status,
+              subtotal_cents, discount_cents, total_cents, opened_at, closed_at, updated_at
+       FROM orders
+       WHERE event_id = ? AND status IN ('paid', 'cancelled')
+       ORDER BY updated_at DESC
+       LIMIT 25`,
+    )
+    .all(eventId) as OperationOrderRow[];
+  return rows.map((row) => mapOrder(database, row));
+}
+
 function ensureCounter(database: DatabaseContext, eventId: string): void {
   const existing = database.sqlite
     .prepare(
@@ -278,7 +295,7 @@ export function getOperationState(database: DatabaseContext): DatabaseOperationS
   const eventId = getSessionState(database).activeEvent?.id ?? null;
 
   if (eventId === null) {
-    return { activeEventId: null, servicePoints: [], catalog: [] };
+    return { activeEventId: null, servicePoints: [], catalog: [], recentOrders: [] };
   }
 
   ensureCounter(database, eventId);
@@ -286,6 +303,7 @@ export function getOperationState(database: DatabaseContext): DatabaseOperationS
     activeEventId: eventId,
     servicePoints: listServicePoints(database, eventId),
     catalog: listOperationCatalog(database, eventId),
+    recentOrders: listRecentOrders(database, eventId),
   };
 }
 
