@@ -48,11 +48,11 @@ jobs:
         run: npx playwright test
 
       - name: Gerar instalador Windows
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         run: npm run package:win
 
       - name: Publicar instalador Windows
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
         uses: actions/upload-artifact@v7
         with:
           name: GTRZ-System-Windows
