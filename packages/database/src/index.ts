@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 
 import { financeMigration } from './finance-migration';
 import { ticketMigration } from './ticket-migration';
+import { ticketMigration } from './ticket-migration';
 import { technicalSchema } from './schema';
 import type { DatabaseContext } from './types';
 
@@ -392,6 +393,8 @@ export * from './expenses';
 export * from './inventory';
 export * from './operations';
 export * from './stock-transfers';
+export * from './ticket-finance';
+export * from './tickets';
 export * from './ticket-finance';
 export * from './tickets';
 export * from './vouchers';
