@@ -39,12 +39,14 @@ export function VoucherForm({ busy, tables, onSubmit }: VoucherFormProps): React
         const input: CreateVoucherInput =
           normalizedCode.length === 0 ? baseInput : { ...baseInput, code: normalizedCode };
 
-        void onSubmit(input).then(() => {
-          setLabel('');
-          setCode('');
-          setBalance('');
-          setServicePointId('');
-        });
+        void onSubmit(input)
+          .then(() => {
+            setLabel('');
+            setCode('');
+            setBalance('');
+            setServicePointId('');
+          })
+          .catch(() => undefined);
       }}
     >
       <div className="panel__heading">
