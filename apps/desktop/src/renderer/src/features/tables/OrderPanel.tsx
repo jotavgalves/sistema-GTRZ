@@ -2,14 +2,17 @@ import { ArrowLeft, ReceiptText, Trash2 } from 'lucide-react';
 
 import type { CloseOrderInput, Order } from '@gtrz/contracts';
 
+import { CancellationForm } from './CancellationForm';
 import { CheckoutForm } from './CheckoutForm';
 
 interface OrderPanelProps {
   readonly order: Order;
   readonly busy: boolean;
+  readonly production: boolean;
   readonly onBack: () => void;
   readonly onRemoveItem: (orderItemId: string) => Promise<void>;
   readonly onCloseOrder: (input: Omit<CloseOrderInput, 'orderId'>) => Promise<void>;
+  readonly onCancelOrder: (reason: string) => Promise<void>;
 }
 
 function formatMoney(cents: number): string {
@@ -22,9 +25,11 @@ function formatMoney(cents: number): string {
 export function OrderPanel({
   order,
   busy,
+  production,
   onBack,
   onRemoveItem,
   onCloseOrder,
+  onCancelOrder,
 }: OrderPanelProps): React.JSX.Element {
   return (
     <article className="panel order-panel">
@@ -76,6 +81,12 @@ export function OrderPanel({
       </div>
 
       <CheckoutForm busy={busy} onClose={onCloseOrder} order={order} />
+
+      {production ? (
+        <div className="order-cancellation">
+          <CancellationForm busy={busy} label="Cancelar comanda" onSubmit={onCancelOrder} />
+        </div>
+      ) : null}
     </article>
   );
 }
