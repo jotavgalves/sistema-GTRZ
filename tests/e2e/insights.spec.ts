@@ -1,10 +1,9 @@
 import path from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
-import { _electron as electron, type ElectronApplication } from 'playwright';
+import { _electron as electron } from 'playwright';
 
 const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
-const actionTimeout = 5_000;
 
 async function ensureProduction(window: Page): Promise<void> {
   if (await window.getByText('Caixa', { exact: true }).isVisible()) {
@@ -12,21 +11,6 @@ async function ensureProduction(window: Page): Promise<void> {
     await window.getByRole('button', { name: 'Entrar em Produção' }).click();
     await expect(window.getByText('Produção', { exact: true })).toBeVisible();
   }
-}
-
-async function closeApplication(application: ElectronApplication): Promise<void> {
-  await new Promise<void>((resolve) => {
-    const timeoutId = setTimeout(() => {
-      application.process().kill();
-      resolve();
-    }, actionTimeout);
-    const finish = (): void => {
-      clearTimeout(timeoutId);
-      resolve();
-    };
-
-    void application.close().then(finish, finish);
-  });
 }
 
 test('SMK-INS-001 — consolida evento e pesquisa sua trilha de auditoria', async () => {
@@ -52,20 +36,21 @@ test('SMK-INS-001 — consolida evento e pesquisa sua trilha de auditoria', asyn
     }
 
     await window.getByRole('link', { name: 'Visão geral' }).click();
-    await expect(window.getByRole('heading', { name: 'Visão geral' })).toBeVisible();
-    await expect(window.getByText(eventName, { exact: true })).toBeVisible();
-    await expect(window.getByText('Faturamento', { exact: true })).toBeVisible();
-    await expect(window.getByText('Resultado projetado', { exact: true })).toBeVisible();
+    const main = window.getByRole('main');
+    await expect(main.getByRole('heading', { name: 'Visão geral' })).toBeVisible();
+    await expect(main.getByText(eventName, { exact: true })).toBeVisible();
+    await expect(main.getByText('Faturamento', { exact: true })).toBeVisible();
+    await expect(main.getByText('Resultado projetado', { exact: true })).toBeVisible();
 
     await window.getByRole('link', { name: 'Auditoria' }).click();
-    await expect(window.getByRole('heading', { name: 'Auditoria' })).toBeVisible();
-    const searchInput = window.getByPlaceholder('Ex.: estorno, ingresso, nome do evento');
+    await expect(main.getByRole('heading', { name: 'Auditoria' })).toBeVisible();
+    const searchInput = main.getByPlaceholder('Ex.: estorno, ingresso, nome do evento');
     await searchInput.fill(eventName);
-    await window.getByRole('button', { name: 'Aplicar filtros' }).click();
-    const auditCard = window.locator('article.audit-card').filter({ hasText: eventName }).first();
+    await main.getByRole('button', { name: 'Aplicar filtros' }).click();
+    const auditCard = main.locator('article.audit-card').filter({ hasText: eventName }).first();
     await expect(auditCard).toBeVisible();
     await expect(auditCard).toContainText('event.created');
   } finally {
-    await closeApplication(electronApplication);
+    await electronApplication.close();
   }
 });
