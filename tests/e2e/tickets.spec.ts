@@ -39,8 +39,10 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
     await window.getByRole('button', { name: 'Criar lote', exact: true }).click();
     await expect(window.getByText('Lote criado.')).toBeVisible();
 
-    await window
-      .getByLabel('Lote', { exact: true })
+    const saleForm = window.locator('form.ticket-sale-form');
+    await saleForm
+      .getByRole('combobox')
+      .first()
       .selectOption({ label: `${lotName} · 3 disponíveis` });
     await window.getByPlaceholder('Nome completo').fill(attendeeName);
     await window.getByLabel('Origem', { exact: true }).selectOption('door');
