@@ -41,9 +41,7 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
 
     const saleForm = window.locator('form.ticket-sale-form');
     const saleComboboxes = saleForm.getByRole('combobox');
-    await saleComboboxes
-      .nth(0)
-      .selectOption({ label: `${lotName} · 3 disponíveis` });
+    await saleComboboxes.nth(0).selectOption({ label: `${lotName} · 3 disponíveis` });
     await saleForm.getByPlaceholder('Nome completo').fill(attendeeName);
     await saleComboboxes.nth(1).selectOption('door');
     await saleForm.getByRole('spinbutton').fill('2');
