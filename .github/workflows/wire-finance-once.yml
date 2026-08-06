@@ -30,100 +30,103 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Aplicar ligações
-        shell: python
+        shell: pwsh
         run: |
-          from pathlib import Path
-
-          index = Path('packages/database/src/index.ts')
-          text = index.read_text(encoding='utf-8')
-          text = text.replace(
-              "import { technicalSchema } from './schema';",
-              "import { financeMigration } from './finance-migration';\nimport { technicalSchema } from './schema';",
+          $indexPath = 'packages/database/src/index.ts'
+          $text = Get-Content $indexPath -Raw
+          $text = $text.Replace(
+            "import { technicalSchema } from './schema';",
+            "import { financeMigration } from './finance-migration';`nimport { technicalSchema } from './schema';"
           )
-          marker = "  {\n    version: 7,\n    name: 'vouchers-and-balance-ledger',"
-          if marker not in text:
-              raise SystemExit('migration 7 marker missing')
-          closing = "  },\n];\n\nfunction ensureMigrationTable"
-          text = text.replace(closing, "  },\n  financeMigration,\n];\n\nfunction ensureMigrationTable", 1)
-          text = text.replace("export * from './backup';", "export * from './backup';\nexport * from './cash';")
-          text = text.replace("export * from './control';", "export * from './control';\nexport * from './expenses';")
-          index.write_text(text, encoding='utf-8')
-
-          ipc = Path('apps/desktop/src/main/register-ipc.ts')
-          text = ipc.read_text(encoding='utf-8')
-          text = text.replace(
-              "import { registerComboIpcHandlers } from './register-combo-ipc';",
-              "import { registerComboIpcHandlers } from './register-combo-ipc';\nimport { registerFinanceIpcHandlers } from './register-finance-ipc';",
+          $text = $text.Replace(
+            "  },`n];`n`nfunction ensureMigrationTable",
+            "  },`n  financeMigration,`n];`n`nfunction ensureMigrationTable"
           )
-          text = text.replace(
-              "  registerComboIpcHandlers({ getDatabase: options.getDatabase });",
-              "  registerComboIpcHandlers({ getDatabase: options.getDatabase });\n  registerFinanceIpcHandlers({ getDatabase: options.getDatabase });",
+          $text = $text.Replace(
+            "export * from './backup';",
+            "export * from './backup';`nexport * from './cash';"
           )
-          ipc.write_text(text, encoding='utf-8')
-
-          preload = Path('apps/desktop/src/preload/index.ts')
-          text = preload.read_text(encoding='utf-8')
-          text = text.replace(
-              "import { inventoryApi } from './inventory-api';",
-              "import { cashApi, expenseApi } from './finance-api';\nimport { inventoryApi } from './inventory-api';",
+          $text = $text.Replace(
+            "export * from './control';",
+            "export * from './control';`nexport * from './expenses';"
           )
-          text = text.replace(
-              "  vouchers: voucherApi,",
-              "  vouchers: voucherApi,\n  cash: cashApi,\n  expenses: expenseApi,",
+          Set-Content $indexPath $text -NoNewline
+
+          $ipcPath = 'apps/desktop/src/main/register-ipc.ts'
+          $text = Get-Content $ipcPath -Raw
+          $text = $text.Replace(
+            "import { registerComboIpcHandlers } from './register-combo-ipc';",
+            "import { registerComboIpcHandlers } from './register-combo-ipc';`nimport { registerFinanceIpcHandlers } from './register-finance-ipc';"
           )
-          preload.write_text(text, encoding='utf-8')
-
-          cash = Path('packages/database/src/cash.ts')
-          text = cash.read_text(encoding='utf-8')
-          old = """  const totals: DatabaseSalesByMethod = {
-    cashCents: 0,
-    pixCents: 0,
-    creditCardCents: 0,
-    debitCardCents: 0,
-    voucherCents: 0,
-  };
-
-  for (const row of rows) {
-    if (row.method === 'cash') {
-      totals.cashCents = row.amount_cents;
-    } else if (row.method === 'pix') {
-      totals.pixCents = row.amount_cents;
-    } else if (row.method === 'credit-card') {
-      totals.creditCardCents = row.amount_cents;
-    } else {
-      totals.debitCardCents = row.amount_cents;
-    }
-  }
-
-  const voucher = database.sqlite
-"""
-          new = """  let cashCents = 0;
-  let pixCents = 0;
-  let creditCardCents = 0;
-  let debitCardCents = 0;
-
-  for (const row of rows) {
-    if (row.method === 'cash') {
-      cashCents = row.amount_cents;
-    } else if (row.method === 'pix') {
-      pixCents = row.amount_cents;
-    } else if (row.method === 'credit-card') {
-      creditCardCents = row.amount_cents;
-    } else {
-      debitCardCents = row.amount_cents;
-    }
-  }
-
-  const voucher = database.sqlite
-"""
-          if old not in text:
-              raise SystemExit('cash totals block missing')
-          text = text.replace(old, new)
-          text = text.replace(
-              "  totals.voucherCents = voucher.amount_cents;\n  return totals;",
-              "  return {\n    cashCents,\n    pixCents,\n    creditCardCents,\n    debitCardCents,\n    voucherCents: voucher.amount_cents,\n  };",
+          $text = $text.Replace(
+            "  registerComboIpcHandlers({ getDatabase: options.getDatabase });",
+            "  registerComboIpcHandlers({ getDatabase: options.getDatabase });`n  registerFinanceIpcHandlers({ getDatabase: options.getDatabase });"
           )
-          cash.write_text(text, encoding='utf-8')
+          Set-Content $ipcPath $text -NoNewline
+
+          $preloadPath = 'apps/desktop/src/preload/index.ts'
+          $text = Get-Content $preloadPath -Raw
+          $text = $text.Replace(
+            "import { inventoryApi } from './inventory-api';",
+            "import { cashApi, expenseApi } from './finance-api';`nimport { inventoryApi } from './inventory-api';"
+          )
+          $text = $text.Replace(
+            "  vouchers: voucherApi,",
+            "  vouchers: voucherApi,`n  cash: cashApi,`n  expenses: expenseApi,"
+          )
+          Set-Content $preloadPath $text -NoNewline
+
+          $cashPath = 'packages/database/src/cash.ts'
+          $text = Get-Content $cashPath -Raw
+          $old = @'
+          const totals: DatabaseSalesByMethod = {
+            cashCents: 0,
+            pixCents: 0,
+            creditCardCents: 0,
+            debitCardCents: 0,
+            voucherCents: 0,
+          };
+
+          for (const row of rows) {
+            if (row.method === 'cash') {
+              totals.cashCents = row.amount_cents;
+            } else if (row.method === 'pix') {
+              totals.pixCents = row.amount_cents;
+            } else if (row.method === 'credit-card') {
+              totals.creditCardCents = row.amount_cents;
+            } else {
+              totals.debitCardCents = row.amount_cents;
+            }
+          }
+
+          const voucher = database.sqlite
+          '@
+          $new = @'
+          let cashCents = 0;
+          let pixCents = 0;
+          let creditCardCents = 0;
+          let debitCardCents = 0;
+
+          for (const row of rows) {
+            if (row.method === 'cash') {
+              cashCents = row.amount_cents;
+            } else if (row.method === 'pix') {
+              pixCents = row.amount_cents;
+            } else if (row.method === 'credit-card') {
+              creditCardCents = row.amount_cents;
+            } else {
+              debitCardCents = row.amount_cents;
+            }
+          }
+
+          const voucher = database.sqlite
+          '@
+          $text = $text.Replace($old.Trim(), $new.Trim())
+          $text = $text.Replace(
+            "  totals.voucherCents = voucher.amount_cents;`n  return totals;",
+            "  return {`n    cashCents,`n    pixCents,`n    creditCardCents,`n    debitCardCents,`n    voucherCents: voucher.amount_cents,`n  };"
+          )
+          Set-Content $cashPath $text -NoNewline
 
       - name: Formatar arquivos alterados
         run: >-
@@ -136,6 +139,10 @@ jobs:
       - name: Registrar resultado
         shell: bash
         run: |
+          if git diff --quiet; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
