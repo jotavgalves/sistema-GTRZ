@@ -1,11 +1,21 @@
-import { CreditCard, Plus, TicketCheck, Trash2, WalletCards } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+  CreditCard,
+  Link2,
+  Plus,
+  TicketCheck,
+  Trash2,
+  Unlink,
+  WalletCards,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
-import type { CloseOrderInput, Order, PaymentMethod } from '@gtrz/contracts';
+import type { CloseOrderInput, Order, PaymentMethod, Voucher } from '@gtrz/contracts';
 
 interface CheckoutFormProps {
   readonly order: Order;
   readonly busy: boolean;
+  readonly onBindVoucher: (code: string) => Promise<void>;
+  readonly onUnbindVoucher: () => Promise<void>;
   readonly onClose: (input: Omit<CloseOrderInput, 'orderId'>) => Promise<void>;
 }
 
@@ -30,8 +40,20 @@ function formatMoney(cents: number): string {
   }).format(cents / 100);
 }
 
+function formatMoneyInput(cents: number): string {
+  return (cents / 100).toFixed(2).replace('.', ',');
+}
+
 function parseMoney(value: string): number {
-  const normalized = value.trim().replace(',', '.');
+  const trimmed = value.trim().replaceAll(/\s/gu, '');
+
+  if (trimmed.length === 0) {
+    return 0;
+  }
+
+  const normalized = trimmed.includes(',')
+    ? trimmed.replaceAll('.', '').replace(',', '.')
+    : trimmed;
   const amount = Number(normalized);
   return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
 }
@@ -45,18 +67,99 @@ function newPayment(method: PaymentMethod = 'cash'): PaymentDraft {
   };
 }
 
-export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React.JSX.Element {
+export function CheckoutForm({
+  order,
+  busy,
+  onBindVoucher,
+  onUnbindVoucher,
+  onClose,
+}: CheckoutFormProps): React.JSX.Element {
   const [discount, setDiscount] = useState('');
   const [payments, setPayments] = useState<readonly PaymentDraft[]>([newPayment()]);
-  const [voucherCode, setVoucherCode] = useState('');
   const [voucherAmount, setVoucherAmount] = useState('');
+  const [availableVouchers, setAvailableVouchers] = useState<readonly Voucher[]>([]);
   const discountCents = parseMoney(discount);
+  const discountInvalid = discountCents > order.subtotalCents;
   const totalCents = Math.max(order.subtotalCents - discountCents, 0);
+  const allocation = order.voucherAllocation;
   const voucherCents = parseMoney(voucherAmount);
-  const informedCents = useMemo(
-    () => payments.reduce((total, payment) => total + parseMoney(payment.amount), 0) + voucherCents,
-    [payments, voucherCents],
+
+  useEffect(() => {
+    let active = true;
+
+    void window.gtrz.vouchers.getState().then((voucherState) => {
+      if (active) {
+        setAvailableVouchers(
+          voucherState.vouchers.filter(
+            (voucher) => voucher.status === 'active' && voucher.remainingBalanceCents > 0,
+          ),
+        );
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [order.id, allocation?.voucherId]);
+
+  useEffect(() => {
+    if (allocation === null) {
+      setVoucherAmount('');
+      return;
+    }
+
+    setVoucherAmount((current) => {
+      const currentCents = parseMoney(current);
+      const maximumCents = Math.min(allocation.remainingBalanceCents, totalCents);
+
+      if (currentCents > 0 && currentCents <= maximumCents) {
+        return current;
+      }
+
+      return maximumCents > 0 ? formatMoneyInput(maximumCents) : '';
+    });
+  }, [allocation, totalCents]);
+
+  const paymentCents = useMemo(
+    () => payments.reduce((total, payment) => total + parseMoney(payment.amount), 0),
+    [payments],
   );
+  const informedCents = paymentCents + voucherCents;
+  const totalChangeCents = useMemo(
+    () =>
+      payments.reduce((total, payment) => {
+        if (payment.method !== 'cash') {
+          return total;
+        }
+
+        const amountCents = parseMoney(payment.amount);
+        const receivedCents = parseMoney(payment.received);
+        return total + Math.max(receivedCents - amountCents, 0);
+      }, 0),
+    [payments],
+  );
+  const cashInvalid = payments.some((payment) => {
+    if (payment.method !== 'cash') {
+      return false;
+    }
+
+    const amountCents = parseMoney(payment.amount);
+    const receivedCents = parseMoney(payment.received);
+    return receivedCents > 0 && receivedCents < amountCents;
+  });
+  const voucherInvalid =
+    voucherCents > 0 &&
+    (allocation === null ||
+      allocation.status !== 'active' ||
+      voucherCents > allocation.remainingBalanceCents ||
+      voucherCents > totalCents);
+  const canSubmit =
+    !busy &&
+    !discountInvalid &&
+    !cashInvalid &&
+    !voucherInvalid &&
+    totalCents > 0 &&
+    informedCents === totalCents;
 
   const updatePayment = (id: string, patch: Partial<PaymentDraft>): void => {
     setPayments((current) =>
@@ -69,6 +172,11 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
       className="checkout-form"
       onSubmit={(event) => {
         event.preventDefault();
+
+        if (!canSubmit) {
+          return;
+        }
+
         const normalizedPayments = payments
           .map((payment) => {
             const amountCents = parseMoney(payment.amount);
@@ -78,10 +186,9 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
               : { method: payment.method, amountCents };
           })
           .filter((payment) => payment.amountCents > 0);
-        const normalizedCode = voucherCode.trim();
         const voucherUses =
-          normalizedCode.length >= 4 && voucherCents > 0
-            ? [{ code: normalizedCode, amountCents: voucherCents }]
+          allocation !== null && voucherCents > 0
+            ? [{ code: allocation.code, amountCents: voucherCents }]
             : [];
 
         void onClose({
@@ -102,6 +209,7 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
       <label className="form-field">
         <span>Desconto em reais</span>
         <input
+          aria-invalid={discountInvalid}
           disabled={busy}
           inputMode="decimal"
           onChange={(event) => {
@@ -110,6 +218,7 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
           placeholder="0,00"
           value={discount}
         />
+        {discountInvalid ? <small>O desconto não pode superar o subtotal.</small> : null}
       </label>
 
       <div className="checkout-total">
@@ -119,96 +228,180 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
           Informado: {formatMoney(informedCents)} · Restante:{' '}
           {formatMoney(Math.max(totalCents - informedCents, 0))}
         </small>
+        {informedCents > totalCents ? (
+          <small className="checkout-warning">
+            O valor informado supera o total em {formatMoney(informedCents - totalCents)}.
+          </small>
+        ) : null}
       </div>
 
-      <div className="voucher-payment-row">
-        <TicketCheck size={18} aria-hidden="true" />
-        <label className="form-field">
-          <span>Código do voucher</span>
-          <input
-            disabled={busy}
-            onChange={(event) => {
-              setVoucherCode(event.target.value.toLocaleUpperCase('pt-BR'));
-            }}
-            placeholder="GTRZ-XXXXXXXX"
-            value={voucherCode}
-          />
-        </label>
-        <label className="form-field">
-          <span>Valor do voucher</span>
-          <input
-            disabled={busy}
-            inputMode="decimal"
-            onChange={(event) => {
-              setVoucherAmount(event.target.value);
-            }}
-            placeholder="0,00"
-            value={voucherAmount}
-          />
-        </label>
-      </div>
+      <section className="voucher-checkout" aria-label="Voucher da comanda">
+        <div className="voucher-checkout__heading">
+          <TicketCheck size={18} aria-hidden="true" />
+          <div>
+            <strong>Voucher vinculado à mesa</strong>
+            <small>Selecione o voucher e o sistema associa automaticamente à comanda.</small>
+          </div>
+        </div>
 
-      <div className="payment-list">
-        {payments.map((payment, index) => (
-          <div className="payment-row" key={payment.id}>
-            <select
-              aria-label={`Forma de pagamento ${String(index + 1)}`}
+        <div className="voucher-checkout__selector">
+          <select
+            aria-label="Voucher vinculado à comanda"
+            disabled={busy}
+            onChange={(event) => {
+              const code = event.target.value;
+
+              if (code.length === 0) {
+                void onUnbindVoucher();
+              } else {
+                void onBindVoucher(code);
+              }
+            }}
+            value={allocation?.code ?? ''}
+          >
+            <option value="">Nenhum voucher</option>
+            {availableVouchers.map((voucher) => (
+              <option key={voucher.id} value={voucher.code}>
+                {voucher.code} · {voucher.label} · {formatMoney(voucher.remainingBalanceCents)}
+              </option>
+            ))}
+          </select>
+          {allocation === null ? <Link2 size={18} aria-hidden="true" /> : null}
+          {allocation !== null ? (
+            <button
+              aria-label="Remover voucher da comanda"
+              className="icon-button"
               disabled={busy}
-              onChange={(event) => {
-                updatePayment(payment.id, {
-                  method: event.target.value as PaymentMethod,
-                  received: '',
-                });
+              onClick={() => {
+                void onUnbindVoucher();
               }}
-              value={payment.method}
+              title="Remover voucher"
+              type="button"
             >
-              {Object.entries(PAYMENT_LABELS).map(([method, label]) => (
-                <option key={method} value={method}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <input
-              aria-label={`Valor do pagamento ${String(index + 1)}`}
-              disabled={busy}
-              inputMode="decimal"
-              onChange={(event) => {
-                updatePayment(payment.id, { amount: event.target.value });
-              }}
-              placeholder="Valor aplicado"
-              value={payment.amount}
-            />
-            {payment.method === 'cash' ? (
+              <Unlink size={17} aria-hidden="true" />
+            </button>
+          ) : null}
+        </div>
+
+        {allocation === null ? (
+          <p className="voucher-checkout__empty">Nenhum voucher vinculado.</p>
+        ) : (
+          <div className="voucher-checkout__card">
+            <span>
+              <strong>{allocation.label}</strong>
+              <small>{allocation.code}</small>
+            </span>
+            <span>
+              <small>Saldo disponível</small>
+              <strong>{formatMoney(allocation.remainingBalanceCents)}</strong>
+            </span>
+            <label className="form-field">
+              <span>Valor a utilizar</span>
               <input
-                aria-label={`Valor recebido ${String(index + 1)}`}
+                aria-invalid={voucherInvalid}
                 disabled={busy}
                 inputMode="decimal"
                 onChange={(event) => {
-                  updatePayment(payment.id, { received: event.target.value });
+                  setVoucherAmount(event.target.value);
                 }}
-                placeholder="Recebido"
-                value={payment.received}
+                placeholder="0,00"
+                value={voucherAmount}
               />
-            ) : (
-              <span className="payment-row__digital">
-                <CreditCard size={16} aria-hidden="true" />
-                Sem troco
-              </span>
-            )}
-            <button
-              aria-label={`Remover pagamento ${String(index + 1)}`}
-              className="icon-button"
-              disabled={busy || payments.length === 1}
-              onClick={() => {
-                setPayments((current) => current.filter((item) => item.id !== payment.id));
-              }}
-              type="button"
-            >
-              <Trash2 size={16} aria-hidden="true" />
-            </button>
+            </label>
           </div>
-        ))}
+        )}
+
+        {allocation !== null && voucherCents > allocation.remainingBalanceCents ? (
+          <p className="form-error">
+            O voucher possui somente {formatMoney(allocation.remainingBalanceCents)} disponíveis.
+          </p>
+        ) : null}
+      </section>
+
+      <div className="payment-list">
+        {payments.map((payment, index) => {
+          const amountCents = parseMoney(payment.amount);
+          const receivedCents = parseMoney(payment.received);
+          const changeCents = Math.max(receivedCents - amountCents, 0);
+          const receivedIsInsufficient =
+            payment.method === 'cash' && receivedCents > 0 && receivedCents < amountCents;
+
+          return (
+            <div className="payment-row" key={payment.id}>
+              <select
+                aria-label={`Forma de pagamento ${String(index + 1)}`}
+                disabled={busy}
+                onChange={(event) => {
+                  updatePayment(payment.id, {
+                    method: event.target.value as PaymentMethod,
+                    received: '',
+                  });
+                }}
+                value={payment.method}
+              >
+                {Object.entries(PAYMENT_LABELS).map(([method, label]) => (
+                  <option key={method} value={method}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <input
+                aria-label={`Valor do pagamento ${String(index + 1)}`}
+                disabled={busy}
+                inputMode="decimal"
+                onChange={(event) => {
+                  updatePayment(payment.id, { amount: event.target.value });
+                }}
+                placeholder="Valor aplicado"
+                value={payment.amount}
+              />
+              {payment.method === 'cash' ? (
+                <div className="cash-received-field">
+                  <input
+                    aria-invalid={receivedIsInsufficient}
+                    aria-label={`Valor recebido ${String(index + 1)}`}
+                    disabled={busy}
+                    inputMode="decimal"
+                    onChange={(event) => {
+                      updatePayment(payment.id, { received: event.target.value });
+                    }}
+                    placeholder="Valor recebido"
+                    value={payment.received}
+                  />
+                  <small className={receivedIsInsufficient ? 'checkout-warning' : undefined}>
+                    {receivedIsInsufficient
+                      ? `Faltam ${formatMoney(amountCents - receivedCents)}`
+                      : `Troco: ${formatMoney(changeCents)}`}
+                  </small>
+                </div>
+              ) : (
+                <span className="payment-row__digital">
+                  <CreditCard size={16} aria-hidden="true" />
+                  Sem troco
+                </span>
+              )}
+              <button
+                aria-label={`Remover pagamento ${String(index + 1)}`}
+                className="icon-button"
+                disabled={busy || payments.length === 1}
+                onClick={() => {
+                  setPayments((current) => current.filter((item) => item.id !== payment.id));
+                }}
+                type="button"
+              >
+                <Trash2 size={16} aria-hidden="true" />
+              </button>
+            </div>
+          );
+        })}
       </div>
+
+      {totalChangeCents > 0 ? (
+        <div className="checkout-change" role="status">
+          <span>Troco a entregar</span>
+          <strong>{formatMoney(totalChangeCents)}</strong>
+        </div>
+      ) : null}
 
       <div className="checkout-form__actions">
         <button
@@ -222,11 +415,7 @@ export function CheckoutForm({ order, busy, onClose }: CheckoutFormProps): React
           <Plus size={16} aria-hidden="true" />
           Adicionar pagamento
         </button>
-        <button
-          className="button"
-          disabled={busy || totalCents <= 0 || informedCents !== totalCents}
-          type="submit"
-        >
+        <button className="button" disabled={!canSubmit} type="submit">
           Concluir venda
         </button>
       </div>
