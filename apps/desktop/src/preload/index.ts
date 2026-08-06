@@ -35,6 +35,7 @@ import {
 } from '@gtrz/contracts';
 
 import { comboApi } from './combo-api';
+import { eventCloseApi } from './event-close-api';
 import { cashApi, expenseApi } from './finance-api';
 import { inventoryApi } from './inventory-api';
 import { operationsApi } from './operations-api';
@@ -77,6 +78,7 @@ const api: GtrzDesktopApi = {
       return sessionStateSchema.parse(payload);
     },
   },
+  eventClose: eventCloseApi,
   session: {
     async getState(): Promise<SessionState> {
       const payload: unknown = await ipcRenderer.invoke(IPC_CHANNELS.sessionGetState);

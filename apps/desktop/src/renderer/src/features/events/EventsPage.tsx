@@ -1,10 +1,11 @@
 import { CalendarPlus, RefreshCw } from 'lucide-react';
 import { useMemo, useState, type SyntheticEvent } from 'react';
 
-import type { EventStatus } from '@gtrz/contracts';
+import type { EventCloseResult, EventStatus } from '@gtrz/contracts';
 
 import { useSession } from '../../shared/session/session-context';
 import { EventCard } from './EventCard';
+import { EventClosePanel } from './EventClosePanel';
 import { useEvents } from './useEvents';
 
 function getDefaultDateTime(): string {
@@ -14,13 +15,15 @@ function getDefaultDateTime(): string {
 }
 
 export function EventsPage(): React.JSX.Element {
-  const { state: sessionState } = useSession();
+  const { state: sessionState, refresh: refreshSession } = useSession();
   const { events, loading, error, create, rename, changeStatus, select, reload } = useEvents();
   const [name, setName] = useState('');
   const [startsAt, setStartsAt] = useState(getDefaultDateTime);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [closingEventId, setClosingEventId] = useState<string | null>(null);
+  const [closeMessage, setCloseMessage] = useState<string | null>(null);
 
   const counters = useMemo(
     () => ({
@@ -69,6 +72,14 @@ export function EventsPage(): React.JSX.Element {
     await runEventAction(eventId, () => changeStatus(eventId, status));
   }
 
+  async function handleCloseCompleted(result: EventCloseResult): Promise<void> {
+    setClosingEventId(null);
+    setCloseMessage(
+      `Evento encerrado. Backup verificado: ${result.backup.fileName}.`,
+    );
+    await Promise.all([reload(), refreshSession()]);
+  }
+
   return (
     <section className="feature-page">
       <header className="feature-header">
@@ -108,6 +119,20 @@ export function EventsPage(): React.JSX.Element {
           <strong>{sessionState?.activeEvent?.name ?? 'Nenhum'}</strong>
         </article>
       </div>
+
+      {closeMessage === null ? null : (
+        <div className="event-close-success">{closeMessage}</div>
+      )}
+
+      {sessionState?.activeEvent !== null &&
+      sessionState?.activeEvent !== undefined &&
+      closingEventId === sessionState.activeEvent.id ? (
+        <EventClosePanel
+          eventId={sessionState.activeEvent.id}
+          eventName={sessionState.activeEvent.name}
+          onCompleted={handleCloseCompleted}
+        />
+      ) : null}
 
       <div className="control-layout">
         <form className="panel form-panel" onSubmit={(formEvent) => void handleCreate(formEvent)}>
@@ -179,6 +204,10 @@ export function EventsPage(): React.JSX.Element {
               onRename={(eventId, nextName) =>
                 runEventAction(eventId, () => rename(eventId, nextName))
               }
+              onRequestClose={(eventId) => {
+                setCloseMessage(null);
+                setClosingEventId(eventId);
+              }}
               onSelect={(eventId) => runEventAction(eventId, () => select(eventId))}
             />
           ))}
