@@ -1,3 +1,5 @@
+import type { DatabaseVoucherRedemption } from './vouchers';
+
 export type DatabaseServicePointType = 'table' | 'counter';
 export type DatabaseServicePointStatus = 'available' | 'open';
 export type DatabaseOrderStatus = 'open' | 'paid' | 'cancelled';
@@ -51,6 +53,7 @@ export interface DatabaseOrder {
   readonly remainingCents: number;
   readonly items: readonly DatabaseOrderItem[];
   readonly payments: readonly DatabasePayment[];
+  readonly voucherRedemptions: readonly DatabaseVoucherRedemption[];
   readonly openedAt: number;
   readonly closedAt: number | null;
   readonly updatedAt: number;
