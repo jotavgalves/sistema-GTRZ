@@ -153,7 +153,7 @@ export function useOperations(): OperationsViewState {
   );
 
   const unbindVoucher = useCallback(async (): Promise<void> => {
-    if (order === null || order.voucherAllocation === null) {
+    if (!order?.voucherAllocation) {
       return;
     }
 
