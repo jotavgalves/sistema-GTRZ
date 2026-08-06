@@ -1,53 +1,66 @@
-name: Inventário temporário de logos
+name: Preparar identidade visual oficial
 
 on:
   pull_request:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  extract-brand:
+  prepare-brand:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
-      - name: Checkout
+      - name: Checkout da branch do PR
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Extrair logos
+      - name: Extrair logos e gerar ícones
         run: |
-          rm -rf brand-preview
+          rm -rf brand-preview .brand-source
           mkdir -p brand-preview/files
           unzip -o LOGOS.zip -d brand-preview/files
+          cp -R brand-preview/files .brand-source
           find brand-preview/files -type f -printf '%P\n' | sort > brand-preview/inventory.txt
-          python - <<'PY'
-          from pathlib import Path
-          import html
 
-          root = Path('brand-preview/files')
-          files = sorted(p for p in root.rglob('*') if p.is_file())
-          cards = []
-          for file in files:
-              rel = file.relative_to(Path('brand-preview')).as_posix()
-              suffix = file.suffix.lower()
-              if suffix in {'.svg', '.png', '.jpg', '.jpeg', '.webp'}:
-                  cards.append(
-                      f'<article><div class="preview"><img src="{html.escape(rel)}" alt=""></div>'
-                      f'<code>{html.escape(str(file.relative_to(root)))}</code></article>'
-                  )
-          page = '''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'''
-          page += '''<title>Logos GTRZ</title><style>body{font:14px system-ui;background:#18181b;color:#fff;padding:24px}'''
-          page += '''main{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}'''
-          page += '''article{background:#27272a;border:1px solid #3f3f46;border-radius:14px;padding:14px}'''
-          page += '''.preview{height:190px;display:grid;place-items:center;background:linear-gradient(135deg,#09090b 50%,#f4f4f5 50%);border-radius:10px;padding:18px}'''
-          page += '''img{max-width:100%;max-height:100%}code{display:block;margin-top:10px;overflow-wrap:anywhere}</style></head><body>'''
-          page += f'<h1>Inventário oficial GTRZ</h1><p>{len(cards)} arquivos visuais</p><main>{"".join(cards)}</main></body></html>'
-          Path('brand-preview/index.html').write_text(page, encoding='utf-8')
-          PY
+          mkdir -p apps/desktop/src/renderer/src/assets/brand
+          mkdir -p apps/desktop/resources/branding
 
-      - name: Publicar inventário
+          cp '.brand-source/LOGOS/LOGOS VERMELHO/GTRZ LOGOMARCA - SEM EVENTOS - PADRÃO VERMELHO.svg' \
+             'apps/desktop/src/renderer/src/assets/brand/gtrz-lockup.svg'
+          cp '.brand-source/LOGOS/LOGOS VERMELHO/GTRZ LOGO PADRÃO VERMELHO.svg' \
+             'apps/desktop/src/renderer/src/assets/brand/gtrz-symbol.svg'
+          cp '.brand-source/LOGOS/LOGOS BRANCOS/GTRZ LOGOMARCA - SEM EVENTOS - ALL WHITE.svg' \
+             'apps/desktop/src/renderer/src/assets/brand/gtrz-lockup-white.svg'
+
+          cp 'apps/desktop/src/renderer/src/assets/brand/gtrz-lockup.svg' \
+             'apps/desktop/resources/branding/gtrz-lockup.svg'
+          cp 'apps/desktop/src/renderer/src/assets/brand/gtrz-symbol.svg' \
+             'apps/desktop/resources/branding/gtrz-symbol.svg'
+
+          convert -background none \
+            '.brand-source/LOGOS/LOGOS VERMELHO/GTRZ LOGO PADRÃO VERMELHO.svg' \
+            -resize 512x512 -gravity center -extent 512x512 \
+            'apps/desktop/resources/icon.png'
+          convert 'apps/desktop/resources/icon.png' \
+            -define icon:auto-resize=256,128,64,48,32,24,16 \
+            'apps/desktop/resources/icon.ico'
+
+      - name: Publicar ativos na branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/desktop/src/renderer/src/assets/brand apps/desktop/resources
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat: adiciona identidade visual oficial da GTRZ'
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
+
+      - name: Publicar inventário temporário
         uses: actions/upload-artifact@v7
         with:
           name: GTRZ-Brand-Inventory
