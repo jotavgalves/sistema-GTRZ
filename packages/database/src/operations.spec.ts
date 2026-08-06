@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   addOrderItem,
+  cancelOrder,
   closeOrder,
   createCombo,
   createEvent,
@@ -87,6 +88,7 @@ describe('event operations database', () => {
     const initialState = getOperationState(database);
     expect(initialState.servicePoints).toHaveLength(1);
     expect(initialState.servicePoints[0]).toMatchObject({ label: 'Balcão', type: 'counter' });
+    expect(initialState.recentOrders).toHaveLength(0);
 
     const table = createServicePoint(database, { label: 'Mesa 01', type: 'table' });
     let order = openOrder(database, table.id);
@@ -162,11 +164,104 @@ describe('event operations database', () => {
     expect(getStock(database, event.id, catalog.waterId)).toBe(7);
     expect(getStock(database, event.id, catalog.iceId)).toBe(6);
     expect(getOperationState(database).servicePoints[0]?.status).toBe('available');
+    expect(getOperationState(database).recentOrders[0]?.id).toBe(paidOrder.id);
 
     const saleMovements = database.sqlite
       .prepare("SELECT product_id, quantity, delta FROM stock_movements WHERE type = 'sale'")
       .all();
     expect(saleMovements).toHaveLength(2);
+    database.close();
+  });
+
+  it('cancela comanda aberta sem alterar o estoque e registra o motivo', async () => {
+    const database = await createTemporaryDatabase();
+    const event = createEvent(database, { name: 'Evento cancelamento', startsAt: Date.now() });
+    const catalog = seedCatalog(database);
+    const table = createServicePoint(database, { label: 'Mesa cancelada', type: 'table' });
+    let order = openOrder(database, table.id);
+    order = addOrderItem(database, {
+      orderId: order.id,
+      itemKind: 'product',
+      itemId: catalog.waterId,
+      quantity: 2,
+    });
+
+    const cancelled = cancelOrder(database, {
+      orderId: order.id,
+      reason: 'Pedido lançado em mesa incorreta',
+    });
+
+    expect(cancelled.status).toBe('cancelled');
+    expect(getStock(database, event.id, catalog.waterId)).toBe(10);
+    expect(getOperationState(database).servicePoints.find((item) => item.id === table.id)?.status).toBe(
+      'available',
+    );
+    expect(getOperationState(database).recentOrders[0]?.id).toBe(order.id);
+    expect(
+      database.sqlite
+        .prepare("SELECT COUNT(*) AS value FROM stock_movements WHERE type = 'return'")
+        .get(),
+    ).toEqual({ value: 0 });
+
+    const audit = database.sqlite
+      .prepare("SELECT details_json FROM audit_log WHERE action = 'operations.order-cancelled'")
+      .get() as { readonly details_json: string };
+    expect(JSON.parse(audit.details_json)).toMatchObject({
+      previousStatus: 'open',
+      reason: 'Pedido lançado em mesa incorreta',
+      restoredUnits: 0,
+    });
+    database.close();
+  });
+
+  it('estorna venda paga pelas movimentações originais mesmo após alterar o combo', async () => {
+    const database = await createTemporaryDatabase();
+    const event = createEvent(database, { name: 'Evento estorno', startsAt: Date.now() });
+    const catalog = seedCatalog(database);
+    const counter = getOperationState(database).servicePoints[0];
+
+    if (counter === undefined) {
+      throw new Error('Balcão não criado.');
+    }
+
+    let order = openOrder(database, counter.id);
+    order = addOrderItem(database, {
+      orderId: order.id,
+      itemKind: 'combo',
+      itemId: catalog.comboId,
+      quantity: 2,
+    });
+    const paidOrder = closeOrder(database, {
+      orderId: order.id,
+      discountCents: 0,
+      payments: [{ method: 'pix', amountCents: 1200 }],
+    });
+
+    expect(getStock(database, event.id, catalog.waterId)).toBe(8);
+    expect(getStock(database, event.id, catalog.iceId)).toBe(6);
+    database.sqlite
+      .prepare('UPDATE combo_components SET quantity = 9 WHERE combo_id = ?')
+      .run(catalog.comboId);
+
+    const cancelled = cancelOrder(database, {
+      orderId: paidOrder.id,
+      reason: 'Pagamento duplicado no terminal',
+    });
+
+    expect(cancelled.status).toBe('cancelled');
+    expect(cancelled.paidCents).toBe(1200);
+    expect(getStock(database, event.id, catalog.waterId)).toBe(10);
+    expect(getStock(database, event.id, catalog.iceId)).toBe(10);
+    expect(
+      database.sqlite
+        .prepare(
+          "SELECT product_id, quantity, delta FROM stock_movements WHERE type = 'return' ORDER BY product_id",
+        )
+        .all(),
+    ).toHaveLength(2);
+    expect(() =>
+      cancelOrder(database, { orderId: paidOrder.id, reason: 'Segundo cancelamento' }),
+    ).toThrow('Esta comanda já foi cancelada.');
     database.close();
   });
 
@@ -203,7 +298,7 @@ describe('event operations database', () => {
     database.close();
   });
 
-  it('permite operação no Caixa, mas restringe o cadastro de mesas', async () => {
+  it('permite operação no Caixa, mas restringe mesas e cancelamentos', async () => {
     const database = await createTemporaryDatabase();
     createEvent(database, { name: 'Evento Caixa', startsAt: Date.now() });
     seedCatalog(database);
@@ -213,10 +308,13 @@ describe('event operations database', () => {
       throw new Error('Balcão não criado.');
     }
 
+    const order = openOrder(database, counter.id);
     switchProfile(database, 'cashier');
-    expect(openOrder(database, counter.id).status).toBe('open');
     expect(() => createServicePoint(database, { label: 'Mesa proibida', type: 'table' })).toThrow(
       'O cadastro de mesas exige o perfil Produção.',
+    );
+    expect(() => cancelOrder(database, { orderId: order.id, reason: 'Tentativa Caixa' })).toThrow(
+      'O cancelamento de comandas exige o perfil Produção.',
     );
     database.close();
   });
