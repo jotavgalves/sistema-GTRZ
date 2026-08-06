@@ -1,6 +1,7 @@
 import { appendAudit } from './audit';
 import { getSessionState } from './control';
 import { cancelOrder } from './operation-cancellation';
+import { countRestorableOrderUnits } from './operation-stock-impact';
 import type { DatabaseContext } from './types';
 
 export interface DatabaseVoucherDeleteImpact {
@@ -9,6 +10,7 @@ export interface DatabaseVoucherDeleteImpact {
   readonly paidOrderCount: number;
   readonly paidOrderTotalCents: number;
   readonly voucherRedemptionCents: number;
+  readonly restoredUnits: number;
 }
 
 export interface DatabaseVoucherDeleteResult extends DatabaseVoucherDeleteImpact {
@@ -52,7 +54,7 @@ function requireVoucher(database: DatabaseContext, voucherId: string, eventId: s
     )
     .get(voucherId) as VoucherRow | undefined;
 
-  if (voucher?.deleted_at !== null) {
+  if (voucher === undefined || voucher.deleted_at !== null) {
     throw new Error('O voucher informado não existe ou já foi excluído.');
   }
 
@@ -106,6 +108,10 @@ export function previewVoucherDeletion(
     paidOrderCount: paidOrders.length,
     paidOrderTotalCents: paidOrders.reduce((total, order) => total + order.total_cents, 0),
     voucherRedemptionCents: sumVoucherRedemptions(database, voucher.id),
+    restoredUnits: paidOrders.reduce(
+      (total, order) => total + countRestorableOrderUnits(database, eventId, order.id),
+      0,
+    ),
   };
 }
 
@@ -157,6 +163,7 @@ export function deleteVoucher(
         cancelledOrderIds: paidOrders.map((order) => order.id),
         paidOrderCount: impact.paidOrderCount,
         paidOrderTotalCents: impact.paidOrderTotalCents,
+        restoredUnits: impact.restoredUnits,
         voucherRedemptionCents: impact.voucherRedemptionCents,
       },
     });
