@@ -46,6 +46,8 @@ export const voucherAllocationSchema = z.object({
   label: z.string().trim().min(2).max(100),
   remainingBalanceCents: z.number().int().nonnegative(),
   status: z.enum(['active', 'exhausted', 'cancelled']),
+  servicePointId: z.uuid().nullable(),
+  servicePointLabel: z.string().trim().min(1).max(40).nullable(),
   createdAt: z.number().int().nonnegative(),
   updatedAt: z.number().int().nonnegative(),
 });
