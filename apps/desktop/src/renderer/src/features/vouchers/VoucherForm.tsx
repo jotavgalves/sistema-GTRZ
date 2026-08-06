@@ -1,22 +1,28 @@
 import { TicketPlus } from 'lucide-react';
 import { useState } from 'react';
 
-import type { CreateVoucherInput } from '@gtrz/contracts';
+import type { CreateVoucherInput, ServicePoint } from '@gtrz/contracts';
 
 interface VoucherFormProps {
   readonly busy: boolean;
+  readonly tables: readonly ServicePoint[];
   readonly onSubmit: (input: CreateVoucherInput) => Promise<void>;
 }
 
 function parseMoney(value: string): number {
-  const amount = Number(value.trim().replace(',', '.'));
+  const trimmed = value.trim().replaceAll(/\s/gu, '');
+  const normalized = trimmed.includes(',')
+    ? trimmed.replaceAll('.', '').replace(',', '.')
+    : trimmed;
+  const amount = Number(normalized);
   return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
 }
 
-export function VoucherForm({ busy, onSubmit }: VoucherFormProps): React.JSX.Element {
+export function VoucherForm({ busy, tables, onSubmit }: VoucherFormProps): React.JSX.Element {
   const [label, setLabel] = useState('');
   const [code, setCode] = useState('');
   const [balance, setBalance] = useState('');
+  const [servicePointId, setServicePointId] = useState('');
 
   return (
     <form
@@ -25,15 +31,19 @@ export function VoucherForm({ busy, onSubmit }: VoucherFormProps): React.JSX.Ele
         event.preventDefault();
         const normalizedCode = code.trim();
         const initialBalanceCents = parseMoney(balance);
-        const input =
-          normalizedCode.length === 0
-            ? { label: label.trim(), initialBalanceCents }
-            : { code: normalizedCode, label: label.trim(), initialBalanceCents };
+        const baseInput = {
+          label: label.trim(),
+          initialBalanceCents,
+          servicePointId: servicePointId.length === 0 ? null : servicePointId,
+        };
+        const input: CreateVoucherInput =
+          normalizedCode.length === 0 ? baseInput : { ...baseInput, code: normalizedCode };
 
         void onSubmit(input).then(() => {
           setLabel('');
           setCode('');
           setBalance('');
+          setServicePointId('');
         });
       }}
     >
@@ -41,7 +51,7 @@ export function VoucherForm({ busy, onSubmit }: VoucherFormProps): React.JSX.Ele
         <TicketPlus size={20} aria-hidden="true" />
         <div>
           <h2>Emitir voucher</h2>
-          <p>Deixe o código vazio para gerar um identificador automático.</p>
+          <p>Vincule a uma mesa para fazê-lo aparecer automaticamente apenas nela.</p>
         </div>
       </div>
       <label className="form-field">
@@ -81,6 +91,24 @@ export function VoucherForm({ busy, onSubmit }: VoucherFormProps): React.JSX.Ele
           required
           value={balance}
         />
+      </label>
+      <label className="form-field">
+        <span>Mesa vinculada</span>
+        <select
+          disabled={busy}
+          onChange={(event) => {
+            setServicePointId(event.target.value);
+          }}
+          value={servicePointId}
+        >
+          <option value="">Sem vínculo automático</option>
+          {tables.map((table) => (
+            <option key={table.id} value={table.id}>
+              {table.label}
+            </option>
+          ))}
+        </select>
+        <small>Sem vínculo, o voucher só será aplicado digitando o código no checkout.</small>
       </label>
       <button
         className="button"
