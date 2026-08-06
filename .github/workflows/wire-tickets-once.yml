@@ -1,4 +1,4 @@
-name: Ligar ingressos
+name: Finalizar ligação de ingressos
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  wire:
+  fix:
     if: github.actor != 'github-actions[bot]'
     runs-on: windows-latest
     timeout-minutes: 15
@@ -29,82 +29,106 @@ jobs:
       - name: Instalar dependências
         run: npm ci --ignore-scripts
 
-      - name: Aplicar ligações
+      - name: Corrigir ligações de forma idempotente
         shell: pwsh
         run: |
           $indexPath = 'packages/database/src/index.ts'
           $text = Get-Content $indexPath -Raw
-          $text = $text.Replace(
-            "import { financeMigration } from './finance-migration';",
-            "import { financeMigration } from './finance-migration';`nimport { ticketMigration } from './ticket-migration';"
+          $text = [regex]::Replace(
+            $text,
+            "(?:import \{ ticketMigration \} from './ticket-migration';\r?\n)+",
+            "import { ticketMigration } from './ticket-migration';`n"
           )
-          $text = $text.Replace(
-            "  financeMigration,`n];",
-            "  financeMigration,`n  ticketMigration,`n];"
+          $text = [regex]::Replace(
+            $text,
+            "(?:export \* from './ticket-finance';\r?\n)+",
+            "export * from './ticket-finance';`n"
           )
-          $text = $text.Replace(
-            "export * from './stock-transfers';",
-            "export * from './stock-transfers';`nexport * from './ticket-finance';`nexport * from './tickets';"
+          $text = [regex]::Replace(
+            $text,
+            "(?:export \* from './tickets';\r?\n)+",
+            "export * from './tickets';`n"
           )
           Set-Content $indexPath $text -NoNewline
 
           $ipcPath = 'apps/desktop/src/main/register-ipc.ts'
           $text = Get-Content $ipcPath -Raw
-          $text = $text.Replace(
-            "import { registerOperationsIpcHandlers } from './register-operations-ipc';",
-            "import { registerOperationsIpcHandlers } from './register-operations-ipc';`nimport { registerTicketIpcHandlers } from './register-ticket-ipc';"
+          $text = [regex]::Replace(
+            $text,
+            "(?:import \{ registerTicketIpcHandlers \} from './register-ticket-ipc';\r?\n)+",
+            "import { registerTicketIpcHandlers } from './register-ticket-ipc';`n"
           )
-          $text = $text.Replace(
-            "  registerOperationsIpcHandlers({ getDatabase: options.getDatabase });",
-            "  registerOperationsIpcHandlers({ getDatabase: options.getDatabase });`n  registerTicketIpcHandlers({ getDatabase: options.getDatabase });"
+          $text = [regex]::Replace(
+            $text,
+            "(?:  registerTicketIpcHandlers\(\{ getDatabase: options\.getDatabase \}\);\r?\n)+",
+            "  registerTicketIpcHandlers({ getDatabase: options.getDatabase });`n"
           )
           Set-Content $ipcPath $text -NoNewline
 
           $preloadPath = 'apps/desktop/src/preload/index.ts'
           $text = Get-Content $preloadPath -Raw
-          $text = $text.Replace(
-            "import { operationsApi } from './operations-api';",
-            "import { operationsApi } from './operations-api';`nimport { ticketApi } from './ticket-api';"
+          $text = [regex]::Replace(
+            $text,
+            "(?:import \{ ticketApi \} from './ticket-api';\r?\n)+",
+            "import { ticketApi } from './ticket-api';`n"
           )
-          $text = $text.Replace(
-            "  expenses: expenseApi,",
-            "  expenses: expenseApi,`n  tickets: ticketApi,"
+          $text = [regex]::Replace(
+            $text,
+            "(?:  tickets: ticketApi,\r?\n)+",
+            "  tickets: ticketApi,`n"
           )
           Set-Content $preloadPath $text -NoNewline
 
           $cashPath = 'packages/database/src/cash.ts'
           $text = Get-Content $cashPath -Raw
-          $text = $text.Replace(
-            "import type { DatabaseContext } from './types';",
-            "import { getTicketSalesByMethod } from './ticket-finance';`nimport type { DatabaseContext } from './types';"
+          $text = [regex]::Replace(
+            $text,
+            "(?:import \{ getTicketSalesByMethod \} from './ticket-finance';\r?\n)+",
+            "import { getTicketSalesByMethod } from './ticket-finance';`n"
           )
-          $text = $text.Replace(
-            "  let cashCents = 0;",
-            "  const ticketSales = getTicketSalesByMethod(database, eventId);`n  let cashCents = 0;"
-          )
-          $text = $text.Replace(
-            "    cashCents,`n    pixCents,`n    creditCardCents,`n    debitCardCents,",
-            "    cashCents: cashCents + ticketSales.cashCents,`n    pixCents: pixCents + ticketSales.pixCents,`n    creditCardCents: creditCardCents + ticketSales.creditCardCents,`n    debitCardCents: debitCardCents + ticketSales.debitCardCents,"
+          $text = [regex]::Replace(
+            $text,
+            "(?:  const ticketSales = getTicketSalesByMethod\(database, eventId\);\r?\n)+",
+            "  const ticketSales = getTicketSalesByMethod(database, eventId);`n"
           )
           Set-Content $cashPath $text -NoNewline
 
-      - name: Formatar
+          Set-Content \
+            'apps/desktop/src/renderer/src/features/tickets/index.tsx' \
+            "export { TicketsPage } from './TicketsPage';`n" \
+            -NoNewline
+
+          $globalPath = 'apps/desktop/src/renderer/src/styles/global.css'
+          $text = Get-Content $globalPath -Raw
+          $text = [regex]::Replace($text, "(?:@import './tickets.css';\r?\n)+", '')
+          $text = $text.TrimEnd() + "`n@import './tickets.css';`n"
+          Set-Content $globalPath $text -NoNewline
+
+      - name: Formatar arquivos alterados
         run: >-
           npx prettier --write
           packages/database/src/index.ts
           packages/database/src/cash.ts
           apps/desktop/src/main/register-ipc.ts
           apps/desktop/src/preload/index.ts
+          apps/desktop/src/renderer/src/features/tickets/index.tsx
+          apps/desktop/src/renderer/src/styles/global.css
 
       - name: Registrar resultado
         shell: bash
         run: |
+          if git diff --quiet; then
+            echo "Nenhuma alteração necessária."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
             packages/database/src/index.ts \
             packages/database/src/cash.ts \
             apps/desktop/src/main/register-ipc.ts \
-            apps/desktop/src/preload/index.ts
-          git commit -m "feat: conecta ingressos à aplicação e ao caixa"
+            apps/desktop/src/preload/index.ts \
+            apps/desktop/src/renderer/src/features/tickets/index.tsx \
+            apps/desktop/src/renderer/src/styles/global.css
+          git commit -m "fix: finaliza ligação do módulo de ingressos"
           git push origin HEAD:feat/operacao-evento
