@@ -2,6 +2,7 @@ import BetterSqlite3 from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 
 import { financeMigration } from './finance-migration';
+import { ticketMigration } from './ticket-migration';
 import { technicalSchema } from './schema';
 import type { DatabaseContext } from './types';
 
@@ -319,6 +320,7 @@ const migrations: readonly Migration[] = [
     `,
   },
   financeMigration,
+  ticketMigration,
 ];
 
 function ensureMigrationTable(sqlite: BetterSqlite3.Database): void {
@@ -390,5 +392,7 @@ export * from './expenses';
 export * from './inventory';
 export * from './operations';
 export * from './stock-transfers';
+export * from './ticket-finance';
+export * from './tickets';
 export * from './vouchers';
 export type { DatabaseContext } from './types';
