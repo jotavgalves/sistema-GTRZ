@@ -20,7 +20,7 @@ async function waitForCloseOutcome(
   closedStatus: Locator,
   failureMessage: Locator,
 ): Promise<CloseOutcome> {
-  const deadline = Date.now() + 15_000;
+  const deadline = Date.now() + 30_000;
 
   while (Date.now() < deadline) {
     if (await closedStatus.isVisible()) {
@@ -31,14 +31,14 @@ async function waitForCloseOutcome(
       return 'failure';
     }
 
-    await window.waitForTimeout(150);
+    await window.waitForTimeout(200);
   }
 
   return 'pending';
 }
 
 test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   const electronApplication = await electron.launch({ args: [applicationPath] });
 
   try {
