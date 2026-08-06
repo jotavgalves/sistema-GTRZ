@@ -6,7 +6,12 @@ import {
   dashboardStateSchema,
   IPC_CHANNELS,
 } from '@gtrz/contracts';
-import { getAuditState, getDashboardState, type DatabaseContext } from '@gtrz/database';
+import {
+  getAuditState,
+  getDashboardState,
+  type DatabaseAuditQuery,
+  type DatabaseContext,
+} from '@gtrz/database';
 
 interface RegisterInsightsIpcOptions {
   readonly getDatabase: () => DatabaseContext;
@@ -25,6 +30,15 @@ export function registerInsightsIpcHandlers(options: RegisterInsightsIpcOptions)
 
   ipcMain.handle(IPC_CHANNELS.auditList, (_event, payload: unknown) => {
     const input = auditQueryInputSchema.parse(payload ?? {});
-    return auditStateSchema.parse(getAuditState(options.getDatabase(), input));
+    const databaseInput: DatabaseAuditQuery = {
+      limit: input.limit,
+      ...(input.eventId === undefined ? {} : { eventId: input.eventId }),
+      ...(input.profile === undefined ? {} : { profile: input.profile }),
+      ...(input.action === undefined ? {} : { action: input.action }),
+      ...(input.search === undefined ? {} : { search: input.search }),
+      ...(input.from === undefined ? {} : { from: input.from }),
+      ...(input.to === undefined ? {} : { to: input.to }),
+    };
+    return auditStateSchema.parse(getAuditState(options.getDatabase(), databaseInput));
   });
 }
