@@ -51,7 +51,9 @@ export function registerEventCloseIpcHandlers(options: RegisterEventCloseIpcOpti
     const summary = previewEventClose(database, input.eventId);
 
     if (!summary.canClose || summary.requiresCashCount) {
-      throw new Error('O caixa não foi conciliado corretamente. Revise o fechamento antes de tentar novamente.');
+      throw new Error(
+        'O caixa não foi conciliado corretamente. Revise o fechamento antes de tentar novamente.',
+      );
     }
 
     const backup = await options.backupService.createBackup('event-close');

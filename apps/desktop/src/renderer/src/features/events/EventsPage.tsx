@@ -74,9 +74,7 @@ export function EventsPage(): React.JSX.Element {
 
   async function handleCloseCompleted(result: EventCloseResult): Promise<void> {
     setClosingEventId(null);
-    setCloseMessage(
-      `Evento encerrado. Backup verificado: ${result.backup.fileName}.`,
-    );
+    setCloseMessage(`Evento encerrado. Backup verificado: ${result.backup.fileName}.`);
     await Promise.all([reload(), refreshSession()]);
   }
 
@@ -120,9 +118,7 @@ export function EventsPage(): React.JSX.Element {
         </article>
       </div>
 
-      {closeMessage === null ? null : (
-        <div className="event-close-success">{closeMessage}</div>
-      )}
+      {closeMessage === null ? null : <div className="event-close-success">{closeMessage}</div>}
 
       {sessionState?.activeEvent !== null &&
       sessionState?.activeEvent !== undefined &&

@@ -69,9 +69,7 @@ export function EventClosePanel({
     try {
       const result = await window.gtrz.eventClose.complete({
         eventId,
-        ...(summary.requiresCashCount && countedCashCents !== null
-          ? { countedCashCents }
-          : {}),
+        ...(summary.requiresCashCount && countedCashCents !== null ? { countedCashCents } : {}),
       });
       await onCompleted(result);
     } catch (closeError: unknown) {

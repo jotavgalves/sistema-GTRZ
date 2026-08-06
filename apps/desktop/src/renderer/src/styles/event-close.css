@@ -4,7 +4,11 @@
   padding: 1.25rem;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border));
   border-radius: 1rem;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 94%, var(--accent)), var(--panel));
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--panel) 94%, var(--accent)),
+    var(--panel)
+  );
   box-shadow: var(--shadow-soft);
 }
 

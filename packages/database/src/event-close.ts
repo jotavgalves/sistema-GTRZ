@@ -139,7 +139,9 @@ export function previewEventClose(
     cash.register === null &&
     (cash.grossSalesCents > 0 || cash.activeExpensesCents > 0 || tickets.revenue_cents > 0)
   ) {
-    blockers.push('Abra e concilie o caixa antes de encerrar um evento com movimentação financeira.');
+    blockers.push(
+      'Abra e concilie o caixa antes de encerrar um evento com movimentação financeira.',
+    );
   }
 
   return {
