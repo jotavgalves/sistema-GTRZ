@@ -142,7 +142,7 @@ export function CheckoutForm({
   const voucherInvalid =
     voucherCents > 0 &&
     (allocation?.status !== 'active' ||
-      voucherCents > (allocation?.remainingBalanceCents ?? 0) ||
+      voucherCents > allocation.remainingBalanceCents ||
       voucherCents > totalCents);
   const canSubmit =
     !busy &&
