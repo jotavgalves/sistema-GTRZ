@@ -47,9 +47,7 @@ export function registerFinanceIpcHandlers(options: RegisterFinanceIpcOptions): 
 
   ipcMain.handle(IPC_CHANNELS.cashOpen, (_event, payload: unknown) => {
     const input = openCashRegisterInputSchema.parse(payload);
-    return cashStateSchema.parse(
-      openCashRegister(options.getDatabase(), input.openingCashCents),
-    );
+    return cashStateSchema.parse(openCashRegister(options.getDatabase(), input.openingCashCents));
   });
 
   ipcMain.handle(IPC_CHANNELS.cashRecordMovement, (_event, payload: unknown) => {
@@ -63,9 +61,7 @@ export function registerFinanceIpcHandlers(options: RegisterFinanceIpcOptions): 
 
   ipcMain.handle(IPC_CHANNELS.cashClose, (_event, payload: unknown) => {
     const input = closeCashRegisterInputSchema.parse(payload);
-    return cashStateSchema.parse(
-      closeCashRegister(options.getDatabase(), input.countedCashCents),
-    );
+    return cashStateSchema.parse(closeCashRegister(options.getDatabase(), input.countedCashCents));
   });
 
   ipcMain.handle(IPC_CHANNELS.expensesGetState, () => {

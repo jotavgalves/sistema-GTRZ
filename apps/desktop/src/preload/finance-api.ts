@@ -36,10 +36,7 @@ export const cashApi: CashApi = {
 
   async recordMovement(input: RecordCashMovementInput): Promise<CashState> {
     const parsedInput = recordCashMovementInputSchema.parse(input);
-    const payload: unknown = await ipcRenderer.invoke(
-      IPC_CHANNELS.cashRecordMovement,
-      parsedInput,
-    );
+    const payload: unknown = await ipcRenderer.invoke(IPC_CHANNELS.cashRecordMovement, parsedInput);
     return cashStateSchema.parse(payload);
   },
 

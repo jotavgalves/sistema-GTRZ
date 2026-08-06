@@ -17,8 +17,17 @@ const MOVEMENT_LABELS = {
 } as const;
 
 export function CashPage(): React.JSX.Element {
-  const { state, loading, busy, error, message, reload, openRegister, recordMovement, closeRegister } =
-    useCash();
+  const {
+    state,
+    loading,
+    busy,
+    error,
+    message,
+    reload,
+    openRegister,
+    recordMovement,
+    closeRegister,
+  } = useCash();
   const registerStatus =
     state?.register === null || state === null ? 'not-opened' : state.register.status;
   const sales = state?.salesByMethod;
