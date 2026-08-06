@@ -40,6 +40,7 @@ export const IPC_CHANNELS = {
   operationsAddItem: 'operations:add-item',
   operationsRemoveItem: 'operations:remove-item',
   operationsCloseOrder: 'operations:close-order',
+  operationsCancelOrder: 'operations:cancel-order',
 } as const;
 
 export const systemInfoSchema = z.object({
