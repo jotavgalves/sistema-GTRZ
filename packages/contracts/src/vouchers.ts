@@ -69,6 +69,7 @@ export const voucherDeleteImpactSchema = z.object({
   paidOrderCount: z.number().int().nonnegative(),
   paidOrderTotalCents: z.number().int().nonnegative(),
   voucherRedemptionCents: z.number().int().nonnegative(),
+  restoredUnits: z.number().int().nonnegative(),
 });
 
 export const previewVoucherDeletionInputSchema = z.object({
