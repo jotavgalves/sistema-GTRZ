@@ -1,0 +1,86 @@
+.button--danger {
+  border: 1px solid rgb(242 13 50 / 45%);
+  background: rgb(242 13 50 / 12%);
+  color: var(--color-brand-hover);
+}
+
+.button--danger:hover:not(:disabled) {
+  background: rgb(242 13 50 / 22%);
+}
+
+.voucher-card__header > span:first-child > small {
+  color: var(--color-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.voucher-edit-form,
+.voucher-delete-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-raised);
+}
+
+.voucher-edit-form__actions,
+.voucher-delete-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.voucher-delete-panel {
+  border-color: rgb(242 13 50 / 38%);
+  background: rgb(242 13 50 / 7%);
+}
+
+.voucher-delete-panel__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.voucher-delete-panel__warning > svg {
+  flex: 0 0 auto;
+  color: var(--color-brand-hover);
+}
+
+.voucher-delete-panel__warning p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+.voucher-checkout__manual {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.voucher-checkout__manual .form-field {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .voucher-checkout__manual {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .voucher-edit-form__actions,
+  .voucher-delete-panel__actions {
+    justify-content: stretch;
+  }
+
+  .voucher-edit-form__actions .button,
+  .voucher-delete-panel__actions .button {
+    flex: 1;
+  }
+}
