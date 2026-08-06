@@ -46,9 +46,7 @@ export async function launchElectronApplication(): Promise<ElectronApplication> 
   throw lastError;
 }
 
-export async function closeElectronApplication(
-  application: ElectronApplication,
-): Promise<void> {
+export async function closeElectronApplication(application: ElectronApplication): Promise<void> {
   const childProcess = application.process();
   const processId = childProcess.pid;
   let exited = childProcess.exitCode !== null;
@@ -64,10 +62,7 @@ export async function closeElectronApplication(
     });
   });
 
-  await Promise.race([
-    application.close().catch(() => undefined),
-    delay(cleanupTimeout),
-  ]);
+  await Promise.race([application.close().catch(() => undefined), delay(cleanupTimeout)]);
 
   if (!exited && processId !== undefined) {
     await terminateProcessTree(processId);
