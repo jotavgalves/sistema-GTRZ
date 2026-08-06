@@ -21,6 +21,7 @@ interface OperationsViewState {
   readonly addItem: (item: OperationCatalogItem) => Promise<void>;
   readonly removeItem: (orderItemId: string) => Promise<void>;
   readonly closeCurrentOrder: (input: Omit<CloseOrderInput, 'orderId'>) => Promise<void>;
+  readonly cancelOrder: (orderId: string, reason: string) => Promise<void>;
   readonly clearOrder: () => void;
 }
 
@@ -149,6 +150,20 @@ export function useOperations(): OperationsViewState {
     [order, run],
   );
 
+  const cancelOrder = useCallback(
+    async (orderId: string, reason: string): Promise<void> => {
+      await run(
+        () => window.gtrz.operations.cancelOrder({ orderId, reason }),
+        'Comanda cancelada e operação auditada.',
+      );
+
+      if (order?.id === orderId) {
+        setOrder(null);
+      }
+    },
+    [order?.id, run],
+  );
+
   const clearOrder = useCallback((): void => {
     setOrder(null);
     setError(null);
@@ -167,6 +182,7 @@ export function useOperations(): OperationsViewState {
     addItem,
     removeItem,
     closeCurrentOrder,
+    cancelOrder,
     clearOrder,
   };
 }
