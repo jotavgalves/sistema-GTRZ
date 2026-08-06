@@ -87,10 +87,7 @@ export function mapTicketSale(database: DatabaseContext, row: TicketSaleRow): Da
   };
 }
 
-function listTicketLots(
-  database: DatabaseContext,
-  eventId: string,
-): readonly DatabaseTicketLot[] {
+function listTicketLots(database: DatabaseContext, eventId: string): readonly DatabaseTicketLot[] {
   const rows = database.sqlite
     .prepare(
       `SELECT
