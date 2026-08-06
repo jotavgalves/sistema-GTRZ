@@ -45,15 +45,23 @@ test('SMK-END-001 — concilia, gera backup e encerra o evento', async () => {
     const closePanel = window.locator('.event-close-panel');
     await expect(closePanel.getByRole('heading', { name: eventName })).toBeVisible();
     await expect(closePanel).toContainText('R$ 100,00');
-    await closePanel.getByPlaceholder('0,00').fill('100.00');
+    await closePanel.getByPlaceholder('0,00').fill('100,00');
     await closePanel.getByRole('checkbox').check();
     await closePanel.getByRole('button', { name: 'Encerrar evento com backup' }).click();
 
-    await expect(window.getByText(/Evento encerrado\. Backup verificado:/u)).toBeVisible({
-      timeout: 15_000,
-    });
+    const successMessage = window.getByText(/Evento encerrado\. Backup verificado:/u);
+    const failureMessage = window.locator('.event-close-panel .form-error');
+    const outcome = await Promise.race([
+      successMessage.waitFor({ state: 'visible', timeout: 15_000 }).then(() => 'success' as const),
+      failureMessage.waitFor({ state: 'visible', timeout: 15_000 }).then(() => 'failure' as const),
+    ]);
+
+    if (outcome === 'failure') {
+      throw new Error(`Encerramento rejeitado pelo sistema: ${await failureMessage.textContent()}`);
+    }
+
     await expect(eventCard.getByText('Encerrado', { exact: true })).toBeVisible();
-    await expect(window.getByText('Nenhum', { exact: true })).toBeVisible();
+    await expect(window.getByText('Nenhum', { exact: true }).first()).toBeVisible();
   } finally {
     await electronApplication.close();
   }
