@@ -56,7 +56,9 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
     await expect(window.getByText('R$ 100,00', { exact: true }).first()).toBeVisible();
 
     await window.getByRole('link', { name: 'Ingressos' }).click();
-    const activeSaleCard = window.locator('article.ticket-sale-card').filter({ hasText: attendeeName });
+    const activeSaleCard = window
+      .locator('article.ticket-sale-card')
+      .filter({ hasText: attendeeName });
     await activeSaleCard.getByPlaceholder('Ex.: venda duplicada').fill('Venda duplicada');
     await activeSaleCard.getByRole('button', { name: 'Cancelar venda' }).click();
     await expect(window.getByText('Venda cancelada.')).toBeVisible();

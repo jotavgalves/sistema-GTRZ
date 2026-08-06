@@ -266,7 +266,11 @@ function generateCode(): string {
   return `TKT-${randomBytes(6).toString('hex').toLocaleUpperCase('pt-BR')}`;
 }
 
-function ensureUniqueCodes(database: DatabaseContext, eventId: string, codes: readonly string[]): void {
+function ensureUniqueCodes(
+  database: DatabaseContext,
+  eventId: string,
+  codes: readonly string[],
+): void {
   if (new Set(codes).size !== codes.length) {
     throw new Error('Os códigos da venda precisam ser únicos.');
   }

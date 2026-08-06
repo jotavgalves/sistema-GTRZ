@@ -29,13 +29,19 @@ export function TicketLotCard({ lot, busy, onUpdate }: TicketLotCardProps): Reac
   const consumed = lot.soldQuantity + lot.courtesyQuantity;
 
   return (
-    <article className={lot.active ? 'ticket-lot-card' : 'ticket-lot-card ticket-lot-card--inactive'}>
+    <article
+      className={lot.active ? 'ticket-lot-card' : 'ticket-lot-card ticket-lot-card--inactive'}
+    >
       <header className="ticket-lot-card__header">
         <span>
           <Ticket size={18} aria-hidden="true" />
           <strong>{lot.name}</strong>
         </span>
-        <span className={lot.active ? 'status-badge status-badge--open' : 'status-badge status-badge--archived'}>
+        <span
+          className={
+            lot.active ? 'status-badge status-badge--open' : 'status-badge status-badge--archived'
+          }
+        >
           {lot.active ? 'Ativo' : 'Inativo'}
         </span>
       </header>
@@ -59,7 +65,10 @@ export function TicketLotCard({ lot, busy, onUpdate }: TicketLotCardProps): Reac
         </span>
       </div>
 
-      <div className="ticket-capacity-bar" aria-label={`${String(consumed)} de ${String(lot.capacity)} utilizados`}>
+      <div
+        className="ticket-capacity-bar"
+        aria-label={`${String(consumed)} de ${String(lot.capacity)} utilizados`}
+      >
         <span style={{ width: `${String(Math.min((consumed / lot.capacity) * 100, 100))}%` }} />
       </div>
 

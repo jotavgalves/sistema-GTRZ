@@ -85,9 +85,7 @@ export function TicketLotForm({ busy, onSubmit }: TicketLotFormProps): React.JSX
       </div>
       <button
         className="button"
-        disabled={
-          busy || name.trim().length < 2 || parseMoney(price) < 0 || Number(capacity) <= 0
-        }
+        disabled={busy || name.trim().length < 2 || parseMoney(price) < 0 || Number(capacity) <= 0}
         type="submit"
       >
         Criar lote

@@ -14,8 +14,18 @@ function formatMoney(cents: number): string {
 }
 
 export function TicketsPage(): React.JSX.Element {
-  const { state, loading, busy, error, message, reload, createLot, updateLot, createSale, cancelSale } =
-    useTickets();
+  const {
+    state,
+    loading,
+    busy,
+    error,
+    message,
+    reload,
+    createLot,
+    updateLot,
+    createSale,
+    cancelSale,
+  } = useTickets();
   const lots = state?.lots ?? [];
   const sales = state?.sales ?? [];
   const activeSales = sales.filter((sale) => sale.status === 'active');
@@ -114,12 +124,7 @@ export function TicketsPage(): React.JSX.Element {
             ) : null}
             <div className="ticket-sale-list">
               {sales.map((sale) => (
-                <TicketSaleCard
-                  busy={busy}
-                  key={sale.id}
-                  onCancel={cancelSale}
-                  sale={sale}
-                />
+                <TicketSaleCard busy={busy} key={sale.id} onCancel={cancelSale} sale={sale} />
               ))}
             </div>
           </article>

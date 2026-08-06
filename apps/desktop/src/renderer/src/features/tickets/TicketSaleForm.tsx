@@ -35,11 +35,7 @@ function splitCodes(value: string): readonly string[] {
     .filter((code) => code.length > 0);
 }
 
-export function TicketSaleForm({
-  lots,
-  busy,
-  onSubmit,
-}: TicketSaleFormProps): React.JSX.Element {
+export function TicketSaleForm({ lots, busy, onSubmit }: TicketSaleFormProps): React.JSX.Element {
   const availableLots = useMemo(
     () => lots.filter((lot) => lot.active && lot.availableQuantity > 0),
     [lots],

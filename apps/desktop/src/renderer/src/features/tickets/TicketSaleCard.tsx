@@ -23,11 +23,7 @@ function formatMoney(cents: number): string {
   }).format(cents / 100);
 }
 
-export function TicketSaleCard({
-  sale,
-  busy,
-  onCancel,
-}: TicketSaleCardProps): React.JSX.Element {
+export function TicketSaleCard({ sale, busy, onCancel }: TicketSaleCardProps): React.JSX.Element {
   const [reason, setReason] = useState('');
 
   return (
