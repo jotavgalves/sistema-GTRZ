@@ -1,6 +1,5 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 
-import { appendAudit } from './audit';
 import { getSessionState } from './control';
 import type { DatabaseContext } from './types';
 
@@ -20,6 +19,8 @@ export interface DatabaseVoucher {
   readonly initialBalanceCents: number;
   readonly remainingBalanceCents: number;
   readonly status: DatabaseVoucherStatus;
+  readonly servicePointId: string | null;
+  readonly servicePointLabel: string | null;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
@@ -63,6 +64,9 @@ interface VoucherRow {
   readonly initial_balance_cents: number;
   readonly remaining_balance_cents: number;
   readonly status: DatabaseVoucherStatus;
+  readonly service_point_id: string | null;
+  readonly service_point_label: string | null;
+  readonly deleted_at: number | null;
   readonly created_at: number;
   readonly updated_at: number;
 }
@@ -87,28 +91,27 @@ interface RefundRow {
   readonly amount_cents: number;
 }
 
-function requireProduction(database: DatabaseContext): void {
-  if (getSessionState(database).profile !== 'production') {
-    throw new Error('A administração de vouchers exige o perfil Produção.');
-  }
-}
-
-function requireActiveEvent(database: DatabaseContext): string {
-  const eventId = getSessionState(database).activeEvent?.id;
-
-  if (eventId === undefined) {
-    throw new Error('Selecione um evento aberto antes de administrar vouchers.');
-  }
-
-  return eventId;
-}
-
 function normalizeCode(code: string): string {
   return code.trim().toLocaleUpperCase('pt-BR').replaceAll(/\s+/gu, '-');
 }
 
-function generateCode(): string {
-  return `GTRZ-${randomBytes(4).toString('hex').toLocaleUpperCase('pt-BR')}`;
+function selectVoucherSql(where: string): string {
+  return `SELECT
+            v.id,
+            v.event_id,
+            v.code,
+            v.label,
+            v.initial_balance_cents,
+            v.remaining_balance_cents,
+            v.status,
+            v.service_point_id,
+            sp.label AS service_point_label,
+            v.deleted_at,
+            v.created_at,
+            v.updated_at
+          FROM vouchers v
+          LEFT JOIN service_points sp ON sp.id = v.service_point_id
+          WHERE ${where}`;
 }
 
 function mapVoucher(row: VoucherRow): DatabaseVoucher {
@@ -120,6 +123,8 @@ function mapVoucher(row: VoucherRow): DatabaseVoucher {
     initialBalanceCents: row.initial_balance_cents,
     remainingBalanceCents: row.remaining_balance_cents,
     status: row.status,
+    servicePointId: row.service_point_id,
+    servicePointLabel: row.service_point_label,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -142,16 +147,12 @@ function mapTransaction(row: VoucherTransactionRow): DatabaseVoucherTransaction 
 }
 
 function requireVoucherById(database: DatabaseContext, voucherId: string): VoucherRow {
-  const row = database.sqlite
-    .prepare(
-      `SELECT id, event_id, code, label, initial_balance_cents, remaining_balance_cents,
-              status, created_at, updated_at
-       FROM vouchers WHERE id = ?`,
-    )
-    .get(voucherId) as VoucherRow | undefined;
+  const row = database.sqlite.prepare(selectVoucherSql('v.id = ?')).get(voucherId) as
+    | VoucherRow
+    | undefined;
 
-  if (row === undefined) {
-    throw new Error('O voucher informado não existe.');
+  if (row?.deleted_at !== null) {
+    throw new Error('O voucher informado não existe ou foi excluído.');
   }
 
   return row;
@@ -162,17 +163,13 @@ function requireVoucherByCode(
   eventId: string,
   code: string,
 ): VoucherRow {
+  const normalizedCode = normalizeCode(code);
   const row = database.sqlite
-    .prepare(
-      `SELECT id, event_id, code, label, initial_balance_cents, remaining_balance_cents,
-              status, created_at, updated_at
-       FROM vouchers
-       WHERE event_id = ? AND code = ? COLLATE NOCASE`,
-    )
-    .get(eventId, normalizeCode(code)) as VoucherRow | undefined;
+    .prepare(selectVoucherSql('v.event_id = ? AND v.code = ? COLLATE NOCASE'))
+    .get(eventId, normalizedCode) as VoucherRow | undefined;
 
-  if (row === undefined) {
-    throw new Error(`Voucher ${normalizeCode(code)} não encontrado neste evento.`);
+  if (row?.deleted_at !== null) {
+    throw new Error(`Voucher ${normalizedCode} não encontrado neste evento.`);
   }
 
   return row;
@@ -213,12 +210,9 @@ export function getVoucherState(database: DatabaseContext): DatabaseVoucherState
 
   const vouchers = database.sqlite
     .prepare(
-      `SELECT id, event_id, code, label, initial_balance_cents, remaining_balance_cents,
-              status, created_at, updated_at
-       FROM vouchers
-       WHERE event_id = ?
-       ORDER BY CASE status WHEN 'active' THEN 0 WHEN 'exhausted' THEN 1 ELSE 2 END,
-                updated_at DESC`,
+      `${selectVoucherSql('v.event_id = ? AND v.deleted_at IS NULL')}
+       ORDER BY CASE v.status WHEN 'active' THEN 0 WHEN 'exhausted' THEN 1 ELSE 2 END,
+                v.updated_at DESC`,
     )
     .all(eventId) as VoucherRow[];
   const transactions = database.sqlite
@@ -237,119 +231,6 @@ export function getVoucherState(database: DatabaseContext): DatabaseVoucherState
     vouchers: vouchers.map(mapVoucher),
     transactions: transactions.map(mapTransaction),
   };
-}
-
-export function createVoucher(
-  database: DatabaseContext,
-  input: { readonly code?: string; readonly label: string; readonly initialBalanceCents: number },
-): DatabaseVoucher {
-  requireProduction(database);
-  const eventId = requireActiveEvent(database);
-  const code = normalizeCode(input.code ?? generateCode());
-  const label = input.label.trim();
-  const duplicate = database.sqlite
-    .prepare('SELECT id FROM vouchers WHERE event_id = ? AND code = ? COLLATE NOCASE')
-    .get(eventId, code);
-
-  if (duplicate !== undefined) {
-    throw new Error('Já existe um voucher com esse código no evento.');
-  }
-
-  if (!Number.isInteger(input.initialBalanceCents) || input.initialBalanceCents <= 0) {
-    throw new Error('O saldo inicial do voucher deve ser positivo.');
-  }
-
-  const voucherId = randomUUID();
-  const now = Date.now();
-  database.sqlite.transaction(() => {
-    database.sqlite
-      .prepare(
-        `INSERT INTO vouchers
-         (id, event_id, code, label, initial_balance_cents, remaining_balance_cents,
-          status, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)`,
-      )
-      .run(
-        voucherId,
-        eventId,
-        code,
-        label,
-        input.initialBalanceCents,
-        input.initialBalanceCents,
-        now,
-        now,
-      );
-    insertTransaction(database, {
-      eventId,
-      voucherId,
-      voucherCode: code,
-      orderId: null,
-      type: 'issue',
-      amountCents: input.initialBalanceCents,
-      balanceBeforeCents: 0,
-      balanceAfterCents: input.initialBalanceCents,
-      note: label,
-      createdAt: now,
-    });
-    appendAudit(database, {
-      action: 'voucher.created',
-      entityType: 'voucher',
-      entityId: voucherId,
-      eventId,
-      details: { code, initialBalanceCents: input.initialBalanceCents, label },
-    });
-  })();
-
-  return mapVoucher(requireVoucherById(database, voucherId));
-}
-
-export function changeVoucherStatus(
-  database: DatabaseContext,
-  input: { readonly voucherId: string; readonly status: 'active' | 'cancelled' },
-): DatabaseVoucher {
-  requireProduction(database);
-  const eventId = requireActiveEvent(database);
-  const voucher = requireVoucherById(database, input.voucherId);
-
-  if (voucher.event_id !== eventId) {
-    throw new Error('O voucher não pertence ao evento ativo.');
-  }
-
-  if (input.status === 'active' && voucher.remaining_balance_cents === 0) {
-    throw new Error('Um voucher sem saldo não pode ser reativado.');
-  }
-
-  if (voucher.status === input.status) {
-    return mapVoucher(voucher);
-  }
-
-  const now = Date.now();
-  database.sqlite.transaction(() => {
-    database.sqlite
-      .prepare('UPDATE vouchers SET status = ?, updated_at = ? WHERE id = ?')
-      .run(input.status, now, voucher.id);
-    insertTransaction(database, {
-      eventId,
-      voucherId: voucher.id,
-      voucherCode: voucher.code,
-      orderId: null,
-      type: input.status === 'active' ? 'reactivation' : 'cancellation',
-      amountCents: 0,
-      balanceBeforeCents: voucher.remaining_balance_cents,
-      balanceAfterCents: voucher.remaining_balance_cents,
-      note: null,
-      createdAt: now,
-    });
-    appendAudit(database, {
-      action: `voucher.${input.status}`,
-      entityType: 'voucher',
-      entityId: voucher.id,
-      eventId,
-      details: { code: voucher.code, previousStatus: voucher.status },
-    });
-  })();
-
-  return mapVoucher(requireVoucherById(database, voucher.id));
 }
 
 export function redeemVouchers(
@@ -377,9 +258,11 @@ export function redeemVouchers(
     }
 
     if (voucher.remaining_balance_cents < use.amountCents) {
-      throw new Error(
-        `Saldo insuficiente no voucher ${voucher.code}. Disponível: ${String(voucher.remaining_balance_cents)} centavos.`,
-      );
+      const available = new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(voucher.remaining_balance_cents / 100);
+      throw new Error(`Saldo insuficiente no voucher ${voucher.code}. Disponível: ${available}.`);
     }
 
     const nextBalance = voucher.remaining_balance_cents - use.amountCents;

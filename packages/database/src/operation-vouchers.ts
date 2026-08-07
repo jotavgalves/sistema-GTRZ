@@ -8,6 +8,8 @@ export interface DatabaseOrderVoucherAllocation {
   readonly label: string;
   readonly remainingBalanceCents: number;
   readonly status: 'active' | 'exhausted' | 'cancelled';
+  readonly servicePointId: string | null;
+  readonly servicePointLabel: string | null;
   readonly createdAt: number;
   readonly updatedAt: number;
 }
@@ -15,6 +17,7 @@ export interface DatabaseOrderVoucherAllocation {
 interface OrderRow {
   readonly id: string;
   readonly event_id: string;
+  readonly service_point_id: string;
   readonly service_point_label: string;
   readonly status: 'open' | 'paid' | 'cancelled';
 }
@@ -25,6 +28,8 @@ interface AllocationRow {
   readonly label: string;
   readonly remaining_balance_cents: number;
   readonly status: 'active' | 'exhausted' | 'cancelled';
+  readonly service_point_id: string | null;
+  readonly service_point_label: string | null;
   readonly created_at: number;
   readonly updated_at: number;
 }
@@ -36,6 +41,8 @@ interface VoucherRow {
   readonly label: string;
   readonly remaining_balance_cents: number;
   readonly status: 'active' | 'exhausted' | 'cancelled';
+  readonly service_point_id: string | null;
+  readonly service_point_label: string | null;
 }
 
 function normalizeCode(code: string): string {
@@ -52,7 +59,7 @@ function formatMoney(cents: number): string {
 function requireOpenOrder(database: DatabaseContext, orderId: string): OrderRow {
   const order = database.sqlite
     .prepare(
-      `SELECT id, event_id, service_point_label, status
+      `SELECT id, event_id, service_point_id, service_point_label, status
        FROM orders
        WHERE id = ?`,
     )
@@ -73,9 +80,20 @@ function requireVoucher(database: DatabaseContext, eventId: string, code: string
   const normalizedCode = normalizeCode(code);
   const voucher = database.sqlite
     .prepare(
-      `SELECT id, event_id, code, label, remaining_balance_cents, status
-       FROM vouchers
-       WHERE event_id = ? AND code = ? COLLATE NOCASE`,
+      `SELECT
+         v.id,
+         v.event_id,
+         v.code,
+         v.label,
+         v.remaining_balance_cents,
+         v.status,
+         v.service_point_id,
+         sp.label AS service_point_label
+       FROM vouchers v
+       LEFT JOIN service_points sp ON sp.id = v.service_point_id
+       WHERE v.event_id = ?
+         AND v.code = ? COLLATE NOCASE
+         AND v.deleted_at IS NULL`,
     )
     .get(eventId, normalizedCode) as VoucherRow | undefined;
 
@@ -93,6 +111,8 @@ function mapAllocation(row: AllocationRow): DatabaseOrderVoucherAllocation {
     label: row.label,
     remainingBalanceCents: row.remaining_balance_cents,
     status: row.status,
+    servicePointId: row.service_point_id,
+    servicePointLabel: row.service_point_label,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -110,11 +130,14 @@ export function getOrderVoucherAllocation(
          v.label,
          v.remaining_balance_cents,
          v.status,
+         v.service_point_id,
+         sp.label AS service_point_label,
          ova.created_at,
          ova.updated_at
        FROM order_voucher_allocations ova
        INNER JOIN vouchers v ON v.id = ova.voucher_id
-       WHERE ova.order_id = ?`,
+       LEFT JOIN service_points sp ON sp.id = v.service_point_id
+       WHERE ova.order_id = ? AND v.deleted_at IS NULL`,
     )
     .get(orderId) as AllocationRow | undefined;
 
@@ -173,6 +196,8 @@ export function bindOrderVoucher(
       details: {
         code: voucher.code,
         orderId: order.id,
+        orderServicePointId: order.service_point_id,
+        permanentServicePointId: voucher.service_point_id,
         previousVoucherCode: current?.code ?? null,
         servicePointLabel: order.service_point_label,
       },

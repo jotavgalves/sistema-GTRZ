@@ -10,6 +10,7 @@
 @import './checkout.css';
 @import './cancellations.css';
 @import './vouchers.css';
+@import './voucher-management.css';
 @import './finance.css';
 @import './tickets.css';
 @import './event-close.css';

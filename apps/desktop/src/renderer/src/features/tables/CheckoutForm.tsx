@@ -217,6 +217,7 @@ export function CheckoutForm({
         onUnbind={onUnbindVoucher}
         onValueChange={setVoucherAmount}
         orderId={order.id}
+        servicePointId={order.servicePointId}
         value={voucherAmount}
         valueCents={voucherCents}
       />

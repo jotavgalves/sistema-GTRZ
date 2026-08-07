@@ -6,7 +6,7 @@ import {
   launchElectronApplication,
 } from './electron-app';
 
-test('SMK-VCH-001 — vincula voucher à mesa, usa saldo parcial e restitui no estorno', async () => {
+test('SMK-VCH-001 — aplica voucher por código, usa saldo parcial e restitui no estorno', async () => {
   const electronApplication = await launchElectronApplication();
 
   try {
@@ -48,13 +48,15 @@ test('SMK-VCH-001 — vincula voucher à mesa, usa saldo parcial e restitui no e
     await window.getByRole('button', { name: 'Emitir voucher' }).click();
     let voucherCard = window.locator('article.voucher-card').filter({ hasText: voucherCode });
     await expect(voucherCard).toContainText('R$ 10,00');
+    await expect(voucherCard).toContainText('Somente por código manual');
 
     await window.getByRole('link', { name: 'Mesas e balcão' }).click();
     await window.getByRole('button', { name: /Balcão/u }).click();
     await window.getByRole('button', { name: new RegExp(productName, 'u') }).click();
-    const voucherSelect = window.getByLabel('Voucher vinculado à comanda');
-    await expect(voucherSelect.locator('option')).toHaveCount(2);
-    await voucherSelect.selectOption(voucherCode);
+    const automaticVoucher = window.getByLabel('Voucher automático da mesa');
+    await expect(automaticVoucher.locator('option')).toHaveCount(1);
+    await window.getByPlaceholder('Digite ou leia o código').fill(voucherCode);
+    await window.getByRole('button', { name: 'Aplicar código' }).click();
     await expect(window.getByText('Saldo disponível', { exact: true })).toBeVisible();
     await expect(window.getByText('R$ 10,00', { exact: true }).last()).toBeVisible();
     await window.getByLabel('Valor a utilizar').fill('4.00');

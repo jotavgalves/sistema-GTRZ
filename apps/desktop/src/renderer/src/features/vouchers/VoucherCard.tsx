@@ -1,11 +1,24 @@
-import { Ban, CheckCircle2, Copy, RefreshCw } from 'lucide-react';
+import { Ban, CheckCircle2, Copy, Pencil, RefreshCw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
-import type { Voucher } from '@gtrz/contracts';
+import type {
+  ServicePoint,
+  UpdateVoucherInput,
+  Voucher,
+  VoucherDeleteImpact,
+} from '@gtrz/contracts';
+
+import { VoucherDeletePanel } from './VoucherDeletePanel';
+import { VoucherEditForm } from './VoucherEditForm';
 
 interface VoucherCardProps {
   readonly voucher: Voucher;
+  readonly tables: readonly ServicePoint[];
   readonly busy: boolean;
+  readonly onUpdate: (input: UpdateVoucherInput) => Promise<void>;
   readonly onChangeStatus: (voucherId: string, status: 'active' | 'cancelled') => Promise<void>;
+  readonly onPreviewDeletion: (voucherId: string) => Promise<VoucherDeleteImpact>;
+  readonly onDelete: (voucherId: string, reason: string) => Promise<void>;
 }
 
 function formatMoney(cents: number): string {
@@ -23,15 +36,27 @@ const STATUS_LABELS = {
 
 export function VoucherCard({
   voucher,
+  tables,
   busy,
+  onUpdate,
   onChangeStatus,
+  onPreviewDeletion,
+  onDelete,
 }: VoucherCardProps): React.JSX.Element {
+  const [editing, setEditing] = useState(false);
+  const [deleteImpact, setDeleteImpact] = useState<VoucherDeleteImpact | null>(null);
+
   return (
     <article className="voucher-card">
       <header className="voucher-card__header">
         <span>
           <strong>{voucher.label}</strong>
           <code>{voucher.code}</code>
+          <small>
+            {voucher.servicePointLabel === null
+              ? 'Somente por código manual'
+              : `Aparece automaticamente em ${voucher.servicePointLabel}`}
+          </small>
         </span>
         <span
           className={
@@ -47,54 +72,103 @@ export function VoucherCard({
       <div className="voucher-card__balance">
         <span>Saldo disponível</span>
         <strong>{formatMoney(voucher.remainingBalanceCents)}</strong>
-        <small>Emitido com {formatMoney(voucher.initialBalanceCents)}</small>
+        <small>Valor total acumulado: {formatMoney(voucher.initialBalanceCents)}</small>
       </div>
 
-      <div className="voucher-card__actions">
-        <button
-          className="button button--ghost button--compact"
-          disabled={busy}
-          onClick={() => {
-            void navigator.clipboard.writeText(voucher.code);
+      {editing ? (
+        <VoucherEditForm
+          busy={busy}
+          onCancel={() => {
+            setEditing(false);
           }}
-          type="button"
-        >
-          <Copy size={15} aria-hidden="true" />
-          Copiar código
-        </button>
-        {voucher.status === 'active' ? (
+          onSubmit={onUpdate}
+          tables={tables}
+          voucher={voucher}
+        />
+      ) : null}
+
+      {deleteImpact === null ? null : (
+        <VoucherDeletePanel
+          busy={busy}
+          impact={deleteImpact}
+          onCancel={() => {
+            setDeleteImpact(null);
+          }}
+          onDelete={(reason) => onDelete(voucher.id, reason)}
+        />
+      )}
+
+      {!editing && deleteImpact === null ? (
+        <div className="voucher-card__actions">
           <button
             className="button button--ghost button--compact"
             disabled={busy}
             onClick={() => {
-              void onChangeStatus(voucher.id, 'cancelled');
+              void navigator.clipboard.writeText(voucher.code);
             }}
             type="button"
           >
-            <Ban size={15} aria-hidden="true" />
-            Cancelar
+            <Copy size={15} aria-hidden="true" />
+            Copiar código
           </button>
-        ) : null}
-        {voucher.status === 'cancelled' && voucher.remainingBalanceCents > 0 ? (
           <button
-            className="button button--secondary button--compact"
+            className="button button--ghost button--compact"
             disabled={busy}
             onClick={() => {
-              void onChangeStatus(voucher.id, 'active');
+              setEditing(true);
             }}
             type="button"
           >
-            <RefreshCw size={15} aria-hidden="true" />
-            Reativar
+            <Pencil size={15} aria-hidden="true" />
+            Editar
           </button>
-        ) : null}
-        {voucher.status === 'exhausted' ? (
-          <span className="voucher-card__complete">
-            <CheckCircle2 size={15} aria-hidden="true" />
-            Saldo consumido
-          </span>
-        ) : null}
-      </div>
+          {voucher.status === 'active' ? (
+            <button
+              className="button button--ghost button--compact"
+              disabled={busy}
+              onClick={() => {
+                void onChangeStatus(voucher.id, 'cancelled').catch(() => undefined);
+              }}
+              type="button"
+            >
+              <Ban size={15} aria-hidden="true" />
+              Cancelar
+            </button>
+          ) : null}
+          {voucher.status === 'cancelled' && voucher.remainingBalanceCents > 0 ? (
+            <button
+              className="button button--secondary button--compact"
+              disabled={busy}
+              onClick={() => {
+                void onChangeStatus(voucher.id, 'active').catch(() => undefined);
+              }}
+              type="button"
+            >
+              <RefreshCw size={15} aria-hidden="true" />
+              Reativar
+            </button>
+          ) : null}
+          {voucher.status === 'exhausted' ? (
+            <span className="voucher-card__complete">
+              <CheckCircle2 size={15} aria-hidden="true" />
+              Saldo consumido
+            </span>
+          ) : null}
+          <button
+            className="button button--danger button--compact"
+            disabled={busy}
+            onClick={() => {
+              void onPreviewDeletion(voucher.id)
+                .then(setDeleteImpact)
+                .catch(() => undefined);
+            }}
+            type="button"
+          >
+            <Trash2 size={15} aria-hidden="true" />
+            Excluir
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }
