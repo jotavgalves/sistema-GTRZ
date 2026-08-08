@@ -9,6 +9,7 @@ import type {
 
 interface StockMovementFormProps {
   readonly product: InventoryProduct;
+  readonly initialType: StockMovementType;
   readonly busy: boolean;
   readonly onSubmit: (input: RecordStockMovementInput) => Promise<void>;
   readonly onCancel: () => void;
@@ -34,11 +35,12 @@ const NEGATIVE = new Set<StockMovementType>([
 
 export function StockMovementForm({
   product,
+  initialType,
   busy,
   onSubmit,
   onCancel,
 }: StockMovementFormProps): React.JSX.Element {
-  const [type, setType] = useState<StockMovementType>('correction-negative');
+  const [type, setType] = useState<StockMovementType>(initialType);
   const [quantity, setQuantity] = useState('1');
   const [note, setNote] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export function StockMovementForm({
     <form className="movement-form" onSubmit={(event) => void handleSubmit(event)}>
       <div className="movement-form__heading">
         <div>
-          <span>Baixar / ajustar estoque</span>
+          <span>Entrada / baixa / ajuste</span>
           <strong>{product.name}</strong>
         </div>
         <span className="stock-number">Estoque atual: {product.quantity} un.</span>
@@ -123,10 +125,12 @@ export function StockMovementForm({
       </div>
       <p className="movement-form__explanation">
         {type === 'correction-negative'
-          ? 'Correção negativa serve para desfazer uma entrada cadastrada com quantidade errada e também reduz o aporte líquido correspondente.'
+          ? 'Correção negativa desfaz uma entrada cadastrada com quantidade errada e reduz também o aporte líquido correspondente.'
           : type === 'loss' || type === 'breakage'
             ? 'Perda ou quebra reduz o estoque e o valor atual das mercadorias, mas preserva o custo que realmente foi desembolsado.'
-            : 'O sistema registra este movimento no histórico do estoque.'}
+            : type === 'purchase' || type === 'correction-positive'
+              ? 'Esta entrada aumenta o saldo e registra o custo correspondente no aporte líquido do evento.'
+              : 'O sistema registra este movimento no histórico do estoque.'}
       </p>
       <label className="form-field">
         <span>Observação</span>
