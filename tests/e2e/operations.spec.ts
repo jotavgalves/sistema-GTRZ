@@ -40,7 +40,9 @@ test('SMK-OPR-001 — vende, estorna e devolve o estoque pela interface', async 
 
     const productForm = window.locator('form.product-form');
     await productForm.getByLabel('Nome', { exact: true }).fill(productName);
-    await productForm.getByLabel('Categoria', { exact: true }).selectOption({ label: categoryName });
+    await productForm
+      .getByLabel('Categoria', { exact: true })
+      .selectOption({ label: categoryName });
     await productForm.getByLabel('Preço de custo', { exact: true }).fill('2.00');
     await productForm.getByLabel('Preço de venda', { exact: true }).fill('10.00');
     await productForm.getByLabel('Aviso de estoque baixo', { exact: true }).fill('1');
