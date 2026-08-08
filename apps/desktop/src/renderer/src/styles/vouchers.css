@@ -72,6 +72,23 @@
   font-size: 1.4rem;
 }
 
+.voucher-card__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+}
+
+.voucher-card__link strong {
+  overflow: hidden;
+  max-width: 70%;
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .voucher-card__actions {
   flex-wrap: wrap;
   margin-top: auto;
@@ -83,6 +100,47 @@
   gap: var(--space-2);
   color: var(--color-success);
   font-size: 0.72rem;
+}
+
+.voucher-card__management {
+  overflow: hidden;
+  border-top: 1px solid var(--color-border);
+}
+
+.voucher-card__management-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.voucher-card__management-trigger > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.voucher-card__management--open .voucher-card__management-trigger > svg {
+  transform: rotate(180deg);
+}
+
+.voucher-card__management-body {
+  padding-top: var(--space-3);
+}
+
+.voucher-card__management-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .voucher-history__list {

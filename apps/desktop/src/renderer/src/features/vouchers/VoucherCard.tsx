@@ -1,4 +1,13 @@
-import { Ban, CheckCircle2, Copy, Pencil, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  Ban,
+  CheckCircle2,
+  ChevronDown,
+  Copy,
+  Pencil,
+  RefreshCw,
+  Settings2,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import type {
@@ -43,6 +52,7 @@ export function VoucherCard({
   onPreviewDeletion,
   onDelete,
 }: VoucherCardProps): React.JSX.Element {
+  const [managementOpen, setManagementOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleteImpact, setDeleteImpact] = useState<VoucherDeleteImpact | null>(null);
 
@@ -52,11 +62,6 @@ export function VoucherCard({
         <span>
           <strong>{voucher.label}</strong>
           <code>{voucher.code}</code>
-          <small>
-            {voucher.servicePointLabel === null
-              ? 'Somente por código manual'
-              : `Aparece automaticamente em ${voucher.servicePointLabel}`}
-          </small>
         </span>
         <span
           className={
@@ -72,103 +77,144 @@ export function VoucherCard({
       <div className="voucher-card__balance">
         <span>Saldo disponível</span>
         <strong>{formatMoney(voucher.remainingBalanceCents)}</strong>
-        <small>Valor total acumulado: {formatMoney(voucher.initialBalanceCents)}</small>
+        <small>Emitido com {formatMoney(voucher.initialBalanceCents)}</small>
       </div>
 
-      {editing ? (
-        <VoucherEditForm
-          busy={busy}
-          onCancel={() => {
-            setEditing(false);
-          }}
-          onSubmit={onUpdate}
-          tables={tables}
-          voucher={voucher}
-        />
-      ) : null}
+      <div className="voucher-card__link">
+        <span>Mesa</span>
+        <strong>{voucher.servicePointLabel ?? 'Sem vínculo automático'}</strong>
+      </div>
 
-      {deleteImpact === null ? null : (
-        <VoucherDeletePanel
-          busy={busy}
-          impact={deleteImpact}
-          onCancel={() => {
-            setDeleteImpact(null);
+      <div className="voucher-card__actions">
+        <button
+          className="button button--ghost button--compact"
+          disabled={busy}
+          onClick={() => {
+            void navigator.clipboard.writeText(voucher.code);
           }}
-          onDelete={(reason) => onDelete(voucher.id, reason)}
-        />
-      )}
-
-      {!editing && deleteImpact === null ? (
-        <div className="voucher-card__actions">
+          type="button"
+        >
+          <Copy size={15} aria-hidden="true" />
+          Copiar código
+        </button>
+        {voucher.status === 'active' ? (
           <button
             className="button button--ghost button--compact"
             disabled={busy}
             onClick={() => {
-              void navigator.clipboard.writeText(voucher.code);
+              void onChangeStatus(voucher.id, 'cancelled').catch(() => undefined);
             }}
             type="button"
           >
-            <Copy size={15} aria-hidden="true" />
-            Copiar código
+            <Ban size={15} aria-hidden="true" />
+            Cancelar
           </button>
+        ) : null}
+        {voucher.status === 'cancelled' && voucher.remainingBalanceCents > 0 ? (
           <button
-            className="button button--ghost button--compact"
+            className="button button--secondary button--compact"
             disabled={busy}
             onClick={() => {
-              setEditing(true);
+              void onChangeStatus(voucher.id, 'active').catch(() => undefined);
             }}
             type="button"
           >
-            <Pencil size={15} aria-hidden="true" />
-            Editar
+            <RefreshCw size={15} aria-hidden="true" />
+            Reativar
           </button>
-          {voucher.status === 'active' ? (
-            <button
-              className="button button--ghost button--compact"
-              disabled={busy}
-              onClick={() => {
-                void onChangeStatus(voucher.id, 'cancelled').catch(() => undefined);
-              }}
-              type="button"
-            >
-              <Ban size={15} aria-hidden="true" />
-              Cancelar
-            </button>
-          ) : null}
-          {voucher.status === 'cancelled' && voucher.remainingBalanceCents > 0 ? (
-            <button
-              className="button button--secondary button--compact"
-              disabled={busy}
-              onClick={() => {
-                void onChangeStatus(voucher.id, 'active').catch(() => undefined);
-              }}
-              type="button"
-            >
-              <RefreshCw size={15} aria-hidden="true" />
-              Reativar
-            </button>
-          ) : null}
-          {voucher.status === 'exhausted' ? (
-            <span className="voucher-card__complete">
-              <CheckCircle2 size={15} aria-hidden="true" />
-              Saldo consumido
-            </span>
-          ) : null}
-          <button
-            className="button button--danger button--compact"
-            disabled={busy}
-            onClick={() => {
-              void onPreviewDeletion(voucher.id)
-                .then(setDeleteImpact)
-                .catch(() => undefined);
-            }}
-            type="button"
-          >
-            <Trash2 size={15} aria-hidden="true" />
-            Excluir
-          </button>
-        </div>
-      ) : null}
+        ) : null}
+        {voucher.status === 'exhausted' ? (
+          <span className="voucher-card__complete">
+            <CheckCircle2 size={15} aria-hidden="true" />
+            Saldo consumido
+          </span>
+        ) : null}
+      </div>
+
+      <div className={managementOpen ? 'voucher-card__management voucher-card__management--open' : 'voucher-card__management'}>
+        <button
+          className="voucher-card__management-trigger"
+          disabled={busy}
+          onClick={() => {
+            setManagementOpen((current) => !current);
+            if (managementOpen) {
+              setEditing(false);
+              setDeleteImpact(null);
+            }
+          }}
+          type="button"
+        >
+          <span>
+            <Settings2 size={15} aria-hidden="true" />
+            Gerenciar voucher
+          </span>
+          <ChevronDown size={16} aria-hidden="true" />
+        </button>
+
+        {managementOpen ? (
+          <div className="voucher-card__management-body">
+            {!editing && deleteImpact === null ? (
+              <div className="voucher-card__management-actions">
+                <button
+                  className="button button--ghost button--compact"
+                  disabled={busy}
+                  onClick={() => {
+                    setEditing(true);
+                  }}
+                  type="button"
+                >
+                  <Pencil size={15} aria-hidden="true" />
+                  Editar dados
+                </button>
+                <button
+                  className="button button--danger button--compact"
+                  disabled={busy}
+                  onClick={() => {
+                    void onPreviewDeletion(voucher.id)
+                      .then(setDeleteImpact)
+                      .catch(() => undefined);
+                  }}
+                  type="button"
+                >
+                  <Trash2 size={15} aria-hidden="true" />
+                  Excluir
+                </button>
+              </div>
+            ) : null}
+
+            {editing ? (
+              <VoucherEditForm
+                busy={busy}
+                onCancel={() => {
+                  setEditing(false);
+                }}
+                onSubmit={async (input) => {
+                  await onUpdate(input);
+                  setEditing(false);
+                  setManagementOpen(false);
+                }}
+                tables={tables}
+                voucher={voucher}
+              />
+            ) : null}
+
+            {deleteImpact === null ? null : (
+              <VoucherDeletePanel
+                busy={busy}
+                impact={deleteImpact}
+                onCancel={() => {
+                  setDeleteImpact(null);
+                }}
+                onDelete={async (reason) => {
+                  await onDelete(voucher.id, reason);
+                  setDeleteImpact(null);
+                  setManagementOpen(false);
+                }}
+              />
+            )}
+          </div>
+        ) : null}
+      </div>
     </article>
   );
 }
