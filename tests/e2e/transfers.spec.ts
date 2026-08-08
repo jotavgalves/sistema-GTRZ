@@ -39,7 +39,7 @@ test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', asy
 
     const productForm = window.locator('form.product-form');
     await productForm.getByLabel('Nome', { exact: true }).fill(productName);
-    await productForm.getByRole('combobox').first().selectOption({ label: categoryName });
+    await productForm.getByLabel('Categoria', { exact: true }).selectOption({ label: categoryName });
     await productForm.getByLabel('Preço de custo', { exact: true }).fill('2.00');
     await productForm.getByLabel('Preço de venda', { exact: true }).fill('5.00');
     await productForm.getByLabel('Aviso de estoque baixo', { exact: true }).fill('2');
