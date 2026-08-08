@@ -131,7 +131,13 @@ export function VoucherCard({
         ) : null}
       </div>
 
-      <div className={managementOpen ? 'voucher-card__management voucher-card__management--open' : 'voucher-card__management'}>
+      <div
+        className={
+          managementOpen
+            ? 'voucher-card__management voucher-card__management--open'
+            : 'voucher-card__management'
+        }
+      >
         <button
           className="voucher-card__management-trigger"
           disabled={busy}

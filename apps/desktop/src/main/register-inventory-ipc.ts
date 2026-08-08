@@ -124,9 +124,7 @@ export function registerInventoryIpcHandlers(options: RegisterInventoryIpcOption
 
   ipcMain.handle(INVENTORY_ADMIN_CHANNELS.setPresentation, (_event, payload: unknown) => {
     const input = setProductPresentationInputSchema.parse(payload);
-    return productAdministrationSchema.parse(
-      setProductPresentation(options.getDatabase(), input),
-    );
+    return productAdministrationSchema.parse(setProductPresentation(options.getDatabase(), input));
   });
 
   ipcMain.handle(INVENTORY_ADMIN_CHANNELS.previewDeletion, (_event, payload: unknown) => {

@@ -68,7 +68,7 @@ export function useInventory(): InventoryViewState {
   }, [reload]);
 
   const run = useCallback(
-    async <T,>(operation: () => Promise<T>, successMessage: string): Promise<T> => {
+    async <T>(operation: () => Promise<T>, successMessage: string): Promise<T> => {
       setBusy(true);
       setError(null);
       setMessage(null);
@@ -135,7 +135,10 @@ export function useInventory(): InventoryViewState {
 
   const setPresentation = useCallback(
     async (input: SetProductPresentationInput): Promise<void> => {
-      await run(() => window.gtrz.inventory.setPresentation(input), 'Imagem do produto atualizada.');
+      await run(
+        () => window.gtrz.inventory.setPresentation(input),
+        'Imagem do produto atualizada.',
+      );
     },
     [run],
   );

@@ -62,7 +62,10 @@ function requireProduction(database: DatabaseContext): void {
   }
 }
 
-function requireProduct(database: DatabaseContext, productId: string): { id: string; name: string } {
+function requireProduct(
+  database: DatabaseContext,
+  productId: string,
+): { id: string; name: string } {
   const row = database.sqlite
     .prepare('SELECT id, name FROM products WHERE id = ?')
     .get(productId) as { readonly id: string; readonly name: string } | undefined;
@@ -228,8 +231,7 @@ export function previewProductDeletion(
     productName: product.name,
     currentQuantity: currentQuantityRow.quantity,
     openOrdersCount: countOrders('open'),
-    paidOrdersInActiveEventCount:
-      activeEventId === null ? 0 : countOrders('paid', activeEventId),
+    paidOrdersInActiveEventCount: activeEventId === null ? 0 : countOrders('paid', activeEventId),
     paidOrdersHistoricalCount: countOrders('paid'),
     stockMovementsCount: stockMovements.amount,
     stockTransfersCount: transfers.amount,
@@ -299,7 +301,9 @@ export function deleteInventoryProduct(
     database.sqlite.prepare('DELETE FROM stock_transfers WHERE product_id = ?').run(product.id);
     database.sqlite.prepare('DELETE FROM stock_movements WHERE product_id = ?').run(product.id);
     database.sqlite.prepare('DELETE FROM event_stock WHERE product_id = ?').run(product.id);
-    database.sqlite.prepare('DELETE FROM product_presentations WHERE product_id = ?').run(product.id);
+    database.sqlite
+      .prepare('DELETE FROM product_presentations WHERE product_id = ?')
+      .run(product.id);
     database.sqlite.prepare('DELETE FROM products WHERE id = ?').run(product.id);
 
     appendAudit(database, {

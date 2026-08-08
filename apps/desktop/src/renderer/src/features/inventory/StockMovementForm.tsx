@@ -1,7 +1,11 @@
 import { ArrowDownToLine, X } from 'lucide-react';
 import { useMemo, useState, type SyntheticEvent } from 'react';
 
-import type { InventoryProduct, RecordStockMovementInput, StockMovementType } from '@gtrz/contracts';
+import type {
+  InventoryProduct,
+  RecordStockMovementInput,
+  StockMovementType,
+} from '@gtrz/contracts';
 
 interface StockMovementFormProps {
   readonly product: InventoryProduct;
@@ -20,9 +24,20 @@ const MOVEMENT_LABELS: Readonly<Record<StockMovementType, string>> = {
   courtesy: 'Cortesia',
   return: 'Devolução ao estoque',
 };
-const NEGATIVE = new Set<StockMovementType>(['correction-negative', 'loss', 'breakage', 'internal-consumption', 'courtesy']);
+const NEGATIVE = new Set<StockMovementType>([
+  'correction-negative',
+  'loss',
+  'breakage',
+  'internal-consumption',
+  'courtesy',
+]);
 
-export function StockMovementForm({ product, busy, onSubmit, onCancel }: StockMovementFormProps): React.JSX.Element {
+export function StockMovementForm({
+  product,
+  busy,
+  onSubmit,
+  onCancel,
+}: StockMovementFormProps): React.JSX.Element {
   const [type, setType] = useState<StockMovementType>('correction-negative');
   const [quantity, setQuantity] = useState('1');
   const [note, setNote] = useState('');
@@ -31,31 +46,76 @@ export function StockMovementForm({ product, busy, onSubmit, onCancel }: StockMo
   const isNegative = NEGATIVE.has(type);
   const afterQuantity = useMemo(() => {
     if (!Number.isInteger(parsedQuantity) || parsedQuantity < 0) return product.quantity;
-    return isNegative ? Math.max(product.quantity - parsedQuantity, 0) : product.quantity + parsedQuantity;
+    return isNegative
+      ? Math.max(product.quantity - parsedQuantity, 0)
+      : product.quantity + parsedQuantity;
   }, [isNegative, parsedQuantity, product.quantity]);
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault(); setError(null);
+    event.preventDefault();
+    setError(null);
     try {
-      if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) throw new Error('A quantidade deve ser um número inteiro maior que zero.');
-      if (isNegative && parsedQuantity > product.quantity) throw new Error(`Só existem ${String(product.quantity)} unidades no estoque atual.`);
-      await onSubmit({ productId: product.id, type, quantity: parsedQuantity, note: note.trim() || undefined });
+      if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0)
+        throw new Error('A quantidade deve ser um número inteiro maior que zero.');
+      if (isNegative && parsedQuantity > product.quantity)
+        throw new Error(`Só existem ${String(product.quantity)} unidades no estoque atual.`);
+      await onSubmit({
+        productId: product.id,
+        type,
+        quantity: parsedQuantity,
+        note: note.trim() || undefined,
+      });
       onCancel();
     } catch (submitError: unknown) {
-      setError(submitError instanceof Error ? submitError.message : 'Não foi possível movimentar o estoque.');
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : 'Não foi possível movimentar o estoque.',
+      );
     }
   }
 
   return (
     <form className="movement-form" onSubmit={(event) => void handleSubmit(event)}>
       <div className="movement-form__heading">
-        <div><span>Baixar / ajustar estoque</span><strong>{product.name}</strong></div>
+        <div>
+          <span>Baixar / ajustar estoque</span>
+          <strong>{product.name}</strong>
+        </div>
         <span className="stock-number">Estoque atual: {product.quantity} un.</span>
       </div>
-      <div className="movement-stock-preview"><span>Agora</span><strong>{product.quantity}</strong><span>Após este movimento</span><strong>{afterQuantity}</strong></div>
+      <div className="movement-stock-preview">
+        <span>Agora</span>
+        <strong>{product.quantity}</strong>
+        <span>Após este movimento</span>
+        <strong>{afterQuantity}</strong>
+      </div>
       <div className="movement-form__grid">
-        <label className="form-field"><span>Motivo</span><select onChange={(event) => setType(event.target.value as StockMovementType)} value={type}>{Object.entries(MOVEMENT_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label className="form-field"><span>Quantidade</span><input max={isNegative ? product.quantity : undefined} min="1" onChange={(event) => setQuantity(event.target.value)} required step="1" type="number" value={quantity} /></label>
+        <label className="form-field">
+          <span>Motivo</span>
+          <select
+            onChange={(event) => setType(event.target.value as StockMovementType)}
+            value={type}
+          >
+            {Object.entries(MOVEMENT_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="form-field">
+          <span>Quantidade</span>
+          <input
+            max={isNegative ? product.quantity : undefined}
+            min="1"
+            onChange={(event) => setQuantity(event.target.value)}
+            required
+            step="1"
+            type="number"
+            value={quantity}
+          />
+        </label>
       </div>
       <p className="movement-form__explanation">
         {type === 'correction-negative'
@@ -64,9 +124,26 @@ export function StockMovementForm({ product, busy, onSubmit, onCancel }: StockMo
             ? 'Perda ou quebra reduz o estoque e o valor atual das mercadorias, mas preserva o custo que realmente foi desembolsado.'
             : 'O sistema registra este movimento no histórico do estoque.'}
       </p>
-      <label className="form-field"><span>Observação</span><input maxLength={240} onChange={(event) => setNote(event.target.value)} placeholder="Opcional" value={note} /></label>
+      <label className="form-field">
+        <span>Observação</span>
+        <input
+          maxLength={240}
+          onChange={(event) => setNote(event.target.value)}
+          placeholder="Opcional"
+          value={note}
+        />
+      </label>
       {error === null ? null : <p className="form-error">{error}</p>}
-      <div className="product-form__actions"><button className="button button--ghost" disabled={busy} onClick={onCancel} type="button"><X size={16} aria-hidden="true" />Cancelar</button><button className="button button--primary" disabled={busy} type="submit"><ArrowDownToLine size={17} aria-hidden="true" />Registrar movimento</button></div>
+      <div className="product-form__actions">
+        <button className="button button--ghost" disabled={busy} onClick={onCancel} type="button">
+          <X size={16} aria-hidden="true" />
+          Cancelar
+        </button>
+        <button className="button button--primary" disabled={busy} type="submit">
+          <ArrowDownToLine size={17} aria-hidden="true" />
+          Registrar movimento
+        </button>
+      </div>
     </form>
   );
 }
