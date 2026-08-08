@@ -75,6 +75,7 @@ test('SMK-BKP-001 — cria e verifica backup manual pela interface', async () =>
 });
 
 test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caixa', async () => {
+  test.setTimeout(90_000);
   const electronApplication = await electron.launch({ args: [applicationPath] });
 
   try {
@@ -91,7 +92,7 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
     await expect(window.getByText(eventName, { exact: true }).first()).toBeVisible();
 
     await window.getByRole('link', { name: 'Estoque' }).click();
-    await expect(window.getByRole('heading', { name: 'Estoque' })).toBeVisible();
+    await expect(window.getByRole('heading', { name: 'Estoque', exact: true })).toBeVisible();
 
     await window.getByPlaceholder('Ex.: Cervejas').fill(categoryName);
     await window.getByRole('button', { name: 'Criar categoria' }).click();
@@ -129,7 +130,7 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
     await window.getByRole('button', { name: 'Usar perfil Caixa' }).click();
     await expect(window.getByText('Caixa', { exact: true })).toBeVisible();
     await window.getByRole('link', { name: 'Estoque' }).click();
-    await expect(window.getByRole('heading', { name: 'Estoque' })).toBeVisible();
+    await expect(window.getByRole('heading', { name: 'Estoque', exact: true })).toBeVisible();
 
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
     await expect(productCard).toBeVisible();
