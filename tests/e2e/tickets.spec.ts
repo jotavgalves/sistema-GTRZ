@@ -46,9 +46,7 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
     const lotSelect = saleComboboxes.nth(0);
     await expect(lotSelect.locator('option')).toHaveCount(2, { timeout: actionTimeout });
     await lotSelect.selectOption({ index: 1 }, { timeout: actionTimeout });
-    await saleForm.getByPlaceholder('Nome completo').fill(attendeeName, {
-      timeout: actionTimeout,
-    });
+    await saleForm.getByPlaceholder('Nome completo').fill(attendeeName, { timeout: actionTimeout });
     await saleComboboxes.nth(1).selectOption('door', { timeout: actionTimeout });
     await saleForm.getByRole('spinbutton').fill('2', { timeout: actionTimeout });
     await saleComboboxes.nth(2).selectOption('cash', { timeout: actionTimeout });
@@ -58,38 +56,29 @@ test('SMK-TKT-001 — vende grupo, gera códigos e cancela com reflexo no caixa'
     });
     await expect(registerSaleButton).toBeEnabled({ timeout: actionTimeout });
     await registerSaleButton.click({ timeout: actionTimeout });
-    await expect(window.getByText('Ingressos registrados.')).toBeVisible({
-      timeout: actionTimeout,
-    });
+    await expect(window.getByText('Ingressos registrados.')).toBeVisible({ timeout: actionTimeout });
 
     const saleCard = window.locator('article.ticket-sale-card').filter({ hasText: attendeeName });
     await expect(saleCard).toContainText('R$ 100,00');
     await expect(saleCard.locator('.ticket-code')).toHaveCount(2);
-    await expect(
-      window.locator('article.ticket-lot-card').filter({ hasText: lotName }),
-    ).toContainText('1');
+    await expect(window.locator('article.ticket-lot-card').filter({ hasText: lotName })).toContainText('1');
 
     await window.getByRole('link', { name: 'Caixa' }).click();
     await expect(window.getByText('R$ 100,00', { exact: true }).first()).toBeVisible();
 
     await window.getByRole('link', { name: 'Ingressos' }).click();
-    const activeSaleCard = window
-      .locator('article.ticket-sale-card')
-      .filter({ hasText: attendeeName });
+    const activeSaleCard = window.locator('article.ticket-sale-card').filter({ hasText: attendeeName });
+    await activeSaleCard.getByRole('button', { name: 'Gerenciar' }).click();
     await activeSaleCard.getByPlaceholder('Ex.: venda duplicada').fill('Venda duplicada');
     const cancelSaleButton = activeSaleCard.getByRole('button', {
-      name: 'Cancelar venda',
+      name: 'Somente cancelar',
       exact: true,
     });
     await expect(cancelSaleButton).toBeEnabled({ timeout: actionTimeout });
     await cancelSaleButton.click({ timeout: actionTimeout });
-    await expect(window.getByText('Venda cancelada.')).toBeVisible({
-      timeout: actionTimeout,
-    });
+    await expect(window.getByText('Venda cancelada.')).toBeVisible({ timeout: actionTimeout });
     await expect(activeSaleCard).toContainText('Cancelada');
-    await expect(
-      window.locator('article.ticket-lot-card').filter({ hasText: lotName }),
-    ).toContainText('3');
+    await expect(window.locator('article.ticket-lot-card').filter({ hasText: lotName })).toContainText('3');
 
     await window.getByRole('link', { name: 'Caixa' }).click();
     await expect(window.getByText('R$ 0,00', { exact: true }).first()).toBeVisible();
