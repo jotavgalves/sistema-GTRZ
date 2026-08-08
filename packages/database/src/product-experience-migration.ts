@@ -1,6 +1,6 @@
 import type BetterSqlite3 from 'better-sqlite3';
 
-export const productExperienceMigration = {
+const productExperienceMigration = {
   version: 20,
   name: 'product-presentation-and-stock-cost-ledger',
 } as const;
