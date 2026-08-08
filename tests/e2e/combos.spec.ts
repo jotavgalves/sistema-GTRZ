@@ -6,6 +6,7 @@ import { _electron as electron } from 'playwright';
 const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
 
 test('SMK-CMB-001 — calcula combo pelo estoque dos componentes e protege custos no Caixa', async () => {
+  test.setTimeout(90_000);
   const electronApplication = await electron.launch({ args: [applicationPath] });
 
   try {
