@@ -1,10 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import {
   closeElectronApplication,
   ensureProduction,
   launchElectronApplication,
 } from './electron-app';
+
+async function createTable(window: Page, name: string): Promise<void> {
+  await window.getByPlaceholder('Ex.: Mesa 12').fill(name);
+  await window.getByRole('button', { name: 'Criar mesa' }).click();
+  await expect(window.getByRole('button', { name: new RegExp(name, 'u') })).toBeVisible();
+}
 
 test('SMK-NAV-002 — troca abas sem renderizar a tela intermediária de permissões', async () => {
   const electronApplication = await launchElectronApplication();
@@ -20,15 +26,11 @@ test('SMK-NAV-002 — troca abas sem renderizar a tela intermediária de permiss
       const observed: string[] = [];
       const collect = (): void => {
         const content = document.querySelector('.workspace-content')?.textContent ?? '';
-        if (content.includes('Carregando permissões')) {
-          observed.push('Carregando permissões');
-        }
+        if (content.includes('Carregando permissões')) observed.push('Carregando permissões');
       };
       const observer = new MutationObserver(collect);
       const target = document.querySelector('.workspace-content');
-      if (target !== null) {
-        observer.observe(target, { childList: true, subtree: true, characterData: true });
-      }
+      if (target !== null) observer.observe(target, { childList: true, subtree: true, characterData: true });
       Object.assign(window, {
         __gtrzPermissionFlashes: observed,
         __gtrzPermissionObserver: observer,
@@ -41,10 +43,8 @@ test('SMK-NAV-002 — troca abas sem renderizar a tela intermediária de permiss
     await expect(window.getByRole('heading', { name: 'Auditoria', exact: true })).toBeVisible();
 
     const flashes = await window.evaluate(() => {
-      const observed = (window as unknown as { __gtrzPermissionFlashes?: string[] })
-        .__gtrzPermissionFlashes;
-      const observer = (window as unknown as { __gtrzPermissionObserver?: MutationObserver })
-        .__gtrzPermissionObserver;
+      const observed = (window as unknown as { __gtrzPermissionFlashes?: string[] }).__gtrzPermissionFlashes;
+      const observer = (window as unknown as { __gtrzPermissionObserver?: MutationObserver }).__gtrzPermissionObserver;
       observer?.disconnect();
       return observed ?? [];
     });
@@ -54,7 +54,7 @@ test('SMK-NAV-002 — troca abas sem renderizar a tela intermediária de permiss
   }
 });
 
-test('SMK-VCH-002 — edita, aumenta, restringe por mesa e aplica manualmente', async () => {
+test('SMK-VCH-002 — mantém voucher na mesa original e bloqueia código manual em outra mesa', async () => {
   test.setTimeout(90_000);
   const electronApplication = await launchElectronApplication();
 
@@ -74,13 +74,8 @@ test('SMK-VCH-002 — edita, aumenta, restringe por mesa e aplica manualmente', 
     await expect(window.getByText(eventName, { exact: true }).first()).toBeVisible();
 
     await window.getByRole('link', { name: 'Mesas e balcão' }).click();
-    const tableInput = window.getByPlaceholder('Ex.: Mesa 12');
-    await tableInput.fill(firstTable);
-    await window.getByRole('button', { name: 'Criar mesa' }).click();
-    await tableInput.fill(secondTable);
-    await window.getByRole('button', { name: 'Criar mesa' }).click();
-    await expect(window.getByRole('button', { name: new RegExp(firstTable, 'u') })).toBeVisible();
-    await expect(window.getByRole('button', { name: new RegExp(secondTable, 'u') })).toBeVisible();
+    await createTable(window, firstTable);
+    await createTable(window, secondTable);
 
     await window.getByRole('link', { name: 'Vouchers' }).click();
     await window.getByPlaceholder('Ex.: Crédito patrocinador').fill(`Voucher ${suffix}`);
@@ -88,40 +83,51 @@ test('SMK-VCH-002 — edita, aumenta, restringe por mesa e aplica manualmente', 
     await window.getByPlaceholder('100,00').fill('10,00');
     await window.getByLabel('Mesa vinculada').selectOption({ label: firstTable });
     await window.getByRole('button', { name: 'Emitir voucher' }).click();
-    const voucherCard = window.locator('article.voucher-card').filter({ hasText: voucherCode });
+
+    let voucherCard = window.locator('article.voucher-card').filter({ hasText: voucherCode });
     await expect(voucherCard).toContainText(firstTable);
     await expect(voucherCard).toContainText('R$ 10,00');
-
-    await voucherCard.getByRole('button', { name: 'Editar' }).click();
-    await voucherCard.getByLabel('Mesa vinculada').selectOption({ label: secondTable });
+    await voucherCard.getByRole('button', { name: 'Gerenciar voucher' }).click();
+    await voucherCard.getByRole('button', { name: 'Editar dados' }).click();
+    const linkedTableSelect = voucherCard.getByLabel('Mesa vinculada');
+    await expect(linkedTableSelect).toBeDisabled();
+    await expect(linkedTableSelect.locator('option:checked')).toHaveText(firstTable);
     await voucherCard.getByLabel('Acréscimo de saldo').fill('5,00');
     await voucherCard.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(voucherCard).toContainText(secondTable);
+
+    voucherCard = window.locator('article.voucher-card').filter({ hasText: voucherCode });
+    await expect(voucherCard).toContainText(firstTable);
     await expect(voucherCard).toContainText('R$ 15,00');
 
     await window.getByRole('link', { name: 'Mesas e balcão' }).click();
     await window.getByRole('button', { name: new RegExp(firstTable, 'u') }).click();
-    const automaticVoucher = window.getByLabel('Voucher automático da mesa');
-    await expect(automaticVoucher.locator('option')).toHaveCount(1);
+    const firstAutomaticVoucher = window.getByLabel('Voucher automático da mesa');
+    await expect(firstAutomaticVoucher.locator('option')).toHaveCount(2);
     await window.getByPlaceholder('Digite ou leia o código').fill(voucherCode);
     await window.getByRole('button', { name: 'Aplicar código' }).click();
-    await expect(window.getByText('aplicado manualmente', { exact: false })).toBeVisible();
-    await window.getByRole('button', { name: 'Remover voucher da comanda' }).click();
+    await expect(window.getByText('Voucher vinculado à comanda.')).toBeVisible();
+    await window.getByRole('button', { name: 'Remover voucher' }).click();
     await window.getByRole('button', { name: 'Voltar para mesas' }).click();
 
     await window.getByRole('button', { name: new RegExp(secondTable, 'u') }).click();
     const secondAutomaticVoucher = window.getByLabel('Voucher automático da mesa');
-    await expect(secondAutomaticVoucher.locator('option')).toHaveCount(2);
-    await secondAutomaticVoucher.selectOption(voucherCode);
-    await expect(window.getByText('vinculado a esta mesa', { exact: false })).toBeVisible();
+    await expect(secondAutomaticVoucher.locator('option')).toHaveCount(1);
+    await window.getByPlaceholder('Digite ou leia o código').fill(voucherCode);
+    await window.getByRole('button', { name: 'Aplicar código' }).click();
+    await expect(
+      window.getByText(
+        new RegExp(`pertence a ${firstTable}.*não pode ser usado em ${secondTable}`, 'u'),
+      ),
+    ).toBeVisible();
 
     await window.getByRole('link', { name: 'Vouchers' }).click();
-    const updatedCard = window.locator('article.voucher-card').filter({ hasText: voucherCode });
-    await updatedCard.getByRole('button', { name: 'Excluir' }).click();
-    await expect(updatedCard).toContainText('Ele ainda não foi usado em nenhuma venda paga.');
-    await updatedCard.getByPlaceholder('Ex.: voucher criado por engano').fill('Teste de exclusão');
-    await updatedCard.getByRole('button', { name: 'Excluir e estornar' }).click();
-    await expect(updatedCard).toHaveCount(0);
+    voucherCard = window.locator('article.voucher-card').filter({ hasText: voucherCode });
+    await voucherCard.getByRole('button', { name: 'Gerenciar voucher' }).click();
+    await voucherCard.getByRole('button', { name: 'Excluir', exact: true }).click();
+    await expect(voucherCard).toContainText('Ele ainda não foi usado em nenhuma venda paga.');
+    await voucherCard.getByPlaceholder('Ex.: voucher criado por engano').fill('Teste de exclusão');
+    await voucherCard.getByRole('button', { name: 'Excluir e estornar' }).click();
+    await expect(voucherCard).toHaveCount(0);
   } finally {
     await closeElectronApplication(electronApplication);
   }
