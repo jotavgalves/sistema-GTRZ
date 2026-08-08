@@ -80,7 +80,9 @@ export function TicketSaleCard({
       </div>
       <button
         className="button button--ghost button--compact"
-        onClick={() => setManaging((value) => !value)}
+        onClick={() => {
+          setManaging((value) => !value);
+        }}
         type="button"
       >
         Gerenciar
@@ -92,7 +94,9 @@ export function TicketSaleCard({
             <input
               disabled={busy}
               maxLength={240}
-              onChange={(event) => setReason(event.target.value)}
+              onChange={(event) => {
+                setReason(event.target.value);
+              }}
               placeholder="Ex.: venda duplicada"
               value={reason}
             />
@@ -102,7 +106,11 @@ export function TicketSaleCard({
               <button
                 className="button button--ghost button--compact"
                 disabled={busy || reason.trim().length < 3}
-                onClick={() => void onCancel(sale.id, reason).then(() => setManaging(false))}
+                onClick={() =>
+                  void onCancel(sale.id, reason).then(() => {
+                    setManaging(false);
+                  })
+                }
                 type="button"
               >
                 <Ban size={15} aria-hidden="true" />

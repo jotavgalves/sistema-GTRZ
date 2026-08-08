@@ -55,7 +55,9 @@ export function ExpenseCard({
       {expense.note === null ? null : <p>{expense.note}</p>}
       <button
         className="button button--ghost button--compact"
-        onClick={() => setManaging((value) => !value)}
+        onClick={() => {
+          setManaging((value) => !value);
+        }}
         type="button"
       >
         Gerenciar
@@ -67,7 +69,9 @@ export function ExpenseCard({
             <input
               disabled={busy}
               maxLength={240}
-              onChange={(event) => setReason(event.target.value)}
+              onChange={(event) => {
+                setReason(event.target.value);
+              }}
               placeholder="Ex.: lançamento duplicado"
               value={reason}
             />

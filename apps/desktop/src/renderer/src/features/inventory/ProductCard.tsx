@@ -54,7 +54,9 @@ export function ProductCard({
         <ProductForm
           busy={busy}
           categories={categories}
-          onCancel={() => setMode('view')}
+          onCancel={() => {
+            setMode('view');
+          }}
           onSubmit={async (input) => {
             await onUpdate(input);
             setMode('view');
@@ -69,7 +71,9 @@ export function ProductCard({
       <article className="inventory-card inventory-card--expanded">
         <StockMovementForm
           busy={busy}
-          onCancel={() => setMode('view')}
+          onCancel={() => {
+            setMode('view');
+          }}
           onSubmit={onMovement}
           product={product}
         />
@@ -123,7 +127,9 @@ export function ProductCard({
               <span>Motivo da exclusão</span>
               <input
                 maxLength={240}
-                onChange={(event) => setReason(event.target.value)}
+                onChange={(event) => {
+                  setReason(event.target.value);
+                }}
                 placeholder="Ex.: produto cadastrado incorretamente"
                 value={reason}
               />
@@ -134,7 +140,9 @@ export function ProductCard({
                 disabled={busy || impact.openOrdersCount > 0 || reason.trim().length < 3}
                 onClick={() =>
                   void onDelete({ productId: product.id, mode: 'keep-sales-history', reason }).then(
-                    () => setMode('view'),
+                    () => {
+                      setMode('view');
+                    },
                   )
                 }
                 type="button"
@@ -151,7 +159,9 @@ export function ProductCard({
                     productId: product.id,
                     mode: 'refund-active-event-sales',
                     reason,
-                  }).then(() => setMode('view'))
+                  }).then(() => {
+                    setMode('view');
+                  })
                 }
                 type="button"
               >
@@ -214,7 +224,9 @@ export function ProductCard({
           <button
             className="button button--ghost button--compact"
             disabled={busy}
-            onClick={() => setMode('edit')}
+            onClick={() => {
+              setMode('edit');
+            }}
             type="button"
           >
             <Pencil size={15} aria-hidden="true" />
@@ -223,7 +235,9 @@ export function ProductCard({
           <button
             className="button button--secondary button--compact"
             disabled={busy || !hasActiveEvent}
-            onClick={() => setMode('movement')}
+            onClick={() => {
+              setMode('movement');
+            }}
             type="button"
           >
             <ArrowDownToLine size={15} aria-hidden="true" />
@@ -237,7 +251,9 @@ export function ProductCard({
               setReason('');
               void onPreviewDeletion(product.id)
                 .then(setImpact)
-                .catch(() => setImpact(null));
+                .catch(() => {
+                  setImpact(null);
+                });
             }}
             type="button"
           >

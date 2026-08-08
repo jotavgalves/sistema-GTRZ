@@ -115,13 +115,13 @@ export function listProductAdministration(
        LEFT JOIN event_stock es ON es.product_id = p.id AND es.event_id = ?
        ORDER BY p.name COLLATE NOCASE`,
     )
-    .all(eventId, eventId) as Array<{
+    .all(eventId, eventId) as {
     readonly product_id: string;
     readonly image_data_url: string | null;
     readonly fallback_icon: DatabaseProductFallbackIcon;
     readonly current_stock_value_cents: number;
     readonly contributed_cost_cents: number;
-  }>;
+  }[];
 
   return rows.map((row) => ({
     productId: row.product_id,
