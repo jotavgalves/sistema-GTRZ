@@ -1,5 +1,6 @@
 name: Validar e gerar instalador temporário
 
+# Execução final da branch validada do PR 18.
 on:
   push:
     branches:
