@@ -49,7 +49,7 @@ export function registerVoucherIpcHandlers(options: RegisterVoucherIpcOptions): 
     const baseInput = {
       label: input.label,
       initialBalanceCents: input.initialBalanceCents,
-      servicePointId: input.servicePointId ?? null,
+      servicePointId: input.servicePointId,
     };
     const databaseInput = input.code === undefined ? baseInput : { ...baseInput, code: input.code };
     return voucherSchema.parse(createVoucher(options.getDatabase(), databaseInput));
