@@ -69,16 +69,22 @@ test('SMK-OPR-001 — vende, estorna e devolve o estoque pela interface', async 
     await window.getByLabel('Valor recebido 1').fill('20.00');
     await window.getByRole('button', { name: 'Concluir venda' }).click();
     await expect(window.getByText('Venda concluída e estoque atualizado.')).toBeVisible();
-    await expect(window.getByRole('button', { name: new RegExp(tableName, 'u') })).toContainText('Livre');
+    await expect(window.getByRole('button', { name: new RegExp(tableName, 'u') })).toContainText(
+      'Livre',
+    );
 
     await window.getByRole('link', { name: 'Estoque' }).click();
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
     await expect(productCard.getByText('4 un.', { exact: true })).toBeVisible();
 
     await window.getByRole('link', { name: 'Mesas e balcão' }).click();
-    const historyDrawer = window.locator('details.history-drawer').filter({ hasText: 'Histórico geral de mesas e balcão' });
+    const historyDrawer = window
+      .locator('details.history-drawer')
+      .filter({ hasText: 'Histórico geral de mesas e balcão' });
     await historyDrawer.locator('summary').click();
-    const recentOrder = historyDrawer.locator('article.recent-order-card').filter({ hasText: tableName });
+    const recentOrder = historyDrawer
+      .locator('article.recent-order-card')
+      .filter({ hasText: tableName });
     await expect(recentOrder).toContainText('Paga');
     await recentOrder.getByPlaceholder('Ex.: lançamento duplicado').fill('Pagamento duplicado');
     await recentOrder.getByRole('button', { name: 'Estornar venda' }).click();

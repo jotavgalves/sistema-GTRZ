@@ -109,14 +109,20 @@ function validateServicePoint(
   return servicePointId;
 }
 
-function originalTableStillExists(database: DatabaseContext, eventId: string, servicePointId: string): boolean {
-  return database.sqlite
-    .prepare(
-      `SELECT id
+function originalTableStillExists(
+  database: DatabaseContext,
+  eventId: string,
+  servicePointId: string,
+): boolean {
+  return (
+    database.sqlite
+      .prepare(
+        `SELECT id
        FROM service_points
        WHERE id = ? AND event_id = ? AND type = 'table' AND active = 1`,
-    )
-    .get(servicePointId, eventId) !== undefined;
+      )
+      .get(servicePointId, eventId) !== undefined
+  );
 }
 
 function insertTransaction(
@@ -131,9 +137,17 @@ function insertTransaction(
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
-      randomUUID(), input.eventId, input.voucherId, input.voucherCode, input.orderId,
-      input.type, input.amountCents, input.balanceBeforeCents, input.balanceAfterCents,
-      input.note, input.createdAt,
+      randomUUID(),
+      input.eventId,
+      input.voucherId,
+      input.voucherCode,
+      input.orderId,
+      input.type,
+      input.amountCents,
+      input.balanceBeforeCents,
+      input.balanceAfterCents,
+      input.note,
+      input.createdAt,
     );
 }
 
@@ -171,7 +185,17 @@ export function createVoucher(
           status, service_point_id, deleted_at, created_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, 'active', ?, NULL, ?, ?)`,
       )
-      .run(voucherId, eventId, code, label, input.initialBalanceCents, input.initialBalanceCents, servicePointId, now, now);
+      .run(
+        voucherId,
+        eventId,
+        code,
+        label,
+        input.initialBalanceCents,
+        input.initialBalanceCents,
+        servicePointId,
+        now,
+        now,
+      );
     insertTransaction(database, {
       eventId,
       voucherId,
@@ -185,8 +209,13 @@ export function createVoucher(
       createdAt: now,
     });
     appendAudit(database, {
-      action: 'voucher.created', entityType: 'voucher', entityId: voucherId, eventId,
-      details: { after: { code, initialBalanceCents: input.initialBalanceCents, label, servicePointId } },
+      action: 'voucher.created',
+      entityType: 'voucher',
+      entityId: voucherId,
+      eventId,
+      details: {
+        after: { code, initialBalanceCents: input.initialBalanceCents, label, servicePointId },
+      },
     });
   })();
   return mapVoucher(requireVoucherById(database, voucherId));
@@ -218,7 +247,9 @@ export function updateVoucher(
     servicePointId !== voucher.service_point_id &&
     originalTableStillExists(database, eventId, voucher.service_point_id)
   ) {
-    throw new Error('O vínculo deste voucher só pode ser alterado depois que a mesa original for excluída.');
+    throw new Error(
+      'O vínculo deste voucher só pode ser alterado depois que a mesa original for excluída.',
+    );
   }
 
   const code = normalizeCode(input.code);
@@ -244,7 +275,16 @@ export function updateVoucher(
              status = ?, service_point_id = ?, updated_at = ?
          WHERE id = ?`,
       )
-      .run(code, label, nextInitialBalance, nextRemainingBalance, nextStatus, servicePointId, now, voucher.id);
+      .run(
+        code,
+        label,
+        nextInitialBalance,
+        nextRemainingBalance,
+        nextStatus,
+        servicePointId,
+        now,
+        voucher.id,
+      );
 
     if (input.addBalanceCents > 0) {
       insertTransaction(database, {
@@ -262,7 +302,10 @@ export function updateVoucher(
     }
 
     appendAudit(database, {
-      action: 'voucher.updated', entityType: 'voucher', entityId: voucher.id, eventId,
+      action: 'voucher.updated',
+      entityType: 'voucher',
+      entityId: voucher.id,
+      eventId,
       details: {
         before: {
           code: voucher.code,
@@ -306,7 +349,9 @@ export function changeVoucherStatus(
 
   const now = Date.now();
   database.sqlite.transaction(() => {
-    database.sqlite.prepare('UPDATE vouchers SET status = ?, updated_at = ? WHERE id = ?').run(input.status, now, voucher.id);
+    database.sqlite
+      .prepare('UPDATE vouchers SET status = ?, updated_at = ? WHERE id = ?')
+      .run(input.status, now, voucher.id);
     insertTransaction(database, {
       eventId,
       voucherId: voucher.id,
@@ -320,8 +365,15 @@ export function changeVoucherStatus(
       createdAt: now,
     });
     appendAudit(database, {
-      action: `voucher.${input.status}`, entityType: 'voucher', entityId: voucher.id, eventId,
-      details: { before: { status: voucher.status }, after: { status: input.status }, code: voucher.code },
+      action: `voucher.${input.status}`,
+      entityType: 'voucher',
+      entityId: voucher.id,
+      eventId,
+      details: {
+        before: { status: voucher.status },
+        after: { status: input.status },
+        code: voucher.code,
+      },
     });
   })();
   return mapVoucher(requireVoucherById(database, voucher.id));

@@ -123,8 +123,15 @@ describe('vouchers database', () => {
       voucherUses: [{ code: voucher.code, amountCents: 400 }],
     });
 
-    expect(paidOrder).toMatchObject({ status: 'paid', totalCents: 1000, paidCents: 1000, remainingCents: 0 });
-    expect(paidOrder.voucherRedemptions).toEqual([{ voucherId: voucher.id, code: voucher.code, amountCents: 400 }]);
+    expect(paidOrder).toMatchObject({
+      status: 'paid',
+      totalCents: 1000,
+      paidCents: 1000,
+      remainingCents: 0,
+    });
+    expect(paidOrder.voucherRedemptions).toEqual([
+      { voucherId: voucher.id, code: voucher.code, amountCents: 400 },
+    ]);
     expect(paidOrder.payments[0]).toMatchObject({ amountCents: 600, changeCents: 400 });
     expect(getVoucherState(database).vouchers[0]?.remainingBalanceCents).toBe(300);
     expect(getStock(database, event.id, productId)).toBe(4);
@@ -150,11 +157,19 @@ describe('vouchers database', () => {
       payments: [],
       voucherUses: [{ code: voucher.code, amountCents: 1000 }],
     });
-    expect(getVoucherState(database).vouchers[0]).toMatchObject({ remainingBalanceCents: 0, status: 'exhausted' });
+    expect(getVoucherState(database).vouchers[0]).toMatchObject({
+      remainingBalanceCents: 0,
+      status: 'exhausted',
+    });
 
     cancelOrder(database, { orderId, reason: 'Venda duplicada' });
-    expect(getVoucherState(database).vouchers[0]).toMatchObject({ remainingBalanceCents: 1000, status: 'active' });
-    expect(getVoucherState(database).transactions.filter((transaction) => transaction.type === 'refund')).toHaveLength(1);
+    expect(getVoucherState(database).vouchers[0]).toMatchObject({
+      remainingBalanceCents: 1000,
+      status: 'active',
+    });
+    expect(
+      getVoucherState(database).transactions.filter((transaction) => transaction.type === 'refund'),
+    ).toHaveLength(1);
     database.close();
   });
 
@@ -172,16 +187,20 @@ describe('vouchers database', () => {
     const orderId = openProductOrder(database, productId, tableId);
     bindOrderVoucher(database, { orderId, code: voucher.code });
 
-    expect(() => closeOrder(database, {
-      orderId,
-      discountCents: 0,
-      payments: [{ method: 'pix', amountCents: 700 }],
-      voucherUses: [{ code: voucher.code, amountCents: 300 }],
-    })).toThrow(/Saldo insuficiente no voucher CURTO-01\. Disponível: R\$\s2,00\./u);
+    expect(() =>
+      closeOrder(database, {
+        orderId,
+        discountCents: 0,
+        payments: [{ method: 'pix', amountCents: 700 }],
+        voucherUses: [{ code: voucher.code, amountCents: 300 }],
+      }),
+    ).toThrow(/Saldo insuficiente no voucher CURTO-01\. Disponível: R\$\s2,00\./u);
     expect(getOrder(database, orderId)).toMatchObject({ status: 'open', paidCents: 0 });
     expect(getStock(database, event.id, productId)).toBe(5);
     expect(getVoucherState(database).vouchers[0]?.remainingBalanceCents).toBe(200);
-    expect(database.sqlite.prepare('SELECT COUNT(*) AS value FROM payments').get()).toEqual({ value: 0 });
+    expect(database.sqlite.prepare('SELECT COUNT(*) AS value FROM payments').get()).toEqual({
+      value: 0,
+    });
     database.close();
   });
 
@@ -195,20 +214,26 @@ describe('vouchers database', () => {
       servicePointId: tableId,
     });
 
-    expect(changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' })).toMatchObject({
+    expect(
+      changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' }),
+    ).toMatchObject({
       status: 'cancelled',
       remainingBalanceCents: 1500,
     });
-    expect(changeVoucherStatus(database, { voucherId: voucher.id, status: 'active' }).status).toBe('active');
-    switchProfile(database, 'cashier');
-    expect(() => createVoucher(database, {
-      label: 'Proibido',
-      initialBalanceCents: 100,
-      servicePointId: tableId,
-    })).toThrow('A administração de vouchers exige o perfil Produção.');
-    expect(() => changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' })).toThrow(
-      'A administração de vouchers exige o perfil Produção.',
+    expect(changeVoucherStatus(database, { voucherId: voucher.id, status: 'active' }).status).toBe(
+      'active',
     );
+    switchProfile(database, 'cashier');
+    expect(() =>
+      createVoucher(database, {
+        label: 'Proibido',
+        initialBalanceCents: 100,
+        servicePointId: tableId,
+      }),
+    ).toThrow('A administração de vouchers exige o perfil Produção.');
+    expect(() =>
+      changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' }),
+    ).toThrow('A administração de vouchers exige o perfil Produção.');
     database.close();
   });
 });

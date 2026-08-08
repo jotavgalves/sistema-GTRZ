@@ -55,7 +55,9 @@ function formatMoney(cents: number): string {
 
 function requireOpenOrder(database: DatabaseContext, orderId: string): OrderRow {
   const order = database.sqlite
-    .prepare(`SELECT id, event_id, service_point_id, service_point_label, status FROM orders WHERE id = ?`)
+    .prepare(
+      `SELECT id, event_id, service_point_id, service_point_label, status FROM orders WHERE id = ?`,
+    )
     .get(orderId) as OrderRow | undefined;
   if (order === undefined) throw new Error('A comanda informada não existe.');
   if (order.status !== 'open') throw new Error('Somente comandas abertas podem receber vouchers.');
@@ -73,7 +75,8 @@ function requireVoucher(database: DatabaseContext, eventId: string, code: string
        WHERE v.event_id = ? AND v.code = ? COLLATE NOCASE AND v.deleted_at IS NULL`,
     )
     .get(eventId, normalizedCode) as VoucherRow | undefined;
-  if (voucher === undefined) throw new Error(`Voucher ${normalizedCode} não encontrado neste evento.`);
+  if (voucher === undefined)
+    throw new Error(`Voucher ${normalizedCode} não encontrado neste evento.`);
   return voucher;
 }
 
@@ -91,7 +94,10 @@ function mapAllocation(row: AllocationRow): DatabaseOrderVoucherAllocation {
   };
 }
 
-export function getOrderVoucherAllocation(database: DatabaseContext, orderId: string): DatabaseOrderVoucherAllocation | null {
+export function getOrderVoucherAllocation(
+  database: DatabaseContext,
+  orderId: string,
+): DatabaseOrderVoucherAllocation | null {
   const row = database.sqlite
     .prepare(
       `SELECT ova.voucher_id, v.code, v.label, v.remaining_balance_cents, v.status,
@@ -116,7 +122,9 @@ export function bindOrderVoucher(
     throw new Error(`O voucher ${voucher.code} não possui saldo ativo para uso.`);
   }
   if (voucher.service_point_id === null) {
-    throw new Error(`O voucher ${voucher.code} precisa ser vinculado a uma mesa antes de ser usado.`);
+    throw new Error(
+      `O voucher ${voucher.code} precisa ser vinculado a uma mesa antes de ser usado.`,
+    );
   }
   if (voucher.service_point_id !== order.service_point_id) {
     throw new Error(
@@ -133,7 +141,9 @@ export function bindOrderVoucher(
     )
     .get(voucher.id, order.id) as { readonly service_point_label: string } | undefined;
   if (conflictingOrder !== undefined) {
-    throw new Error(`O voucher ${voucher.code} já está vinculado a ${conflictingOrder.service_point_label}.`);
+    throw new Error(
+      `O voucher ${voucher.code} já está vinculado a ${conflictingOrder.service_point_label}.`,
+    );
   }
 
   const current = getOrderVoucherAllocation(database, order.id);
@@ -141,12 +151,19 @@ export function bindOrderVoucher(
 
   const now = Date.now();
   database.sqlite.transaction(() => {
-    database.sqlite.prepare('DELETE FROM order_voucher_allocations WHERE order_id = ?').run(order.id);
     database.sqlite
-      .prepare(`INSERT INTO order_voucher_allocations (order_id, event_id, voucher_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`)
+      .prepare('DELETE FROM order_voucher_allocations WHERE order_id = ?')
+      .run(order.id);
+    database.sqlite
+      .prepare(
+        `INSERT INTO order_voucher_allocations (order_id, event_id, voucher_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)`,
+      )
       .run(order.id, order.event_id, voucher.id, now, now);
     appendAudit(database, {
-      action: 'voucher.linked-to-order', entityType: 'voucher', entityId: voucher.id, eventId: order.event_id,
+      action: 'voucher.linked-to-order',
+      entityType: 'voucher',
+      entityId: voucher.id,
+      eventId: order.event_id,
       details: {
         code: voucher.code,
         orderId: order.id,
@@ -168,10 +185,19 @@ export function unbindOrderVoucher(database: DatabaseContext, orderId: string): 
   const allocation = getOrderVoucherAllocation(database, order.id);
   if (allocation === null) return;
   database.sqlite.transaction(() => {
-    database.sqlite.prepare('DELETE FROM order_voucher_allocations WHERE order_id = ?').run(order.id);
+    database.sqlite
+      .prepare('DELETE FROM order_voucher_allocations WHERE order_id = ?')
+      .run(order.id);
     appendAudit(database, {
-      action: 'voucher.unlinked-from-order', entityType: 'voucher', entityId: allocation.voucherId, eventId: order.event_id,
-      details: { code: allocation.code, orderId: order.id, servicePointLabel: order.service_point_label },
+      action: 'voucher.unlinked-from-order',
+      entityType: 'voucher',
+      entityId: allocation.voucherId,
+      eventId: order.event_id,
+      details: {
+        code: allocation.code,
+        orderId: order.id,
+        servicePointLabel: order.service_point_label,
+      },
     });
   })();
 }
@@ -194,9 +220,12 @@ export function validateOrderVoucherUses(
   if (normalizeCode(use.code) !== allocation.code) {
     throw new Error('O voucher informado não corresponde ao voucher vinculado à mesa.');
   }
-  if (allocation.status !== 'active') throw new Error(`O voucher ${allocation.code} não está ativo.`);
+  if (allocation.status !== 'active')
+    throw new Error(`O voucher ${allocation.code} não está ativo.`);
   if (use.amountCents > allocation.remainingBalanceCents) {
-    throw new Error(`Saldo insuficiente no voucher ${allocation.code}. Disponível: ${formatMoney(allocation.remainingBalanceCents)}.`);
+    throw new Error(
+      `Saldo insuficiente no voucher ${allocation.code}. Disponível: ${formatMoney(allocation.remainingBalanceCents)}.`,
+    );
   }
   return [{ code: allocation.code, amountCents: use.amountCents }];
 }

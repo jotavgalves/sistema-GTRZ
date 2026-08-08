@@ -95,7 +95,9 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
 
     await window.getByPlaceholder('Ex.: Cervejas').fill(categoryName);
     await window.getByRole('button', { name: 'Criar categoria' }).click();
-    await expect(window.locator('.category-chips').getByText(categoryName, { exact: true })).toBeVisible();
+    await expect(
+      window.locator('.category-chips').getByText(categoryName, { exact: true }),
+    ).toBeVisible();
 
     const productForm = window.locator('form.product-form');
     await productForm.getByLabel('Nome', { exact: true }).fill(productName);
@@ -110,7 +112,9 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
     await expect(productCard).toContainText('Custo un.');
     await expect(productCard).toContainText('Valor atual em estoque');
     await expect(productCard).toContainText('Aporte líquido');
-    await expect(productCard.getByRole('button', { name: 'Baixar estoque · 0 un.' })).toBeDisabled();
+    await expect(
+      productCard.getByRole('button', { name: 'Baixar estoque · 0 un.' }),
+    ).toBeDisabled();
 
     await productCard.getByRole('button', { name: 'Entrada', exact: true }).click();
     const movementForm = window.locator('form.movement-form');

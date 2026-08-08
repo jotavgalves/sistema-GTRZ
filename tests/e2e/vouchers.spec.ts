@@ -78,9 +78,13 @@ test('SMK-VCH-001 — aplica voucher por código na mesa vinculada, usa saldo pa
     await expect(voucherCard).toContainText('R$ 6,00');
 
     await window.getByRole('link', { name: 'Mesas e balcão' }).click();
-    const historyDrawer = window.locator('details.history-drawer').filter({ hasText: 'Histórico geral de mesas e balcão' });
+    const historyDrawer = window
+      .locator('details.history-drawer')
+      .filter({ hasText: 'Histórico geral de mesas e balcão' });
     await historyDrawer.locator('summary').click();
-    const recentOrder = historyDrawer.locator('article.recent-order-card').filter({ hasText: productName });
+    const recentOrder = historyDrawer
+      .locator('article.recent-order-card')
+      .filter({ hasText: productName });
     await expect(recentOrder).toContainText('Paga');
     await recentOrder.getByPlaceholder('Ex.: lançamento duplicado').fill('Estorno voucher');
     await recentOrder.getByRole('button', { name: 'Estornar venda' }).click();

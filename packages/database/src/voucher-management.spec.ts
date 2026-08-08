@@ -93,7 +93,9 @@ describe('gestão avançada de vouchers', () => {
         servicePointId: secondTable.id,
         addBalanceCents: 500,
       }),
-    ).toThrow('O vínculo deste voucher só pode ser alterado depois que a mesa original for excluída.');
+    ).toThrow(
+      'O vínculo deste voucher só pode ser alterado depois que a mesa original for excluída.',
+    );
 
     const updated = updateVoucher(database, {
       voucherId: voucher.id,
@@ -146,9 +148,9 @@ describe('gestão avançada de vouchers', () => {
       itemId: productId,
       quantity: 1,
     });
-    expect(() => bindOrderVoucher(database, { orderId: wrongOrder.id, code: voucher.code })).toThrow(
-      'não pode ser usado em Mesa errada',
-    );
+    expect(() =>
+      bindOrderVoucher(database, { orderId: wrongOrder.id, code: voucher.code }),
+    ).toThrow('não pode ser usado em Mesa errada');
 
     const order = openOrder(database, linkedTable.id);
     const orderWithItem = addOrderItem(database, {
@@ -182,7 +184,9 @@ describe('gestão avançada de vouchers', () => {
     expect(getStock(database, event.id, productId)).toBe(5);
     expect(getVoucherState(database).vouchers).toHaveLength(0);
     expect(
-      database.sqlite.prepare('SELECT status, deleted_at FROM vouchers WHERE id = ?').get(voucher.id),
+      database.sqlite
+        .prepare('SELECT status, deleted_at FROM vouchers WHERE id = ?')
+        .get(voucher.id),
     ).toMatchObject({ status: 'cancelled' });
     database.close();
   });

@@ -30,7 +30,8 @@ test('SMK-NAV-002 — troca abas sem renderizar a tela intermediária de permiss
       };
       const observer = new MutationObserver(collect);
       const target = document.querySelector('.workspace-content');
-      if (target !== null) observer.observe(target, { childList: true, subtree: true, characterData: true });
+      if (target !== null)
+        observer.observe(target, { childList: true, subtree: true, characterData: true });
       Object.assign(window, {
         __gtrzPermissionFlashes: observed,
         __gtrzPermissionObserver: observer,
@@ -43,8 +44,10 @@ test('SMK-NAV-002 — troca abas sem renderizar a tela intermediária de permiss
     await expect(window.getByRole('heading', { name: 'Auditoria', exact: true })).toBeVisible();
 
     const flashes = await window.evaluate(() => {
-      const observed = (window as unknown as { __gtrzPermissionFlashes?: string[] }).__gtrzPermissionFlashes;
-      const observer = (window as unknown as { __gtrzPermissionObserver?: MutationObserver }).__gtrzPermissionObserver;
+      const observed = (window as unknown as { __gtrzPermissionFlashes?: string[] })
+        .__gtrzPermissionFlashes;
+      const observer = (window as unknown as { __gtrzPermissionObserver?: MutationObserver })
+        .__gtrzPermissionObserver;
       observer?.disconnect();
       return observed ?? [];
     });
