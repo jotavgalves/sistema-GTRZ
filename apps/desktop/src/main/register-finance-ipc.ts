@@ -5,6 +5,9 @@ import {
   cashStateSchema,
   closeCashRegisterInputSchema,
   createExpenseInputSchema,
+  deleteExpenseInputSchema,
+  EXPENSE_DELETE_CHANNEL,
+  expenseDeletionResultSchema,
   expenseSchema,
   expenseStateSchema,
   IPC_CHANNELS,
@@ -15,6 +18,7 @@ import {
   cancelExpense,
   closeCashRegister,
   createExpense,
+  deleteExpense,
   getCashState,
   getExpenseState,
   openCashRegister,
@@ -22,74 +26,16 @@ import {
   type DatabaseContext,
 } from '@gtrz/database';
 
-interface RegisterFinanceIpcOptions {
-  readonly getDatabase: () => DatabaseContext;
-}
-
-const FINANCE_CHANNELS = [
-  IPC_CHANNELS.cashGetState,
-  IPC_CHANNELS.cashOpen,
-  IPC_CHANNELS.cashRecordMovement,
-  IPC_CHANNELS.cashClose,
-  IPC_CHANNELS.expensesGetState,
-  IPC_CHANNELS.expensesCreate,
-  IPC_CHANNELS.expensesCancel,
-] as const;
-
-export function registerFinanceIpcHandlers(options: RegisterFinanceIpcOptions): void {
-  for (const channel of FINANCE_CHANNELS) {
-    ipcMain.removeHandler(channel);
-  }
-
-  ipcMain.handle(IPC_CHANNELS.cashGetState, () => {
-    return cashStateSchema.parse(getCashState(options.getDatabase()));
-  });
-
-  ipcMain.handle(IPC_CHANNELS.cashOpen, (_event, payload: unknown) => {
-    const input = openCashRegisterInputSchema.parse(payload);
-    return cashStateSchema.parse(openCashRegister(options.getDatabase(), input.openingCashCents));
-  });
-
-  ipcMain.handle(IPC_CHANNELS.cashRecordMovement, (_event, payload: unknown) => {
-    const input = recordCashMovementInputSchema.parse(payload);
-    const databaseInput =
-      input.note === undefined
-        ? { type: input.type, amountCents: input.amountCents }
-        : { type: input.type, amountCents: input.amountCents, note: input.note };
-    return cashStateSchema.parse(recordCashMovement(options.getDatabase(), databaseInput));
-  });
-
-  ipcMain.handle(IPC_CHANNELS.cashClose, (_event, payload: unknown) => {
-    const input = closeCashRegisterInputSchema.parse(payload);
-    return cashStateSchema.parse(closeCashRegister(options.getDatabase(), input.countedCashCents));
-  });
-
-  ipcMain.handle(IPC_CHANNELS.expensesGetState, () => {
-    return expenseStateSchema.parse(getExpenseState(options.getDatabase()));
-  });
-
-  ipcMain.handle(IPC_CHANNELS.expensesCreate, (_event, payload: unknown) => {
-    const input = createExpenseInputSchema.parse(payload);
-    const databaseInput =
-      input.note === undefined
-        ? {
-            category: input.category,
-            description: input.description,
-            amountCents: input.amountCents,
-            paymentMethod: input.paymentMethod,
-          }
-        : {
-            category: input.category,
-            description: input.description,
-            amountCents: input.amountCents,
-            paymentMethod: input.paymentMethod,
-            note: input.note,
-          };
-    return expenseSchema.parse(createExpense(options.getDatabase(), databaseInput));
-  });
-
-  ipcMain.handle(IPC_CHANNELS.expensesCancel, (_event, payload: unknown) => {
-    const input = cancelExpenseInputSchema.parse(payload);
-    return expenseSchema.parse(cancelExpense(options.getDatabase(), input));
-  });
+interface RegisterFinanceIpcOptions { readonly getDatabase: () => DatabaseContext; }
+const FINANCE_CHANNELS = [IPC_CHANNELS.cashGetState,IPC_CHANNELS.cashOpen,IPC_CHANNELS.cashRecordMovement,IPC_CHANNELS.cashClose,IPC_CHANNELS.expensesGetState,IPC_CHANNELS.expensesCreate,IPC_CHANNELS.expensesCancel,EXPENSE_DELETE_CHANNEL] as const;
+export function registerFinanceIpcHandlers(options:RegisterFinanceIpcOptions):void {
+  for (const channel of FINANCE_CHANNELS) ipcMain.removeHandler(channel);
+  ipcMain.handle(IPC_CHANNELS.cashGetState,()=>cashStateSchema.parse(getCashState(options.getDatabase())));
+  ipcMain.handle(IPC_CHANNELS.cashOpen,(_event,payload:unknown)=>{const input=openCashRegisterInputSchema.parse(payload);return cashStateSchema.parse(openCashRegister(options.getDatabase(),input.openingCashCents));});
+  ipcMain.handle(IPC_CHANNELS.cashRecordMovement,(_event,payload:unknown)=>{const input=recordCashMovementInputSchema.parse(payload);const dbInput=input.note===undefined?{type:input.type,amountCents:input.amountCents}:{type:input.type,amountCents:input.amountCents,note:input.note};return cashStateSchema.parse(recordCashMovement(options.getDatabase(),dbInput));});
+  ipcMain.handle(IPC_CHANNELS.cashClose,(_event,payload:unknown)=>{const input=closeCashRegisterInputSchema.parse(payload);return cashStateSchema.parse(closeCashRegister(options.getDatabase(),input.countedCashCents));});
+  ipcMain.handle(IPC_CHANNELS.expensesGetState,()=>expenseStateSchema.parse(getExpenseState(options.getDatabase())));
+  ipcMain.handle(IPC_CHANNELS.expensesCreate,(_event,payload:unknown)=>{const input=createExpenseInputSchema.parse(payload);const dbInput=input.note===undefined?{category:input.category,description:input.description,amountCents:input.amountCents,paymentMethod:input.paymentMethod}:{category:input.category,description:input.description,amountCents:input.amountCents,paymentMethod:input.paymentMethod,note:input.note};return expenseSchema.parse(createExpense(options.getDatabase(),dbInput));});
+  ipcMain.handle(IPC_CHANNELS.expensesCancel,(_event,payload:unknown)=>expenseSchema.parse(cancelExpense(options.getDatabase(),cancelExpenseInputSchema.parse(payload))));
+  ipcMain.handle(EXPENSE_DELETE_CHANNEL,(_event,payload:unknown)=>expenseDeletionResultSchema.parse(deleteExpense(options.getDatabase(),deleteExpenseInputSchema.parse(payload))));
 }
