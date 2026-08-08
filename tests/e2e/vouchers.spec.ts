@@ -6,7 +6,7 @@ import {
   launchElectronApplication,
 } from './electron-app';
 
-test('SMK-VCH-001 — aplica voucher por código, usa saldo parcial e restitui no estorno', async () => {
+test('SMK-VCH-001 — aplica voucher por código na mesa vinculada, usa saldo parcial e restitui no estorno', async () => {
   const electronApplication = await launchElectronApplication();
 
   try {
@@ -17,6 +17,7 @@ test('SMK-VCH-001 — aplica voucher por código, usa saldo parcial e restitui n
     const eventName = `Evento voucher ${suffix}`;
     const categoryName = `Categoria voucher ${suffix}`;
     const productName = `Produto voucher ${suffix}`;
+    const tableName = `Mesa voucher ${suffix.slice(-5)}`;
     const voucherCode = `VCH-${suffix.slice(-8)}`;
 
     await window.getByRole('link', { name: 'Eventos' }).click();
@@ -35,26 +36,32 @@ test('SMK-VCH-001 — aplica voucher por código, usa saldo parcial e restitui n
     await productForm.getByLabel('Aviso de estoque baixo', { exact: true }).fill('1');
     await productForm.getByRole('button', { name: 'Cadastrar produto' }).click();
     const productCard = window.locator('article.inventory-card').filter({ hasText: productName });
-    await productCard.getByRole('button', { name: 'Movimentar' }).click();
+    await productCard.getByRole('button', { name: 'Entrada', exact: true }).click();
     const movementForm = window.locator('form.movement-form');
     await movementForm.getByLabel('Quantidade', { exact: true }).fill('3');
     await movementForm.getByRole('button', { name: 'Registrar movimento' }).click();
     await expect(productCard.getByText('3 un.', { exact: true })).toBeVisible();
 
+    await window.getByRole('link', { name: 'Mesas e balcão' }).click();
+    await window.getByPlaceholder('Ex.: Mesa 12').fill(tableName);
+    await window.getByRole('button', { name: 'Criar mesa' }).click();
+    await expect(window.getByRole('button', { name: new RegExp(tableName, 'u') })).toBeVisible();
+
     await window.getByRole('link', { name: 'Vouchers' }).click();
     await window.getByPlaceholder('Ex.: Crédito patrocinador').fill(`Crédito ${suffix}`);
     await window.getByPlaceholder('Gerado automaticamente').fill(voucherCode);
     await window.getByPlaceholder('100,00').fill('10.00');
+    await window.getByLabel('Mesa vinculada').selectOption({ label: tableName });
     await window.getByRole('button', { name: 'Emitir voucher' }).click();
     let voucherCard = window.locator('article.voucher-card').filter({ hasText: voucherCode });
     await expect(voucherCard).toContainText('R$ 10,00');
-    await expect(voucherCard).toContainText('Somente por código manual');
+    await expect(voucherCard).toContainText(tableName);
 
     await window.getByRole('link', { name: 'Mesas e balcão' }).click();
-    await window.getByRole('button', { name: /Balcão/u }).click();
+    await window.getByRole('button', { name: new RegExp(tableName, 'u') }).click();
     await window.getByRole('button', { name: new RegExp(productName, 'u') }).click();
     const automaticVoucher = window.getByLabel('Voucher automático da mesa');
-    await expect(automaticVoucher.locator('option')).toHaveCount(1);
+    await expect(automaticVoucher.locator('option')).toHaveCount(2);
     await window.getByPlaceholder('Digite ou leia o código').fill(voucherCode);
     await window.getByRole('button', { name: 'Aplicar código' }).click();
     await expect(window.getByText('Saldo disponível', { exact: true })).toBeVisible();
@@ -71,9 +78,9 @@ test('SMK-VCH-001 — aplica voucher por código, usa saldo parcial e restitui n
     await expect(voucherCard).toContainText('R$ 6,00');
 
     await window.getByRole('link', { name: 'Mesas e balcão' }).click();
-    const recentOrder = window
-      .locator('article.recent-order-card')
-      .filter({ hasText: productName });
+    const historyDrawer = window.locator('details.history-drawer').filter({ hasText: 'Histórico geral de mesas e balcão' });
+    await historyDrawer.locator('summary').click();
+    const recentOrder = historyDrawer.locator('article.recent-order-card').filter({ hasText: productName });
     await expect(recentOrder).toContainText('Paga');
     await recentOrder.getByPlaceholder('Ex.: lançamento duplicado').fill('Estorno voucher');
     await recentOrder.getByRole('button', { name: 'Estornar venda' }).click();
