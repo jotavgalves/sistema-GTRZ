@@ -93,7 +93,10 @@ export const cancelTicketSaleInputSchema = z.object({
   saleId: z.uuid(),
   reason: z.string().trim().min(3).max(240),
 });
-export const deleteTicketSaleInputSchema = cancelTicketSaleInputSchema;
+export const deleteTicketSaleInputSchema = z.object({
+  saleId: z.uuid(),
+  reason: z.string().trim().min(3).max(240),
+});
 export const ticketSaleDeletionResultSchema = z.object({
   saleId: z.uuid(),
   deleted: z.literal(true),
