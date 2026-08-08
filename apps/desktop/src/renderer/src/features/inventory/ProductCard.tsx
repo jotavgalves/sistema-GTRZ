@@ -61,7 +61,9 @@ export function ProductCard({
         <ProductForm
           busy={busy}
           categories={categories}
-          onCancel={() => setMode('view')}
+          onCancel={() => {
+            setMode('view');
+          }}
           onSubmit={async (input) => {
             await onUpdate(input);
             setMode('view');
@@ -77,7 +79,9 @@ export function ProductCard({
         <StockMovementForm
           busy={busy}
           initialType={movementInitialType}
-          onCancel={() => setMode('view')}
+          onCancel={() => {
+            setMode('view');
+          }}
           onSubmit={onMovement}
           product={product}
         />
@@ -131,7 +135,9 @@ export function ProductCard({
               <span>Motivo da exclusão</span>
               <input
                 maxLength={240}
-                onChange={(event) => setReason(event.target.value)}
+                onChange={(event) => {
+                  setReason(event.target.value);
+                }}
                 placeholder="Ex.: produto cadastrado incorretamente"
                 value={reason}
               />
@@ -140,11 +146,15 @@ export function ProductCard({
               <button
                 className="button button--danger"
                 disabled={busy || impact.openOrdersCount > 0 || reason.trim().length < 3}
-                onClick={() =>
-                  void onDelete({ productId: product.id, mode: 'keep-sales-history', reason }).then(
-                    () => setMode('view'),
-                  )
-                }
+                onClick={() => {
+                  void onDelete({
+                    productId: product.id,
+                    mode: 'keep-sales-history',
+                    reason,
+                  }).then(() => {
+                    setMode('view');
+                  });
+                }}
                 type="button"
               >
                 Excluir e manter vendas no histórico
@@ -154,13 +164,15 @@ export function ProductCard({
                 disabled={
                   busy || impact.openOrdersCount > 0 || !hasActiveEvent || reason.trim().length < 3
                 }
-                onClick={() =>
+                onClick={() => {
                   void onDelete({
                     productId: product.id,
                     mode: 'refund-active-event-sales',
                     reason,
-                  }).then(() => setMode('view'))
-                }
+                  }).then(() => {
+                    setMode('view');
+                  });
+                }}
                 type="button"
               >
                 Estornar vendas deste evento e excluir
@@ -222,7 +234,9 @@ export function ProductCard({
           <button
             className="button button--ghost button--compact"
             disabled={busy}
-            onClick={() => setMode('edit')}
+            onClick={() => {
+              setMode('edit');
+            }}
             type="button"
           >
             <Pencil size={15} aria-hidden="true" />
@@ -231,7 +245,9 @@ export function ProductCard({
           <button
             className="button button--ghost button--compact"
             disabled={busy || !hasActiveEvent}
-            onClick={() => openMovement('purchase')}
+            onClick={() => {
+              openMovement('purchase');
+            }}
             type="button"
           >
             <PackagePlus size={15} aria-hidden="true" />
@@ -240,7 +256,9 @@ export function ProductCard({
           <button
             className="button button--secondary button--compact"
             disabled={busy || !hasActiveEvent || product.quantity === 0}
-            onClick={() => openMovement('correction-negative')}
+            onClick={() => {
+              openMovement('correction-negative');
+            }}
             type="button"
           >
             <ArrowDownToLine size={15} aria-hidden="true" />
@@ -254,7 +272,9 @@ export function ProductCard({
               setReason('');
               void onPreviewDeletion(product.id)
                 .then(setImpact)
-                .catch(() => setImpact(null));
+                .catch(() => {
+                  setImpact(null);
+                });
             }}
             type="button"
           >
