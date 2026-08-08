@@ -62,7 +62,9 @@ export function VoucherForm({ busy, tables, onSubmit }: VoucherFormProps): React
         <input
           disabled={busy}
           maxLength={100}
-          onChange={(event) => setLabel(event.target.value)}
+          onChange={(event) => {
+            setLabel(event.target.value);
+          }}
           placeholder="Ex.: Crédito patrocinador"
           required
           value={label}
@@ -73,7 +75,9 @@ export function VoucherForm({ busy, tables, onSubmit }: VoucherFormProps): React
         <input
           disabled={busy}
           maxLength={32}
-          onChange={(event) => setCode(event.target.value.toLocaleUpperCase('pt-BR'))}
+          onChange={(event) => {
+            setCode(event.target.value.toLocaleUpperCase('pt-BR'));
+          }}
           placeholder="Gerado automaticamente"
           value={code}
         />
@@ -83,7 +87,9 @@ export function VoucherForm({ busy, tables, onSubmit }: VoucherFormProps): React
         <input
           disabled={busy}
           inputMode="decimal"
-          onChange={(event) => setBalance(event.target.value)}
+          onChange={(event) => {
+            setBalance(event.target.value);
+          }}
           placeholder="100,00"
           required
           value={balance}
@@ -93,7 +99,9 @@ export function VoucherForm({ busy, tables, onSubmit }: VoucherFormProps): React
         <span>Mesa vinculada</span>
         <select
           disabled={busy}
-          onChange={(event) => setServicePointId(event.target.value)}
+          onChange={(event) => {
+            setServicePointId(event.target.value);
+          }}
           required
           value={servicePointId}
         >
