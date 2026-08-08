@@ -85,7 +85,10 @@ export const cancelExpenseInputSchema = z.object({
   expenseId: z.uuid(),
   reason: z.string().trim().min(3).max(240),
 });
-export const deleteExpenseInputSchema = cancelExpenseInputSchema;
+export const deleteExpenseInputSchema = z.object({
+  expenseId: z.uuid(),
+  reason: z.string().trim().min(3).max(240),
+});
 export const expenseDeletionResultSchema = z.object({
   expenseId: z.uuid(),
   deleted: z.literal(true),
