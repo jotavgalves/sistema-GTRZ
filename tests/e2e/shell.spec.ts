@@ -95,9 +95,7 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
 
     await window.getByPlaceholder('Ex.: Cervejas').fill(categoryName);
     await window.getByRole('button', { name: 'Criar categoria' }).click();
-    await expect(
-      window.locator('.category-chips').getByText(categoryName, { exact: true }),
-    ).toBeVisible();
+    await expect(window.locator('.category-chips').getByText(categoryName, { exact: true })).toBeVisible();
 
     const productForm = window.locator('form.product-form');
     await productForm.getByLabel('Nome', { exact: true }).fill(productName);
@@ -109,16 +107,20 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
 
     let productCard = window.locator('article.inventory-card').filter({ hasText: productName });
     await expect(productCard).toBeVisible();
-    await expect(productCard.getByText('R$ 4,00')).toBeVisible();
-    await expect(productCard.getByText('40.00%')).toBeVisible();
+    await expect(productCard).toContainText('Custo un.');
+    await expect(productCard).toContainText('Valor atual em estoque');
+    await expect(productCard).toContainText('Aporte líquido');
+    await expect(productCard.getByRole('button', { name: 'Baixar estoque · 0 un.' })).toBeDisabled();
 
-    await productCard.getByRole('button', { name: 'Movimentar' }).click();
+    await productCard.getByRole('button', { name: 'Entrada', exact: true }).click();
     const movementForm = window.locator('form.movement-form');
     await movementForm.getByLabel('Quantidade', { exact: true }).fill('6');
     await movementForm.getByRole('button', { name: 'Registrar movimento' }).click();
 
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
-    await expect(productCard.getByText('6 un.')).toBeVisible();
+    await expect(productCard.getByText('6 un.', { exact: true })).toBeVisible();
+    await expect(productCard.getByRole('button', { name: 'Baixar estoque · 6 un.' })).toBeVisible();
+    await expect(productCard).toContainText('R$ 36,00');
 
     await window.getByRole('button', { name: 'Usar perfil Caixa' }).click();
     await expect(window.getByText('Caixa', { exact: true })).toBeVisible();
@@ -128,10 +130,12 @@ test('SMK-EST-001 — cadastra produto, movimenta saldo e protege custos no Caix
     productCard = window.locator('article.inventory-card').filter({ hasText: productName });
     await expect(productCard).toBeVisible();
     await expect(productCard.getByText('R$ 10,00')).toBeVisible();
-    await expect(productCard.getByText('Lucro bruto')).toHaveCount(0);
-    await expect(productCard.getByText('Custo')).toHaveCount(0);
+    await expect(productCard.getByText('Custo un.')).toHaveCount(0);
+    await expect(productCard.getByText('Valor atual em estoque')).toHaveCount(0);
+    await expect(productCard.getByText('Aporte líquido')).toHaveCount(0);
     await expect(productCard.getByRole('button', { name: 'Editar' })).toHaveCount(0);
-    await expect(productCard.getByRole('button', { name: 'Movimentar' })).toHaveCount(0);
+    await expect(productCard.getByRole('button', { name: 'Entrada' })).toHaveCount(0);
+    await expect(productCard.getByRole('button', { name: /Baixar estoque/u })).toHaveCount(0);
   } finally {
     await electronApplication.close();
   }
