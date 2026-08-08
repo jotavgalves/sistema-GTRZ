@@ -6,8 +6,10 @@ import { _electron as electron } from 'playwright';
 const applicationPath = path.join(process.cwd(), 'apps', 'desktop');
 
 async function ensureProduction(window: Page): Promise<void> {
-  if (await window.getByText('Caixa', { exact: true }).isVisible()) {
-    await window.getByPlaceholder('Digite a senha').fill('121225');
+  const passwordInput = window.getByPlaceholder('Digite a senha');
+
+  if (await passwordInput.isVisible()) {
+    await passwordInput.fill('121225');
     await window.getByRole('button', { name: 'Entrar em Produção' }).click();
     await expect(window.getByText('Produção', { exact: true })).toBeVisible();
   }
@@ -38,7 +40,7 @@ test('SMK-OPR-001 — vende, estorna e devolve o estoque pela interface', async 
 
     const productForm = window.locator('form.product-form');
     await productForm.getByLabel('Nome', { exact: true }).fill(productName);
-    await productForm.getByRole('combobox').first().selectOption({ label: categoryName });
+    await productForm.getByLabel('Categoria', { exact: true }).selectOption({ label: categoryName });
     await productForm.getByLabel('Preço de custo', { exact: true }).fill('2.00');
     await productForm.getByLabel('Preço de venda', { exact: true }).fill('10.00');
     await productForm.getByLabel('Aviso de estoque baixo', { exact: true }).fill('1');
