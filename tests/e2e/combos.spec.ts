@@ -32,7 +32,9 @@ test('SMK-CMB-001 — calcula combo pelo estoque dos componentes e protege custo
 
     const productForm = window.locator('form.product-form');
     await productForm.getByLabel('Nome', { exact: true }).fill(productName);
-    await productForm.getByLabel('Categoria', { exact: true }).selectOption({ label: categoryName });
+    await productForm
+      .getByLabel('Categoria', { exact: true })
+      .selectOption({ label: categoryName });
     await productForm.getByLabel('Preço de custo', { exact: true }).fill('6.00');
     await productForm.getByLabel('Preço de venda', { exact: true }).fill('10.00');
     await productForm.getByLabel('Aviso de estoque baixo', { exact: true }).fill('2');
