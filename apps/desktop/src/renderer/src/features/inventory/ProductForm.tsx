@@ -196,6 +196,7 @@ export function ProductForm(props: ProductFormProps): React.JSX.Element {
         <label className="form-field">
           <span>Categoria</span>
           <select
+            aria-label="Categoria"
             onChange={(event) => {
               setCategoryId(event.target.value);
             }}
