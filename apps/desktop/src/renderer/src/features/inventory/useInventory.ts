@@ -1,14 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type {
   CreateProductInput,
+  DeleteProductInput,
   InventoryState,
+  ProductAdministration,
+  ProductDeletionImpact,
   RecordStockMovementInput,
+  SetProductPresentationInput,
   UpdateProductInput,
 } from '@gtrz/contracts';
 
 interface InventoryViewState {
   readonly state: InventoryState | null;
+  readonly administration: ReadonlyMap<string, ProductAdministration>;
   readonly loading: boolean;
   readonly busy: boolean;
   readonly error: string | null;
@@ -18,6 +23,9 @@ interface InventoryViewState {
   readonly createProduct: (input: CreateProductInput) => Promise<void>;
   readonly updateProduct: (input: UpdateProductInput) => Promise<void>;
   readonly recordMovement: (input: RecordStockMovementInput) => Promise<void>;
+  readonly setPresentation: (input: SetProductPresentationInput) => Promise<void>;
+  readonly previewDeletion: (productId: string) => Promise<ProductDeletionImpact>;
+  readonly deleteProduct: (input: DeleteProductInput) => Promise<void>;
 }
 
 function getErrorMessage(error: unknown): string {
@@ -26,17 +34,28 @@ function getErrorMessage(error: unknown): string {
 
 export function useInventory(): InventoryViewState {
   const [state, setState] = useState<InventoryState | null>(null);
+  const [adminRows, setAdminRows] = useState<readonly ProductAdministration[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const administration = useMemo(
+    () => new Map(adminRows.map((item) => [item.productId, item])),
+    [adminRows],
+  );
 
   const reload = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
 
     try {
-      setState(await window.gtrz.inventory.getState());
+      const [nextState, nextAdministration] = await Promise.all([
+        window.gtrz.inventory.getState(),
+        window.gtrz.inventory.listAdministration(),
+      ]);
+      setState(nextState);
+      setAdminRows(nextAdministration);
     } catch (loadError: unknown) {
       setError(getErrorMessage(loadError));
     } finally {
@@ -49,15 +68,16 @@ export function useInventory(): InventoryViewState {
   }, [reload]);
 
   const run = useCallback(
-    async (operation: () => Promise<unknown>, successMessage: string) => {
+    async <T,>(operation: () => Promise<T>, successMessage: string): Promise<T> => {
       setBusy(true);
       setError(null);
       setMessage(null);
 
       try {
-        await operation();
+        const result = await operation();
         await reload();
         setMessage(successMessage);
+        return result;
       } catch (operationError: unknown) {
         const failureMessage = getErrorMessage(operationError);
         setError(failureMessage);
@@ -78,14 +98,30 @@ export function useInventory(): InventoryViewState {
 
   const createProduct = useCallback(
     async (input: CreateProductInput): Promise<void> => {
-      await run(() => window.gtrz.inventory.createProduct(input), 'Produto cadastrado.');
+      await run(async () => {
+        const product = await window.gtrz.inventory.createProduct(input);
+        await window.gtrz.inventory.setPresentation({
+          productId: product.id,
+          imageDataUrl: input.imageDataUrl ?? null,
+          fallbackIcon: input.fallbackIcon ?? 'package',
+        });
+        return product;
+      }, 'Produto cadastrado.');
     },
     [run],
   );
 
   const updateProduct = useCallback(
     async (input: UpdateProductInput): Promise<void> => {
-      await run(() => window.gtrz.inventory.updateProduct(input), 'Produto atualizado.');
+      await run(async () => {
+        const product = await window.gtrz.inventory.updateProduct(input);
+        await window.gtrz.inventory.setPresentation({
+          productId: input.productId,
+          imageDataUrl: input.imageDataUrl ?? null,
+          fallbackIcon: input.fallbackIcon ?? 'package',
+        });
+        return product;
+      }, 'Produto atualizado.');
     },
     [run],
   );
@@ -97,8 +133,34 @@ export function useInventory(): InventoryViewState {
     [run],
   );
 
+  const setPresentation = useCallback(
+    async (input: SetProductPresentationInput): Promise<void> => {
+      await run(() => window.gtrz.inventory.setPresentation(input), 'Imagem do produto atualizada.');
+    },
+    [run],
+  );
+
+  const previewDeletion = useCallback(
+    async (productId: string): Promise<ProductDeletionImpact> =>
+      window.gtrz.inventory.previewDeletion(productId),
+    [],
+  );
+
+  const deleteProduct = useCallback(
+    async (input: DeleteProductInput): Promise<void> => {
+      await run(
+        () => window.gtrz.inventory.deleteProduct(input),
+        input.mode === 'refund-active-event-sales'
+          ? 'Vendas do evento estornadas e produto excluído.'
+          : 'Produto excluído; vendas históricas preservadas.',
+      );
+    },
+    [run],
+  );
+
   return {
     state,
+    administration,
     loading,
     busy,
     error,
@@ -108,5 +170,8 @@ export function useInventory(): InventoryViewState {
     createProduct,
     updateProduct,
     recordMovement,
+    setPresentation,
+    previewDeletion,
+    deleteProduct,
   };
 }
