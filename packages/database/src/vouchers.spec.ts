@@ -13,8 +13,8 @@ import {
   createEvent,
   createInventoryProduct,
   createProductCategory,
+  createServicePoint,
   createVoucher,
-  getOperationState,
   getOrder,
   getVoucherState,
   openDatabase,
@@ -52,14 +52,12 @@ function seedProduct(database: DatabaseContext): string {
   return product.id;
 }
 
-function openProductOrder(database: DatabaseContext, productId: string): string {
-  const counter = getOperationState(database).servicePoints[0];
+function createVoucherTable(database: DatabaseContext, label = 'Mesa voucher'): string {
+  return createServicePoint(database, { label, type: 'table' }).id;
+}
 
-  if (counter === undefined) {
-    throw new Error('Balcão não criado.');
-  }
-
-  const order = openOrder(database, counter.id);
+function openProductOrder(database: DatabaseContext, productId: string, tableId: string): string {
+  const order = openOrder(database, tableId);
   return addOrderItem(database, {
     orderId: order.id,
     itemKind: 'product',
@@ -76,13 +74,15 @@ function getStock(database: DatabaseContext, eventId: string, productId: string)
 }
 
 describe('vouchers database', () => {
-  it('emite voucher com código normalizado e razão inicial', async () => {
+  it('emite voucher com código normalizado, razão inicial e mesa obrigatória', async () => {
     const database = await createTemporaryDatabase();
     createEvent(database, { name: 'Evento voucher', startsAt: Date.now() });
+    const tableId = createVoucherTable(database);
     const voucher = createVoucher(database, {
       code: 'vip 001',
       label: 'Crédito VIP',
       initialBalanceCents: 5000,
+      servicePointId: tableId,
     });
 
     expect(voucher).toMatchObject({
@@ -91,6 +91,7 @@ describe('vouchers database', () => {
       initialBalanceCents: 5000,
       remainingBalanceCents: 5000,
       status: 'active',
+      servicePointId: tableId,
     });
     expect(getVoucherState(database).transactions[0]).toMatchObject({
       voucherId: voucher.id,
@@ -102,16 +103,18 @@ describe('vouchers database', () => {
     database.close();
   });
 
-  it('combina voucher parcial e dinheiro na mesma venda', async () => {
+  it('combina voucher parcial e dinheiro na mesma venda da mesa vinculada', async () => {
     const database = await createTemporaryDatabase();
     const event = createEvent(database, { name: 'Evento misto', startsAt: Date.now() });
     const productId = seedProduct(database);
+    const tableId = createVoucherTable(database);
     const voucher = createVoucher(database, {
       code: 'MISTO-01',
       label: 'Crédito parcial',
       initialBalanceCents: 700,
+      servicePointId: tableId,
     });
-    const orderId = openProductOrder(database, productId);
+    const orderId = openProductOrder(database, productId, tableId);
     bindOrderVoucher(database, { orderId, code: voucher.code });
     const paidOrder = closeOrder(database, {
       orderId,
@@ -120,15 +123,8 @@ describe('vouchers database', () => {
       voucherUses: [{ code: voucher.code, amountCents: 400 }],
     });
 
-    expect(paidOrder).toMatchObject({
-      status: 'paid',
-      totalCents: 1000,
-      paidCents: 1000,
-      remainingCents: 0,
-    });
-    expect(paidOrder.voucherRedemptions).toEqual([
-      { voucherId: voucher.id, code: voucher.code, amountCents: 400 },
-    ]);
+    expect(paidOrder).toMatchObject({ status: 'paid', totalCents: 1000, paidCents: 1000, remainingCents: 0 });
+    expect(paidOrder.voucherRedemptions).toEqual([{ voucherId: voucher.id, code: voucher.code, amountCents: 400 }]);
     expect(paidOrder.payments[0]).toMatchObject({ amountCents: 600, changeCents: 400 });
     expect(getVoucherState(database).vouchers[0]?.remainingBalanceCents).toBe(300);
     expect(getStock(database, event.id, productId)).toBe(4);
@@ -139,12 +135,14 @@ describe('vouchers database', () => {
     const database = await createTemporaryDatabase();
     createEvent(database, { name: 'Evento restituição', startsAt: Date.now() });
     const productId = seedProduct(database);
+    const tableId = createVoucherTable(database);
     const voucher = createVoucher(database, {
       code: 'REFUND-01',
       label: 'Crédito restituível',
       initialBalanceCents: 1000,
+      servicePointId: tableId,
     });
-    const orderId = openProductOrder(database, productId);
+    const orderId = openProductOrder(database, productId, tableId);
     bindOrderVoucher(database, { orderId, code: voucher.code });
     closeOrder(database, {
       orderId,
@@ -152,19 +150,11 @@ describe('vouchers database', () => {
       payments: [],
       voucherUses: [{ code: voucher.code, amountCents: 1000 }],
     });
-    expect(getVoucherState(database).vouchers[0]).toMatchObject({
-      remainingBalanceCents: 0,
-      status: 'exhausted',
-    });
+    expect(getVoucherState(database).vouchers[0]).toMatchObject({ remainingBalanceCents: 0, status: 'exhausted' });
 
     cancelOrder(database, { orderId, reason: 'Venda duplicada' });
-    expect(getVoucherState(database).vouchers[0]).toMatchObject({
-      remainingBalanceCents: 1000,
-      status: 'active',
-    });
-    expect(
-      getVoucherState(database).transactions.filter((transaction) => transaction.type === 'refund'),
-    ).toHaveLength(1);
+    expect(getVoucherState(database).vouchers[0]).toMatchObject({ remainingBalanceCents: 1000, status: 'active' });
+    expect(getVoucherState(database).transactions.filter((transaction) => transaction.type === 'refund')).toHaveLength(1);
     database.close();
   });
 
@@ -172,55 +162,53 @@ describe('vouchers database', () => {
     const database = await createTemporaryDatabase();
     const event = createEvent(database, { name: 'Evento rollback voucher', startsAt: Date.now() });
     const productId = seedProduct(database);
+    const tableId = createVoucherTable(database);
     const voucher = createVoucher(database, {
       code: 'CURTO-01',
       label: 'Saldo curto',
       initialBalanceCents: 200,
+      servicePointId: tableId,
     });
-    const orderId = openProductOrder(database, productId);
+    const orderId = openProductOrder(database, productId, tableId);
     bindOrderVoucher(database, { orderId, code: voucher.code });
 
-    expect(() =>
-      closeOrder(database, {
-        orderId,
-        discountCents: 0,
-        payments: [{ method: 'pix', amountCents: 700 }],
-        voucherUses: [{ code: voucher.code, amountCents: 300 }],
-      }),
-    ).toThrow(/Saldo insuficiente no voucher CURTO-01\. Disponível: R\$\s2,00\./u);
+    expect(() => closeOrder(database, {
+      orderId,
+      discountCents: 0,
+      payments: [{ method: 'pix', amountCents: 700 }],
+      voucherUses: [{ code: voucher.code, amountCents: 300 }],
+    })).toThrow(/Saldo insuficiente no voucher CURTO-01\. Disponível: R\$\s2,00\./u);
     expect(getOrder(database, orderId)).toMatchObject({ status: 'open', paidCents: 0 });
     expect(getStock(database, event.id, productId)).toBe(5);
     expect(getVoucherState(database).vouchers[0]?.remainingBalanceCents).toBe(200);
-    expect(database.sqlite.prepare('SELECT COUNT(*) AS value FROM payments').get()).toEqual({
-      value: 0,
-    });
+    expect(database.sqlite.prepare('SELECT COUNT(*) AS value FROM payments').get()).toEqual({ value: 0 });
     database.close();
   });
 
   it('preserva saldo ao cancelar e reativar e bloqueia administração no Caixa', async () => {
     const database = await createTemporaryDatabase();
     createEvent(database, { name: 'Evento estado voucher', startsAt: Date.now() });
+    const tableId = createVoucherTable(database);
     const voucher = createVoucher(database, {
       label: 'Voucher controlado',
       initialBalanceCents: 1500,
+      servicePointId: tableId,
     });
 
-    expect(
-      changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' }),
-    ).toMatchObject({
+    expect(changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' })).toMatchObject({
       status: 'cancelled',
       remainingBalanceCents: 1500,
     });
-    expect(changeVoucherStatus(database, { voucherId: voucher.id, status: 'active' }).status).toBe(
-      'active',
-    );
+    expect(changeVoucherStatus(database, { voucherId: voucher.id, status: 'active' }).status).toBe('active');
     switchProfile(database, 'cashier');
-    expect(() => createVoucher(database, { label: 'Proibido', initialBalanceCents: 100 })).toThrow(
+    expect(() => createVoucher(database, {
+      label: 'Proibido',
+      initialBalanceCents: 100,
+      servicePointId: tableId,
+    })).toThrow('A administração de vouchers exige o perfil Produção.');
+    expect(() => changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' })).toThrow(
       'A administração de vouchers exige o perfil Produção.',
     );
-    expect(() =>
-      changeVoucherStatus(database, { voucherId: voucher.id, status: 'cancelled' }),
-    ).toThrow('A administração de vouchers exige o perfil Produção.');
     database.close();
   });
 });
