@@ -58,15 +58,17 @@ function seedOrder(database: DatabaseContext, tableLabel: string): string {
 }
 
 describe('voucher vinculado à comanda', () => {
-  it('persiste na mesa, impede uso simultâneo e libera ao remover', async () => {
+  it('persiste na mesa vinculada e rejeita uso em outra mesa', async () => {
     const database = await createTemporaryDatabase();
     createEvent(database, { name: 'Evento vínculo', startsAt: Date.now() });
     const firstOrderId = seedOrder(database, 'Mesa A');
     const secondOrderId = seedOrder(database, 'Mesa B');
+    const firstTableId = getOrder(database, firstOrderId).servicePointId;
     const voucher = createVoucher(database, {
       code: 'VCH-MESA',
       label: 'Crédito mesa',
       initialBalanceCents: 1500,
+      servicePointId: firstTableId,
     });
 
     bindOrderVoucher(database, { orderId: firstOrderId, code: voucher.code });
@@ -74,16 +76,17 @@ describe('voucher vinculado à comanda', () => {
       code: voucher.code,
       label: 'Crédito mesa',
       remainingBalanceCents: 1500,
+      servicePointId: firstTableId,
     });
     expect(() =>
       bindOrderVoucher(database, { orderId: secondOrderId, code: voucher.code }),
-    ).toThrow('já está vinculado a Mesa A');
+    ).toThrow('pertence a Mesa A e não pode ser usado em Mesa B');
 
     unbindOrderVoucher(database, firstOrderId);
     expect(getOrder(database, firstOrderId).voucherAllocation).toBeNull();
     expect(() =>
       bindOrderVoucher(database, { orderId: secondOrderId, code: voucher.code }),
-    ).not.toThrow();
+    ).toThrow('pertence a Mesa A e não pode ser usado em Mesa B');
     database.close();
   });
 
@@ -91,10 +94,12 @@ describe('voucher vinculado à comanda', () => {
     const database = await createTemporaryDatabase();
     createEvent(database, { name: 'Evento saldo', startsAt: Date.now() });
     const orderId = seedOrder(database, 'Mesa saldo');
+    const tableId = getOrder(database, orderId).servicePointId;
     const voucher = createVoucher(database, {
       code: 'VCH-SALDO',
       label: 'Crédito limitado',
       initialBalanceCents: 400,
+      servicePointId: tableId,
     });
 
     bindOrderVoucher(database, { orderId, code: voucher.code });
