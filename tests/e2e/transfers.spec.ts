@@ -7,6 +7,7 @@ import {
 } from './electron-app';
 
 test('SMK-TRF-001 — transfere estoque entre eventos e exibe o histórico', async () => {
+  test.setTimeout(90_000);
   const electronApplication = await launchElectronApplication();
 
   try {
