@@ -47,14 +47,14 @@ export const createVoucherInputSchema = z.object({
   code: z.string().trim().min(4).max(32).optional(),
   label: z.string().trim().min(2).max(100),
   initialBalanceCents: z.number().int().positive(),
-  servicePointId: z.uuid().nullable().optional(),
+  servicePointId: z.uuid(),
 });
 
 export const updateVoucherInputSchema = z.object({
   voucherId: z.uuid(),
   code: z.string().trim().min(4).max(32),
   label: z.string().trim().min(2).max(100),
-  servicePointId: z.uuid().nullable(),
+  servicePointId: z.uuid(),
   addBalanceCents: z.number().int().nonnegative(),
 });
 
