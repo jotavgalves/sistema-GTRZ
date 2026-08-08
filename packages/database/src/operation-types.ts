@@ -1,5 +1,5 @@
 import type { DatabaseOrderVoucherAllocation } from './operation-vouchers';
-import type { DatabaseProductFallbackIcon } from './product-administration';
+import type { DatabaseProductFallbackIcon } from './product-presentation-types';
 import type { DatabaseVoucherRedemption } from './vouchers';
 
 export type DatabaseServicePointType = 'table' | 'counter';

@@ -7,7 +7,7 @@ import type {
   DatabaseOrderItemKind,
 } from './operation-types';
 import { ensureProductExperienceSchema } from './product-experience-migration';
-import type { DatabaseProductFallbackIcon } from './product-administration';
+import type { DatabaseProductFallbackIcon } from './product-presentation-types';
 import type { DatabaseContext } from './types';
 
 interface ProductCatalogRow {

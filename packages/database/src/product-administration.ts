@@ -2,18 +2,10 @@ import { appendAudit } from './audit';
 import { getSessionState } from './control';
 import { cancelOrder } from './operation-cancellation';
 import { ensureProductExperienceSchema } from './product-experience-migration';
+import type { DatabaseProductFallbackIcon } from './product-presentation-types';
 import type { DatabaseContext } from './types';
 
-export type DatabaseProductFallbackIcon =
-  | 'package'
-  | 'beer'
-  | 'cup-soda'
-  | 'coffee'
-  | 'sandwich'
-  | 'pizza'
-  | 'ice-cream'
-  | 'glass-water'
-  | 'candy';
+export type { DatabaseProductFallbackIcon } from './product-presentation-types';
 
 export type DatabaseProductDeletionMode = 'keep-sales-history' | 'refund-active-event-sales';
 
