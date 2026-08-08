@@ -12,6 +12,7 @@ import {
   createExpense,
   createInventoryProduct,
   createProductCategory,
+  createServicePoint,
   createTicketLot,
   createTicketSale,
   createVoucher,
@@ -104,10 +105,15 @@ describe('event close summary', () => {
       source: 'courtesy',
       quantity: 1,
     });
+    const voucherTable = createServicePoint(database, {
+      label: 'Mesa voucher encerramento',
+      type: 'table',
+    });
     createVoucher(database, {
       code: 'FIM-001',
       label: 'Crédito remanescente',
       initialBalanceCents: 500,
+      servicePointId: voucherTable.id,
     });
 
     expect(previewEventClose(database, event.id)).toMatchObject({
