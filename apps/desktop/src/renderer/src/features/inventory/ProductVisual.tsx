@@ -31,21 +31,6 @@ const ICONS = {
   candy: Candy,
 } as const;
 
-export const PRODUCT_ICON_OPTIONS: readonly {
-  readonly value: ProductFallbackIcon;
-  readonly label: string;
-}[] = [
-  { value: 'package', label: 'Pacote' },
-  { value: 'beer', label: 'Cerveja' },
-  { value: 'cup-soda', label: 'Copo / refrigerante' },
-  { value: 'coffee', label: 'Café' },
-  { value: 'sandwich', label: 'Lanche' },
-  { value: 'pizza', label: 'Pizza' },
-  { value: 'ice-cream', label: 'Sorvete' },
-  { value: 'glass-water', label: 'Bebida / água' },
-  { value: 'candy', label: 'Doce' },
-];
-
 export function ProductVisual({
   imageDataUrl,
   fallbackIcon,
