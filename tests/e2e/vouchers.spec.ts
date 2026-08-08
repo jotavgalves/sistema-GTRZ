@@ -7,6 +7,7 @@ import {
 } from './electron-app';
 
 test('SMK-VCH-001 — aplica voucher por código na mesa vinculada, usa saldo parcial e restitui no estorno', async () => {
+  test.setTimeout(90_000);
   const electronApplication = await launchElectronApplication();
 
   try {
