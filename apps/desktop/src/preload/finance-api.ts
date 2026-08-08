@@ -14,7 +14,6 @@ import {
   recordCashMovementInputSchema,
   type CancelExpenseInput,
   type CashApi,
-  type CashState,
   type CloseCashRegisterInput,
   type CreateExpenseInput,
   type DeleteExpenseInput,
