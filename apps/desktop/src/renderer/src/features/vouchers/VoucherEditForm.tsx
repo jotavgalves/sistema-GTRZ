@@ -59,7 +59,9 @@ export function VoucherEditForm({
         <input
           disabled={busy}
           maxLength={100}
-          onChange={(event) => setLabel(event.target.value)}
+          onChange={(event) => {
+            setLabel(event.target.value);
+          }}
           required
           value={label}
         />
@@ -69,7 +71,9 @@ export function VoucherEditForm({
         <input
           disabled={busy}
           maxLength={32}
-          onChange={(event) => setCode(event.target.value.toLocaleUpperCase('pt-BR'))}
+          onChange={(event) => {
+            setCode(event.target.value.toLocaleUpperCase('pt-BR'));
+          }}
           required
           value={code}
         />
@@ -78,7 +82,9 @@ export function VoucherEditForm({
         <span>Mesa vinculada</span>
         <select
           disabled={busy || linkedTableStillExists}
-          onChange={(event) => setServicePointId(event.target.value)}
+          onChange={(event) => {
+            setServicePointId(event.target.value);
+          }}
           required
           value={servicePointId}
         >
@@ -100,7 +106,9 @@ export function VoucherEditForm({
         <input
           disabled={busy}
           inputMode="decimal"
-          onChange={(event) => setAddBalance(event.target.value)}
+          onChange={(event) => {
+            setAddBalance(event.target.value);
+          }}
           placeholder="0,00"
           value={addBalance}
         />
