@@ -25,9 +25,7 @@ test('SMK-CMB-001 — calcula combo pelo estoque dos componentes e protege custo
     await window.getByRole('link', { name: 'Estoque' }).click();
     await window.getByPlaceholder('Ex.: Cervejas').fill(categoryName);
     await window.getByRole('button', { name: 'Criar categoria' }).click();
-    await expect(
-      window.locator('.category-chips').getByText(categoryName, { exact: true }),
-    ).toBeVisible();
+    await expect(window.locator('.category-chips').getByText(categoryName, { exact: true })).toBeVisible();
 
     const productForm = window.locator('form.product-form');
     await productForm.getByLabel('Nome', { exact: true }).fill(productName);
@@ -38,7 +36,7 @@ test('SMK-CMB-001 — calcula combo pelo estoque dos componentes e protege custo
     await productForm.getByRole('button', { name: 'Cadastrar produto' }).click();
 
     let productCard = window.locator('article.inventory-card').filter({ hasText: productName });
-    await productCard.getByRole('button', { name: 'Movimentar' }).click();
+    await productCard.getByRole('button', { name: 'Entrada', exact: true }).click();
     const movementForm = window.locator('form.movement-form');
     await movementForm.getByLabel('Quantidade', { exact: true }).fill('6');
     await movementForm.getByRole('button', { name: 'Registrar movimento' }).click();
@@ -48,9 +46,7 @@ test('SMK-CMB-001 — calcula combo pelo estoque dos componentes e protege custo
     const comboForm = window.locator('form.combo-form');
     await comboForm.getByLabel('Nome do combo', { exact: true }).fill(comboName);
     await comboForm.getByLabel('Preço do combo', { exact: true }).fill('18.00');
-    await comboForm
-      .getByLabel('Produto do combo', { exact: true })
-      .selectOption({ label: productName });
+    await comboForm.getByLabel('Produto do combo', { exact: true }).selectOption({ label: productName });
     await comboForm.getByLabel('Quantidade do componente', { exact: true }).fill('2');
     await comboForm.getByRole('button', { name: 'Adicionar componente' }).click();
     await comboForm.getByRole('button', { name: 'Cadastrar combo' }).click();
