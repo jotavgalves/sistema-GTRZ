@@ -60,7 +60,7 @@ function getStock(database: DatabaseContext, eventId: string, productId: string)
 }
 
 describe('gestão avançada de vouchers', () => {
-  it('vincula a uma mesa e permite somente acréscimo de saldo na edição', async () => {
+  it('trava a mesa original e só libera novo vínculo depois da exclusão dela', async () => {
     const database = await createTemporaryDatabase();
     createEvent(database, { name: 'Evento edição voucher', startsAt: Date.now() });
     const firstTable = createServicePoint(database, { label: 'Mesa 01', type: 'table' });
@@ -81,16 +81,25 @@ describe('gestão avançada de vouchers', () => {
         voucherId: voucher.id,
         code: 'MESA-02',
         label: 'Crédito alterado',
-        servicePointId: secondTable.id,
+        servicePointId: firstTable.id,
         addBalanceCents: -1,
       }),
     ).toThrow('O acréscimo do voucher não pode ser negativo.');
+    expect(() =>
+      updateVoucher(database, {
+        voucherId: voucher.id,
+        code: 'MESA-02',
+        label: 'Crédito alterado',
+        servicePointId: secondTable.id,
+        addBalanceCents: 500,
+      }),
+    ).toThrow('O vínculo deste voucher só pode ser alterado depois que a mesa original for excluída.');
 
     const updated = updateVoucher(database, {
       voucherId: voucher.id,
       code: 'MESA-02',
       label: 'Crédito alterado',
-      servicePointId: secondTable.id,
+      servicePointId: firstTable.id,
       addBalanceCents: 500,
     });
     expect(updated).toMatchObject({
@@ -98,25 +107,50 @@ describe('gestão avançada de vouchers', () => {
       label: 'Crédito alterado',
       initialBalanceCents: 1500,
       remainingBalanceCents: 1500,
+      servicePointId: firstTable.id,
+      servicePointLabel: 'Mesa 01',
+    });
+
+    database.sqlite.prepare('UPDATE service_points SET active = 0 WHERE id = ?').run(firstTable.id);
+    const relinked = updateVoucher(database, {
+      voucherId: voucher.id,
+      code: 'MESA-02',
+      label: 'Crédito alterado',
+      servicePointId: secondTable.id,
+      addBalanceCents: 0,
+    });
+    expect(relinked).toMatchObject({
       servicePointId: secondTable.id,
       servicePointLabel: 'Mesa 02',
     });
     database.close();
   });
 
-  it('permite aplicar manualmente em outra mesa e exclui cancelando a venda', async () => {
+  it('impede código manual em outra mesa e exclui cancelando a venda da mesa correta', async () => {
     const database = await createTemporaryDatabase();
     const event = createEvent(database, { name: 'Evento exclusão voucher', startsAt: Date.now() });
     const productId = seedProduct(database);
     const linkedTable = createServicePoint(database, { label: 'Mesa vinculada', type: 'table' });
-    const otherTable = createServicePoint(database, { label: 'Mesa manual', type: 'table' });
+    const otherTable = createServicePoint(database, { label: 'Mesa errada', type: 'table' });
     const voucher = createVoucher(database, {
       code: 'EXCLUIR-01',
       label: 'Crédito a excluir',
       initialBalanceCents: 400,
       servicePointId: linkedTable.id,
     });
-    const order = openOrder(database, otherTable.id);
+
+    const wrongOrder = openOrder(database, otherTable.id);
+    addOrderItem(database, {
+      orderId: wrongOrder.id,
+      itemKind: 'product',
+      itemId: productId,
+      quantity: 1,
+    });
+    expect(() => bindOrderVoucher(database, { orderId: wrongOrder.id, code: voucher.code })).toThrow(
+      'não pode ser usado em Mesa errada',
+    );
+
+    const order = openOrder(database, linkedTable.id);
     const orderWithItem = addOrderItem(database, {
       orderId: order.id,
       itemKind: 'product',
@@ -148,9 +182,7 @@ describe('gestão avançada de vouchers', () => {
     expect(getStock(database, event.id, productId)).toBe(5);
     expect(getVoucherState(database).vouchers).toHaveLength(0);
     expect(
-      database.sqlite
-        .prepare('SELECT status, deleted_at FROM vouchers WHERE id = ?')
-        .get(voucher.id),
+      database.sqlite.prepare('SELECT status, deleted_at FROM vouchers WHERE id = ?').get(voucher.id),
     ).toMatchObject({ status: 'cancelled' });
     database.close();
   });
