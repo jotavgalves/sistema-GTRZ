@@ -3,22 +3,34 @@ import { ipcRenderer } from 'electron';
 import {
   createCategoryInputSchema,
   createProductInputSchema,
+  deleteProductInputSchema,
+  INVENTORY_ADMIN_CHANNELS,
   inventoryProductSchema,
   inventoryStateSchema,
   IPC_CHANNELS,
+  productAdministrationListSchema,
+  productAdministrationSchema,
   productCategorySchema,
+  productDeletionImpactSchema,
+  productDeletionResultSchema,
   recordStockMovementInputSchema,
+  setProductPresentationInputSchema,
   stockTransferListSchema,
   stockTransferSchema,
   transferStockInputSchema,
   updateProductInputSchema,
   type CreateCategoryInput,
   type CreateProductInput,
+  type DeleteProductInput,
   type InventoryApi,
   type InventoryProduct,
   type InventoryState,
+  type ProductAdministration,
   type ProductCategory,
+  type ProductDeletionImpact,
+  type ProductDeletionResult,
   type RecordStockMovementInput,
+  type SetProductPresentationInput,
   type StockTransfer,
   type TransferStockInput,
   type UpdateProductInput,
@@ -72,5 +84,31 @@ export const inventoryApi: InventoryApi = {
       parsedInput,
     );
     return stockTransferSchema.parse(payload);
+  },
+  async listAdministration(): Promise<readonly ProductAdministration[]> {
+    const payload: unknown = await ipcRenderer.invoke(INVENTORY_ADMIN_CHANNELS.listAdministration);
+    return productAdministrationListSchema.parse(payload);
+  },
+  async setPresentation(input: SetProductPresentationInput): Promise<ProductAdministration> {
+    const parsedInput = setProductPresentationInputSchema.parse(input);
+    const payload: unknown = await ipcRenderer.invoke(
+      INVENTORY_ADMIN_CHANNELS.setPresentation,
+      parsedInput,
+    );
+    return productAdministrationSchema.parse(payload);
+  },
+  async previewDeletion(productId: string): Promise<ProductDeletionImpact> {
+    const payload: unknown = await ipcRenderer.invoke(INVENTORY_ADMIN_CHANNELS.previewDeletion, {
+      productId,
+    });
+    return productDeletionImpactSchema.parse(payload);
+  },
+  async deleteProduct(input: DeleteProductInput): Promise<ProductDeletionResult> {
+    const parsedInput = deleteProductInputSchema.parse(input);
+    const payload: unknown = await ipcRenderer.invoke(
+      INVENTORY_ADMIN_CHANNELS.deleteProduct,
+      parsedInput,
+    );
+    return productDeletionResultSchema.parse(payload);
   },
 };

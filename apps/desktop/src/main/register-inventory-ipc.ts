@@ -3,11 +3,19 @@ import { ipcMain } from 'electron';
 import {
   createCategoryInputSchema,
   createProductInputSchema,
+  deleteProductInputSchema,
+  INVENTORY_ADMIN_CHANNELS,
   inventoryProductSchema,
   inventoryStateSchema,
   IPC_CHANNELS,
+  previewProductDeletionInputSchema,
+  productAdministrationListSchema,
+  productAdministrationSchema,
   productCategorySchema,
+  productDeletionImpactSchema,
+  productDeletionResultSchema,
   recordStockMovementInputSchema,
+  setProductPresentationInputSchema,
   stockTransferListSchema,
   stockTransferSchema,
   transferStockInputSchema,
@@ -16,9 +24,13 @@ import {
 import {
   createInventoryProduct,
   createProductCategory,
+  deleteInventoryProduct,
   getInventoryState,
+  listProductAdministration,
   listStockTransfers,
+  previewProductDeletion,
   recordStockMovement,
+  setProductPresentation,
   transferStockBetweenEvents,
   updateInventoryProduct,
   type DatabaseContext,
@@ -36,6 +48,10 @@ const INVENTORY_CHANNELS = [
   IPC_CHANNELS.inventoryRecordMovement,
   IPC_CHANNELS.inventoryListTransfers,
   IPC_CHANNELS.inventoryTransferStock,
+  INVENTORY_ADMIN_CHANNELS.listAdministration,
+  INVENTORY_ADMIN_CHANNELS.setPresentation,
+  INVENTORY_ADMIN_CHANNELS.previewDeletion,
+  INVENTORY_ADMIN_CHANNELS.deleteProduct,
 ] as const;
 
 export function registerInventoryIpcHandlers(options: RegisterInventoryIpcOptions): void {
@@ -66,18 +82,13 @@ export function registerInventoryIpcHandlers(options: RegisterInventoryIpcOption
     const input = recordStockMovementInputSchema.parse(payload);
     const movementInput =
       input.note === undefined
-        ? {
-            productId: input.productId,
-            type: input.type,
-            quantity: input.quantity,
-          }
+        ? { productId: input.productId, type: input.type, quantity: input.quantity }
         : {
             productId: input.productId,
             type: input.type,
             quantity: input.quantity,
             note: input.note,
           };
-
     return inventoryProductSchema.parse(recordStockMovement(options.getDatabase(), movementInput));
   });
 
@@ -102,9 +113,31 @@ export function registerInventoryIpcHandlers(options: RegisterInventoryIpcOption
             quantity: input.quantity,
             note: input.note,
           };
-
     return stockTransferSchema.parse(
       transferStockBetweenEvents(options.getDatabase(), transferInput),
     );
+  });
+
+  ipcMain.handle(INVENTORY_ADMIN_CHANNELS.listAdministration, () =>
+    productAdministrationListSchema.parse(listProductAdministration(options.getDatabase())),
+  );
+
+  ipcMain.handle(INVENTORY_ADMIN_CHANNELS.setPresentation, (_event, payload: unknown) => {
+    const input = setProductPresentationInputSchema.parse(payload);
+    return productAdministrationSchema.parse(
+      setProductPresentation(options.getDatabase(), input),
+    );
+  });
+
+  ipcMain.handle(INVENTORY_ADMIN_CHANNELS.previewDeletion, (_event, payload: unknown) => {
+    const input = previewProductDeletionInputSchema.parse(payload);
+    return productDeletionImpactSchema.parse(
+      previewProductDeletion(options.getDatabase(), input.productId),
+    );
+  });
+
+  ipcMain.handle(INVENTORY_ADMIN_CHANNELS.deleteProduct, (_event, payload: unknown) => {
+    const input = deleteProductInputSchema.parse(payload);
+    return productDeletionResultSchema.parse(deleteInventoryProduct(options.getDatabase(), input));
   });
 }

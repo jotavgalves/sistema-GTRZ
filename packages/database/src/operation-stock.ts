@@ -6,6 +6,8 @@ import type {
   DatabaseOrderItem,
   DatabaseOrderItemKind,
 } from './operation-types';
+import { ensureProductExperienceSchema } from './product-experience-migration';
+import type { DatabaseProductFallbackIcon } from './product-administration';
 import type { DatabaseContext } from './types';
 
 interface ProductCatalogRow {
@@ -14,6 +16,8 @@ interface ProductCatalogRow {
   readonly sale_price_cents: number;
   readonly active: number;
   readonly available_quantity: number;
+  readonly image_data_url: string | null;
+  readonly fallback_icon: DatabaseProductFallbackIcon;
 }
 
 interface ComboComponentRow {
@@ -37,6 +41,7 @@ export function listOperationCatalog(
   database: DatabaseContext,
   eventId: string | null,
 ): readonly DatabaseOperationCatalogItem[] {
+  ensureProductExperienceSchema(database.sqlite);
   const products = database.sqlite
     .prepare(
       `SELECT
@@ -44,11 +49,14 @@ export function listOperationCatalog(
          p.name,
          p.sale_price_cents,
          p.active,
-         COALESCE(es.quantity, 0) AS available_quantity
+         COALESCE(es.quantity, 0) AS available_quantity,
+         pp.image_data_url,
+         COALESCE(pp.fallback_icon, 'package') AS fallback_icon
        FROM products p
        LEFT JOIN event_stock es
          ON es.product_id = p.id
         AND es.event_id = ?
+       LEFT JOIN product_presentations pp ON pp.product_id = p.id
        ORDER BY p.active DESC, p.name COLLATE NOCASE`,
     )
     .all(eventId) as ProductCatalogRow[];
@@ -59,6 +67,8 @@ export function listOperationCatalog(
     salePriceCents: product.sale_price_cents,
     availableQuantity: eventId === null ? 0 : product.available_quantity,
     active: product.active === 1,
+    imageDataUrl: product.image_data_url,
+    fallbackIcon: product.fallback_icon,
   }));
   const comboItems = listCombos(database).map((combo) => ({
     id: combo.id,
@@ -67,6 +77,8 @@ export function listOperationCatalog(
     salePriceCents: combo.salePriceCents,
     availableQuantity: combo.availableUnits,
     active: combo.active,
+    imageDataUrl: null,
+    fallbackIcon: 'package' as const,
   }));
 
   return [...productItems, ...comboItems].sort((left, right) =>
@@ -169,6 +181,7 @@ export function deductOrderStock(
   items: readonly DatabaseOrderItem[],
   now: number,
 ): void {
+  ensureProductExperienceSchema(database.sqlite);
   const requirements = buildStockRequirements(database, items);
   const getStock = database.sqlite.prepare(
     'SELECT quantity FROM event_stock WHERE event_id = ? AND product_id = ?',
@@ -218,6 +231,7 @@ export function restoreOrderStock(
   orderId: string,
   now: number,
 ): number {
+  ensureProductExperienceSchema(database.sqlite);
   const saleNote = `Venda da comanda ${orderId}`;
   const movements = database.sqlite
     .prepare(
