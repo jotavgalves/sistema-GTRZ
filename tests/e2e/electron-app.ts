@@ -73,8 +73,10 @@ export async function closeElectronApplication(application: ElectronApplication)
 }
 
 export async function ensureProduction(window: Page): Promise<void> {
-  if (await window.getByText('Caixa', { exact: true }).isVisible()) {
-    await window.getByPlaceholder('Digite a senha').fill('121225');
+  const passwordInput = window.getByPlaceholder('Digite a senha');
+
+  if (await passwordInput.isVisible()) {
+    await passwordInput.fill('121225');
     await window.getByRole('button', { name: 'Entrar em Produção' }).click();
     await expect(window.getByText('Produção', { exact: true })).toBeVisible();
   }
