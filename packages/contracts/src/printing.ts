@@ -16,7 +16,11 @@ export const printingSettingsSchema = z.object({
   paperWidthMm: thermalPaperWidthSchema,
 });
 
-export const updatePrintingSettingsInputSchema = printingSettingsSchema;
+export const updatePrintingSettingsInputSchema = printingSettingsSchema.pick({
+  automaticPrinting: true,
+  deviceName: true,
+  paperWidthMm: true,
+});
 
 export const printOrderInputSchema = z.object({
   orderId: z.uuid(),
