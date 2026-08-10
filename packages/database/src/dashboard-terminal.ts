@@ -4,7 +4,7 @@ import type { DatabaseContext } from './types';
 
 export function getDashboardStateWithTerminal(database: DatabaseContext): DatabaseDashboardState {
   const dashboard = getDashboardState(database);
-  if (dashboard.activeEventId === null) return dashboard;
+  if (dashboard.activeEvent === null) return dashboard;
 
   const cash = getCashState(database);
   return {
