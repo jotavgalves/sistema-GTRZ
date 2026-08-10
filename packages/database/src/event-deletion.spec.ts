@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { getEventStockCostCents } from './event-stock-cost';
 import {
   createEvent,
   createExpense,
@@ -16,6 +17,7 @@ import {
   openDatabase,
   openOrder,
   recordStockMovement,
+  transferStockBetweenEvents,
   verifyDatabaseIntegrity,
   type DatabaseContext,
 } from './index';
@@ -107,6 +109,50 @@ describe('permanent event deletion', () => {
       action: 'event.deleted-permanently',
       entity_id: event.id,
     });
+    database.close();
+  });
+
+  it('preserva custo do estoque recebido por outro evento ao excluir a origem', async () => {
+    const database = await createTemporaryDatabase();
+    const source = createEvent(database, { name: 'Origem removível', startsAt: Date.now() });
+    const category = createProductCategory(database, 'Transferência preservada');
+    const product = createInventoryProduct(database, {
+      categoryId: category.id,
+      name: 'Produto transferido',
+      kind: 'drink',
+      costCents: 200,
+      salePriceCents: 600,
+      lowStockThreshold: 1,
+    });
+    recordStockMovement(database, { productId: product.id, type: 'purchase', quantity: 10 });
+    const destination = createEvent(database, {
+      name: 'Destino preservado',
+      startsAt: Date.now() + 86_400_000,
+    });
+    transferStockBetweenEvents(database, {
+      productId: product.id,
+      sourceEventId: source.id,
+      destinationEventId: destination.id,
+      quantity: 4,
+    });
+
+    expect(getEventStockCostCents(database, source.id)).toBe(1200);
+    expect(getEventStockCostCents(database, destination.id)).toBe(800);
+
+    deleteEventPermanently(database, {
+      eventId: source.id,
+      confirmationName: source.name,
+      reason: 'Origem não será mais utilizada',
+    });
+
+    expect(listEvents(database).map((event) => event.id)).toEqual([destination.id]);
+    expect(
+      database.sqlite
+        .prepare('SELECT quantity FROM event_stock WHERE event_id = ? AND product_id = ?')
+        .get(destination.id, product.id),
+    ).toEqual({ quantity: 4 });
+    expect(getEventStockCostCents(database, destination.id)).toBe(800);
+    expect(verifyDatabaseIntegrity(database)).toBe(true);
     database.close();
   });
 
