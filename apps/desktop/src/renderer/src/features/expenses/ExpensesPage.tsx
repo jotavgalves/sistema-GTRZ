@@ -28,7 +28,9 @@ export function ExpensesPage(): React.JSX.Element {
   const activeExpenses = expenses.filter((expense) => expense.status === 'active');
   const totalCents = activeExpenses.reduce((total, expense) => total + expense.amountCents, 0);
   const openCount = activeExpenses.filter((expense) => expense.paymentStatus === 'open').length;
-  const partialCount = activeExpenses.filter((expense) => expense.paymentStatus === 'partial').length;
+  const partialCount = activeExpenses.filter(
+    (expense) => expense.paymentStatus === 'partial',
+  ).length;
   const paidCount = activeExpenses.filter((expense) => expense.paymentStatus === 'paid').length;
 
   return (
@@ -38,8 +40,8 @@ export function ExpensesPage(): React.JSX.Element {
           <span className="eyebrow">Compromissos financeiros do evento</span>
           <h1>Despesas</h1>
           <p>
-            Controle o pagamento como em aberto, parcial ou pago. Toda despesa não cancelada reduz
-            o resultado, independentemente dessa situação.
+            Controle o pagamento como em aberto, parcial ou pago. Toda despesa não cancelada reduz o
+            resultado, independentemente dessa situação.
           </p>
         </div>
         <button
