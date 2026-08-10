@@ -48,7 +48,9 @@ export class ThermalPrintService {
   async listPrinters(): Promise<readonly PrinterInfo[]> {
     const window = createHiddenWindow();
     try {
-      await window.loadURL('data:text/html;charset=utf-8,%3Chtml%3E%3Cbody%3E%3C/body%3E%3C/html%3E');
+      await window.loadURL(
+        'data:text/html;charset=utf-8,%3Chtml%3E%3Cbody%3E%3C/body%3E%3C/html%3E',
+      );
       const printers = await window.webContents.getPrintersAsync();
       return printers.map((printer) => ({
         name: printer.name,
@@ -99,7 +101,11 @@ export class ThermalPrintService {
 
         return success
           ? { success: true, skipped: false, message: 'Nota enviada para a impressora.' }
-          : { success: false, skipped: false, message: 'A impressora recusou o trabalho de impressão.' };
+          : {
+              success: false,
+              skipped: false,
+              message: 'A impressora recusou o trabalho de impressão.',
+            };
       } finally {
         if (!window.isDestroyed()) window.destroy();
       }
