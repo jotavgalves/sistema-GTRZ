@@ -14,10 +14,20 @@ const receipt: DatabaseOrderReceipt = {
   totalCents: 1800,
   closedAt: 1_786_000_000_000,
   items: [
-    { name: 'Budweiser', quantity: 2, unitPriceCents: 1000, totalCents: 2000 },
+    {
+      name: 'Budweiser',
+      quantity: 2,
+      unitPriceCents: 1000,
+      totalCents: 2000,
+    },
   ],
   payments: [
-    { method: 'cash', amountCents: 1300, receivedCents: 1500, changeCents: 200 },
+    {
+      method: 'cash',
+      amountCents: 1300,
+      receivedCents: 1500,
+      changeCents: 200,
+    },
   ],
   vouchers: [{ code: 'VIP-001', amountCents: 500 }],
 };
