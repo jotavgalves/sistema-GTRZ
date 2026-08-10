@@ -32,17 +32,11 @@ function formatDate(timestamp: number): string {
 
 export function estimateReceiptHeightMm(receipt: DatabaseOrderReceipt): number {
   const contentHeight =
-    115 +
-    receipt.items.length * 9 +
-    receipt.payments.length * 8 +
-    receipt.vouchers.length * 8;
+    115 + receipt.items.length * 9 + receipt.payments.length * 8 + receipt.vouchers.length * 8;
   return Math.max(140, Math.min(contentHeight, 700));
 }
 
-export function buildReceiptHtml(
-  receipt: DatabaseOrderReceipt,
-  paperWidthMm: 58 | 80,
-): string {
+export function buildReceiptHtml(receipt: DatabaseOrderReceipt, paperWidthMm: 58 | 80): string {
   const itemRows = receipt.items
     .map(
       (item) => `
