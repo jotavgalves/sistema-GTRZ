@@ -74,8 +74,8 @@ export function EventDeletePanel({
         </strong>
         <p>
           Comandas abertas ou pagas, vendas, pagamentos, mesas, vouchers, ingressos, caixa,
-          despesas, estoque, movimentações e transferências vinculadas a este evento serão
-          removidos definitivamente.
+          despesas, estoque, movimentações e transferências vinculadas a este evento serão removidos
+          definitivamente.
         </p>
         <p>Não é necessário encerrar comandas, fechar caixa ou encerrar o evento antes.</p>
       </div>
