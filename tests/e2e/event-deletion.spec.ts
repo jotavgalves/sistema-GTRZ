@@ -45,7 +45,9 @@ test('SMK-EVT-001 — exclui definitivamente evento com comanda aberta', async (
 
     await window.getByRole('link', { name: 'Despesas' }).click();
     await window.getByPlaceholder('Ex.: Estrutura').fill('Operação');
-    await window.getByPlaceholder('Ex.: Locação de gerador').fill('Despesa a excluir com evento');
+    await window
+      .getByPlaceholder('Ex.: Locação de gerador')
+      .fill('Despesa a excluir com evento');
     await window.getByPlaceholder('0,00').fill('15.00');
     await window.getByRole('button', { name: 'Registrar despesa' }).click();
     await expect(window.getByText('Despesa registrada.')).toBeVisible();
@@ -66,7 +68,9 @@ test('SMK-EVT-001 — exclui definitivamente evento com comanda aberta', async (
     await window.getByPlaceholder(eventName).fill(eventName);
     await window.getByRole('button', { name: 'Excluir evento definitivamente' }).click();
 
-    await expect(window.getByText(new RegExp(`${eventName} excluído definitivamente`, 'u'))).toBeVisible();
+    await expect(
+      window.getByText(new RegExp(`${eventName} excluído definitivamente`, 'u')),
+    ).toBeVisible();
     await expect(eventCard).toHaveCount(0);
     await expect(window.getByText('Nenhum', { exact: true })).toBeVisible();
   } finally {
