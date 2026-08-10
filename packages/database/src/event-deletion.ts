@@ -67,7 +67,11 @@ export function deleteEventPermanently(
     eventId: event.id,
     eventName: event.name,
     deleted: true,
-    removedOrdersCount: count(database, 'SELECT COUNT(*) AS amount FROM orders WHERE event_id = ?', event.id),
+    removedOrdersCount: count(
+      database,
+      'SELECT COUNT(*) AS amount FROM orders WHERE event_id = ?',
+      event.id,
+    ),
     removedOpenOrdersCount: count(
       database,
       "SELECT COUNT(*) AS amount FROM orders WHERE event_id = ? AND status = 'open'",
@@ -107,7 +111,9 @@ export function deleteEventPermanently(
     database.sqlite.prepare('DELETE FROM ticket_sales WHERE event_id = ?').run(event.id);
     database.sqlite.prepare('DELETE FROM ticket_lots WHERE event_id = ?').run(event.id);
 
-    database.sqlite.prepare('DELETE FROM order_voucher_allocations WHERE event_id = ?').run(event.id);
+    database.sqlite
+      .prepare('DELETE FROM order_voucher_allocations WHERE event_id = ?')
+      .run(event.id);
     database.sqlite.prepare('DELETE FROM voucher_transactions WHERE event_id = ?').run(event.id);
     database.sqlite.prepare('DELETE FROM vouchers WHERE event_id = ?').run(event.id);
 
@@ -115,7 +121,9 @@ export function deleteEventPermanently(
       .prepare('DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE event_id = ?)')
       .run(event.id);
     database.sqlite
-      .prepare('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE event_id = ?)')
+      .prepare(
+        'DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE event_id = ?)',
+      )
       .run(event.id);
     database.sqlite.prepare('DELETE FROM orders WHERE event_id = ?').run(event.id);
     database.sqlite.prepare('DELETE FROM service_points WHERE event_id = ?').run(event.id);
