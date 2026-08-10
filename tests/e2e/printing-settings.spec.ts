@@ -36,9 +36,7 @@ test('SMK-PRT-001 — salva impressão automática e largura térmica', async ()
     await window.getByRole('link', { name: 'Configurações' }).click();
     await expect(window.getByRole('heading', { name: 'Impressora térmica' })).toBeVisible();
     await expect(window.getByRole('button', { name: 'Salvar impressão térmica' })).toBeEnabled();
-    await expect(
-      window.getByLabel('Imprimir automaticamente após concluir a venda'),
-    ).toBeChecked();
+    await expect(window.getByLabel('Imprimir automaticamente após concluir a venda')).toBeChecked();
     await expect(window.getByLabel('Largura da bobina')).toHaveValue('58');
   } finally {
     await closeElectronApplication(electronApplication);
