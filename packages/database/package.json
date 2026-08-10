@@ -12,6 +12,10 @@
       "types": "./src/payment-terminal.ts",
       "default": "./src/payment-terminal.ts"
     },
+    "./printing": {
+      "types": "./src/printing.ts",
+      "default": "./src/printing.ts"
+    },
     "./product-administration": {
       "types": "./src/product-administration.ts",
       "default": "./src/product-administration.ts"
