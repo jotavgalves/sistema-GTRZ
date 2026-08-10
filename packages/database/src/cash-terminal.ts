@@ -34,8 +34,7 @@ function applyOperatingCosts(
     ...state,
     terminalFeesCents: fees.totalFeeCents,
     stockCostCents,
-    projectedResultCents:
-      state.projectedResultCents - stockCostCents - fees.totalFeeCents,
+    projectedResultCents: state.projectedResultCents - stockCostCents - fees.totalFeeCents,
   };
 }
 
