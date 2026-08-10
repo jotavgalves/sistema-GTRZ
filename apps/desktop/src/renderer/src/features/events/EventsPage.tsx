@@ -17,8 +17,17 @@ function getDefaultDateTime(): string {
 
 export function EventsPage(): React.JSX.Element {
   const { state: sessionState, refresh: refreshSession } = useSession();
-  const { events, loading, error, create, rename, changeStatus, deletePermanently, select, reload } =
-    useEvents();
+  const {
+    events,
+    loading,
+    error,
+    create,
+    rename,
+    changeStatus,
+    deletePermanently,
+    select,
+    reload,
+  } = useEvents();
   const [name, setName] = useState('');
   const [startsAt, setStartsAt] = useState(getDefaultDateTime);
   const [busyId, setBusyId] = useState<string | null>(null);
