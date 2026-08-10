@@ -1,11 +1,7 @@
 import { Printer, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState, type SyntheticEvent } from 'react';
 
-import type {
-  PrinterInfo,
-  PrintingSettings,
-  ThermalPaperWidth,
-} from '@gtrz/contracts';
+import type { PrinterInfo, PrintingSettings, ThermalPaperWidth } from '@gtrz/contracts';
 
 const DEFAULT_SETTINGS: PrintingSettings = {
   automaticPrinting: false,
@@ -14,9 +10,7 @@ const DEFAULT_SETTINGS: PrintingSettings = {
 };
 
 function getErrorMessage(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : 'Não foi possível carregar a impressão térmica.';
+  return error instanceof Error ? error.message : 'Não foi possível carregar a impressão térmica.';
 }
 
 export function PrintingSettingsPanel(): React.JSX.Element {
@@ -155,11 +149,7 @@ export function PrintingSettingsPanel(): React.JSX.Element {
       {error === null ? null : <p className="form-error">{error}</p>}
       {message === null ? null : <p className="form-success">{message}</p>}
 
-      <button
-        className="button button--primary"
-        disabled={loading || submitting}
-        type="submit"
-      >
+      <button className="button button--primary" disabled={loading || submitting} type="submit">
         <Printer size={17} aria-hidden="true" />
         Salvar impressão térmica
       </button>
