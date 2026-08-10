@@ -166,8 +166,8 @@ export function ExpenseCard({
             </button>
           </div>
           <small>
-            Cancelar retira a despesa do resultado. Excluir remove o lançamento e preserva somente
-            o registro da exclusão na auditoria.
+            Cancelar retira a despesa do resultado. Excluir remove o lançamento e preserva somente o
+            registro da exclusão na auditoria.
           </small>
         </div>
       ) : null}
