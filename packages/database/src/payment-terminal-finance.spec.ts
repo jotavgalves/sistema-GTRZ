@@ -88,7 +88,7 @@ describe('payment terminal fees in finance', () => {
     expect(cash.expectedCashCents).toBe(0);
 
     const dashboard = getDashboardStateWithTerminal(database);
-    expect(dashboard.grossRevenueCents).toBe(3000);
+    expect(dashboard.grossSalesCents).toBe(3000);
     expect(dashboard.projectedResultCents).toBe(2930);
     database.close();
   });
