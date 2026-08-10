@@ -25,6 +25,11 @@ test('SMK-EVT-001 — exclui definitivamente evento com comanda aberta', async (
     await window.getByRole('button', { name: 'Criar evento' }).click();
     const eventCard = window.locator('article.event-card').filter({ hasText: eventName });
     await expect(eventCard).toBeVisible();
+    const operateButton = eventCard.getByRole('button', { name: 'Operar evento' });
+    if (await operateButton.isVisible()) {
+      await operateButton.click();
+      await expect(eventCard.getByText('Em operação')).toBeVisible();
+    }
 
     await window.getByRole('link', { name: 'Estoque' }).click();
     await window.getByPlaceholder('Ex.: Cervejas').fill(categoryName);
@@ -61,10 +66,13 @@ test('SMK-EVT-001 — exclui definitivamente evento com comanda aberta', async (
 
     await window.getByRole('link', { name: 'Eventos' }).click();
     await eventCard.getByRole('button', { name: 'Excluir definitivamente' }).click();
-    await expect(window.getByRole('heading', { name: eventName })).toBeVisible();
-    await window.getByPlaceholder('Ex.: evento criado por engano').fill('Evento criado para teste');
-    await window.getByPlaceholder(eventName).fill(eventName);
-    await window.getByRole('button', { name: 'Excluir evento definitivamente' }).click();
+    const deletionPanel = window.locator('.event-close-panel');
+    await expect(deletionPanel.getByRole('heading', { name: eventName })).toBeVisible();
+    await deletionPanel
+      .getByPlaceholder('Ex.: evento criado por engano')
+      .fill('Evento criado para teste');
+    await deletionPanel.getByPlaceholder(eventName).fill(eventName);
+    await deletionPanel.getByRole('button', { name: 'Excluir evento definitivamente' }).click();
 
     await expect(
       window.getByText(new RegExp(`${eventName} excluído definitivamente`, 'u')),
