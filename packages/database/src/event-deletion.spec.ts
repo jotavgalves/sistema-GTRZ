@@ -77,10 +77,14 @@ describe('permanent event deletion', () => {
       database.sqlite.prepare('SELECT COUNT(*) AS amount FROM events WHERE id = ?').get(event.id),
     ).toEqual({ amount: 0 });
     expect(
-      database.sqlite.prepare('SELECT COUNT(*) AS amount FROM orders WHERE event_id = ?').get(event.id),
+      database.sqlite
+        .prepare('SELECT COUNT(*) AS amount FROM orders WHERE event_id = ?')
+        .get(event.id),
     ).toEqual({ amount: 0 });
     expect(
-      database.sqlite.prepare('SELECT COUNT(*) AS amount FROM expenses WHERE event_id = ?').get(event.id),
+      database.sqlite
+        .prepare('SELECT COUNT(*) AS amount FROM expenses WHERE event_id = ?')
+        .get(event.id),
     ).toEqual({ amount: 0 });
     expect(
       database.sqlite
