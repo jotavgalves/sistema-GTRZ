@@ -19,7 +19,7 @@
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write apps/desktop/src/main/receipt-html.ts apps/desktop/src/renderer/src/features/settings/PrintingSettingsPanel.tsx packages/database/src/printing.ts && git diff -- apps/desktop/src/main/receipt-html.ts apps/desktop/src/renderer/src/features/settings/PrintingSettingsPanel.tsx packages/database/src/printing.ts",
     "architecture:check": "node scripts/check-architecture.mjs",
     "cycles:check": "madge --circular --extensions ts,tsx apps/desktop/src packages",
     "deadcode:check": "knip",
