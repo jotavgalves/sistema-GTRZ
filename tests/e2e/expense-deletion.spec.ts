@@ -66,6 +66,13 @@ test('SMK-FIN-003 — situação da despesa não altera o resultado', async () =
     await window.getByRole('link', { name: 'Eventos' }).click();
     await window.getByPlaceholder('Ex.: La Rumba Neon — Agosto').fill(eventName);
     await window.getByRole('button', { name: 'Criar evento' }).click();
+    const eventCard = window.locator('article.event-card').filter({ hasText: eventName });
+    await expect(eventCard).toBeVisible();
+    const operateButton = eventCard.getByRole('button', { name: 'Operar evento' });
+    if (await operateButton.isVisible()) {
+      await operateButton.click();
+      await expect(eventCard.getByText('Em operação')).toBeVisible();
+    }
 
     await window.getByRole('link', { name: 'Despesas' }).click();
     await window.getByPlaceholder('Ex.: Estrutura').fill('Estrutura');
@@ -77,7 +84,8 @@ test('SMK-FIN-003 — situação da despesa não altera o resultado', async () =
     await expect(window.getByText('Despesa registrada.')).toBeVisible();
 
     const expenseCard = window.locator('article.expense-card').filter({ hasText: description });
-    await expect(expenseCard.getByText('Em aberto', { exact: true })).toBeVisible();
+    const paymentBadge = expenseCard.locator('span.status-badge').first();
+    await expect(paymentBadge).toHaveText('Em aberto');
 
     await window.getByRole('link', { name: 'Caixa' }).click();
     const projectedResult = window.locator('article.summary-card').filter({
@@ -89,7 +97,7 @@ test('SMK-FIN-003 — situação da despesa não altera o resultado', async () =
     await expenseCard.getByRole('button', { name: 'Gerenciar', exact: true }).click();
     await expenseCard.getByLabel('Situação do pagamento').selectOption('partial');
     await expect(window.getByText('Situação da despesa atualizada.')).toBeVisible();
-    await expect(expenseCard.getByText('Parcial', { exact: true })).toBeVisible();
+    await expect(paymentBadge).toHaveText('Parcial');
 
     await window.getByRole('link', { name: 'Caixa' }).click();
     await expect(projectedResult).toContainText('-R$ 25,00');
@@ -98,7 +106,7 @@ test('SMK-FIN-003 — situação da despesa não altera o resultado', async () =
     await expenseCard.getByRole('button', { name: 'Gerenciar', exact: true }).click();
     await expenseCard.getByLabel('Situação do pagamento').selectOption('paid');
     await expect(window.getByText('Situação da despesa atualizada.')).toBeVisible();
-    await expect(expenseCard.getByText('Paga', { exact: true })).toBeVisible();
+    await expect(paymentBadge).toHaveText('Paga');
 
     await window.getByRole('link', { name: 'Caixa' }).click();
     await expect(projectedResult).toContainText('-R$ 25,00');
