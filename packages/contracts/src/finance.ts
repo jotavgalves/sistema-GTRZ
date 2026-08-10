@@ -130,9 +130,7 @@ export type ExpensePaymentStatus = z.infer<typeof expensePaymentStatusSchema>;
 export type Expense = z.infer<typeof expenseSchema>;
 export type ExpenseState = z.infer<typeof expenseStateSchema>;
 export type CreateExpenseInput = z.infer<typeof createExpenseInputSchema>;
-export type UpdateExpensePaymentStatusInput = z.infer<
-  typeof updateExpensePaymentStatusInputSchema
->;
+export type UpdateExpensePaymentStatusInput = z.infer<typeof updateExpensePaymentStatusInputSchema>;
 export type CancelExpenseInput = z.infer<typeof cancelExpenseInputSchema>;
 export type DeleteExpenseInput = z.infer<typeof deleteExpenseInputSchema>;
 export type ExpenseDeletionResult = z.infer<typeof expenseDeletionResultSchema>;
