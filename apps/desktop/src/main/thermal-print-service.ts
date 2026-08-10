@@ -55,7 +55,7 @@ export class ThermalPrintService {
       return printers.map((printer) => ({
         name: printer.name,
         displayName: printer.displayName || printer.name,
-        isDefault: printer.isDefault,
+        isDefault: false,
       }));
     } finally {
       if (!window.isDestroyed()) window.destroy();
