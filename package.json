@@ -19,7 +19,7 @@
     "typecheck": "tsc -b --pretty false",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
-    "format:check": "prettier --write tests/e2e/event-deletion.spec.ts && git diff -- tests/e2e/event-deletion.spec.ts && exit 1",
+    "format:check": "prettier --check .",
     "architecture:check": "node scripts/check-architecture.mjs",
     "cycles:check": "madge --circular --extensions ts,tsx apps/desktop/src packages",
     "deadcode:check": "knip",
