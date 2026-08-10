@@ -32,7 +32,10 @@ function formatDate(timestamp: number): string {
 
 export function estimateReceiptHeightMm(receipt: DatabaseOrderReceipt): number {
   const contentHeight =
-    115 + receipt.items.length * 9 + receipt.payments.length * 8 + receipt.vouchers.length * 8;
+    115 +
+    receipt.items.length * 9 +
+    receipt.payments.length * 8 +
+    receipt.vouchers.length * 8;
   return Math.max(140, Math.min(contentHeight, 700));
 }
 
