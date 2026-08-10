@@ -87,9 +87,6 @@ export function updatePrintingSettings(
   }
 
   const deviceName = input.deviceName?.trim() ?? '';
-  if (input.paperWidthMm !== 58 && input.paperWidthMm !== 80) {
-    throw new Error('A largura da bobina deve ser 58 mm ou 80 mm.');
-  }
 
   database.sqlite.transaction(() => {
     writeMeta(database, AUTOMATIC_KEY, input.automaticPrinting ? '1' : '0');
