@@ -1,10 +1,7 @@
 import { appendAudit } from './audit';
 import { getSessionState } from './control';
 import { getOrder } from './operation-core';
-import type {
-  DatabasePaymentMethod,
-  DatabaseServicePointType,
-} from './operation-types';
+import type { DatabasePaymentMethod, DatabaseServicePointType } from './operation-types';
 import type { DatabaseContext } from './types';
 
 export type DatabaseThermalPaperWidth = 58 | 80;
@@ -113,18 +110,15 @@ export function updatePrintingSettings(
   return getPrintingSettings(database);
 }
 
-export function getOrderReceipt(
-  database: DatabaseContext,
-  orderId: string,
-): DatabaseOrderReceipt {
+export function getOrderReceipt(database: DatabaseContext, orderId: string): DatabaseOrderReceipt {
   const order = getOrder(database, orderId);
   if (order.status !== 'paid' || order.closedAt === null) {
     throw new Error('Somente vendas pagas podem gerar nota de retirada.');
   }
 
-  const event = database.sqlite.prepare('SELECT name FROM events WHERE id = ?').get(order.eventId) as
-    | { readonly name: string }
-    | undefined;
+  const event = database.sqlite
+    .prepare('SELECT name FROM events WHERE id = ?')
+    .get(order.eventId) as { readonly name: string } | undefined;
   const servicePoint = database.sqlite
     .prepare('SELECT type FROM service_points WHERE id = ?')
     .get(order.servicePointId) as { readonly type: DatabaseServicePointType } | undefined;
